@@ -1,0 +1,99 @@
+# Secrets and machine-local configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials*.json
+service-account*.json
+.local/
+
+# Python / tooling
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+.coverage
+htmlcov/
+.ipynb_checkpoints/
+
+# Frontend builds
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.tsbuildinfo
+
+# Weights and scientific binary data
+*.pt
+*.pth
+# TorchScript file, not TypeScript source
+/models/imaging/brats_mri_segmentation/models/
+*.safetensors
+*.joblib
+*.pkl
+*.pickle
+*.onnx
+*.ckpt
+*.h5
+*.hdf5
+*.nii
+*.nii.gz
+*.dcm
+*.npz
+*.npy
+*.maf
+*.maf.gz
+*.vcf
+*.vcf.gz
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# Existing local assets; exclude whole folders, including JSON weights/meshes
+/models/imaging/UCSF-PDGM/
+/models/imaging/UCSF-PDGM-metadata*.csv
+/models/imaging/example_dataset/
+/models/imaging/nnUNet_data/
+/models/imaging/SwinUNETR_BRATS21/pretrained_models/
+/models/imaging/SwinUNETR_BRATS21/outputs/
+/models/imaging/results/
+/models/imaging/results_eval/
+/models/VeriOdakliCozum/veri/
+/models/VeriOdakliCozum/modeller/
+/models/VeriOdakliCozum/sonuclar/
+
+# Future runtime data
+/data/
+/artifacts/
+/weights/
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.log
+
+# Local reports / historical notes (keep README placeholders)
+/docs/references/*
+!/docs/references/README.md
+/docs/archive/*
+!/docs/archive/README.md
+
+# OS / editor
+.DS_Store
+__MACOSX/
+._*
+Thumbs.db
+.idea/
+.vscode/

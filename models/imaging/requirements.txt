@@ -1,0 +1,23 @@
+# goruntuIslemeModeli — bağımlılıklar
+# Kaynak: koddaki import'lardan çıkarıldı (ensemble_inference, evaluate_uwcse,
+# nnunet_predictor, uwcse_ensemble, compute_stats, serve_dashboard, SwinUNETR_BRATS21/*)
+
+# --- Derin öğrenme ---
+# NOT: PyPI'daki torch wheel'leri CUDA runtime'ı ile geliyor (RTX 3050 için uygun).
+torch>=2.4                 # torch.amp.autocast("cuda") API'si 2.4+ ister
+monai>=1.5                 # SwinUNETR img_size argümanı olmadan çağrılıyor -> 1.5+
+nnunetv2>=2.5              # nnUNetPredictor(perform_everything_on_device=...) 2.3+
+einops>=0.7                # monai SwinUNETR bağımlılığı
+tensorboardX>=2.6          # SwinUNETR_BRATS21/trainer.py
+
+# --- Tıbbi görüntü G/Ç ---
+nibabel>=5.2
+
+# --- Bilimsel yığın ---
+numpy>=1.26
+scipy>=1.11                # compute_stats.py (wilcoxon)
+pandas>=2.0                # evaluate_uwcse.py
+scikit-image>=0.22         # marching_cubes, connected components
+scikit-learn>=1.3          # brats_mri_segmentation/scripts/prepare_datalist.py
+matplotlib>=3.8            # serve_dashboard.py
+tqdm>=4.66
