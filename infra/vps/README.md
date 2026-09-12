@@ -54,6 +54,16 @@ VPS'te Python 3.11+, venv, pip ve systemd gerekir. Model/CUDA/bilimsel Python or
 sudo bash infra/vps/install-services.sh
 ```
 
+Betik `python3.14`, `python3.13`, `python3.12`, `python3.11` ve son olarak `python3`
+sırasıyla desteklenen bir yorumlayıcı arar. Oracle Linux'ta sistem `python3` komutu daha eski
+bir sürüme gidiyorsa yorumlayıcıyı açıkça seçebilirsiniz:
+
+```bash
+sudo env PYTHON_BIN=/usr/bin/python3.12 bash infra/vps/install-services.sh
+```
+
+`PYTHON` değişkeni kullanılmaz. Seçilen yorumlayıcının `venv` modülü de kurulu olmalıdır.
+
 Betik `mergen` servis kullanıcısını ve `/srv/mergen/services` altındaki ayrı venv'i hazırlar; sistem Python'una paket kurmaz. Servisleri otomatik başlatmaz. Güncelleme mevcut servis dosyalarını değiştirir; bakım sırasında iki servisi durdurup kurulumu uygulayın. Bu ilk kurulum betiği servis kodunda atomik sürüm/rollback sağlamaz; güncellemeden önce mevcut servis dizinini yedekleyin.
 
 Geliştirme makinesinde [demo paketini](../../docs/DEMO_SERVICES.md) üretin. `.local/demo-v2` dizinini ayrı olarak VPS'te `/srv/mergen/demo-v2` yoluna rsync/SCP ile taşıyın; kopyalamadan önce/sonra checksum doğrulayın. Dizin `mergen` kullanıcısı tarafından okunabilmeli, Caddy'nin `current/shared` dizinleri altında olmamalıdır. `/etc/mergen/services.env` içindeki `MERGEN_DEMO_ROOT` değerini bu VPS dizinine ayarlayın. Örnek dosyada gerçek makine bilgisi yoktur.
