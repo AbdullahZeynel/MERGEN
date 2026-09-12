@@ -148,6 +148,16 @@ S0 önce tamamlanır. S1 ile S3, sözleşmeler birleştikten sonra paralel yür�
 S2, S1 katalog biçimine; S4, S3 inference adaptörüne bağlıdır. S5 ve S4 birleşmeden
 S6 başlanmaz. S7 bütün zincirin yayın kapısıdır.
 
+### S1 güncel durum
+
+`feat/demo-catalog-v3` dalı kök katalog ile `module/disease/cases` ayrımını,
+filtreli MCP/API uçlarını ve iki görüntü vakası için v3 paket üretimini içerir.
+MCP eski v2 paketini okumaya, `/api/demo/cases` ise mevcut arayüzün beklediği v2
+yanıtını vermeye devam eder. Böylece kod ve veri paketi VPS'ye ayrı adımlarda
+alınabilir. Bilinmeyen koleksiyonlar 404 alır; varlık yolları seçilen koleksiyon
+kökü dışına çıkamaz. Genomik koleksiyon ve vakalar S3 çıktısı olarak aynı kataloğa
+sonradan eklenecektir.
+
 ### Güncel dal durumu
 
 `feat/vps-control-plane` dalında S0 sözleşmeleri ile S5'in VPS temeli birlikte

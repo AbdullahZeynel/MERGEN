@@ -14,27 +14,36 @@ server = FastMCP('MERGEN demo', host='127.0.0.1', port=9010,
 
 
 @server.tool()
-def list_cases() -> dict[str, Any]:
-    """List prepared demo cases; never substitutes live results."""
-    return store.manifest
+def list_catalog() -> dict[str, Any]:
+    """List available demo modules and diseases without exposing disk paths."""
+    return store.catalog()
 
 
 @server.tool()
-def get_slice(case_id: str, axis: str, index: int) -> dict[str, Any]:
+def list_cases(module: str = 'imaging', disease: str = 'glioma') -> dict[str, Any]:
+    """List one prepared demo collection; never substitutes live results."""
+    return store.list_cases(module, disease)
+
+
+@server.tool()
+def get_slice(case_id: str, axis: str, index: int, module: str = 'imaging',
+              disease: str = 'glioma') -> dict[str, Any]:
     """Read a zero-based slice from a listed case and axis."""
-    return store.asset(case_id, 'slice', axis, index)
+    return store.asset(case_id, 'slice', axis, index, module=module, disease=disease)
 
 
 @server.tool()
-def get_overlay(case_id: str, layer: str, axis: str, index: int) -> dict[str, Any]:
+def get_overlay(case_id: str, layer: str, axis: str, index: int,
+                module: str = 'imaging', disease: str = 'glioma') -> dict[str, Any]:
     """Read a transparent prediction or ground-truth mask for a demo slice."""
-    return store.asset(case_id, 'overlay', axis, index, layer)
+    return store.asset(case_id, 'overlay', axis, index, layer=layer,
+                       module=module, disease=disease)
 
 
 @server.tool()
-def get_mesh(case_id: str) -> dict[str, Any]:
+def get_mesh(case_id: str, module: str = 'imaging', disease: str = 'glioma') -> dict[str, Any]:
     """Read tumor surfaces and approximate MR foreground envelope."""
-    return store.asset(case_id, 'mesh')
+    return store.asset(case_id, 'mesh', module=module, disease=disease)
 
 
 if __name__ == '__main__':

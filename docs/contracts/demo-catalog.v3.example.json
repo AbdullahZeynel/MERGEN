@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 3,
+  "collections": [
+    {
+      "module": "imaging",
+      "disease": "glioma",
+      "manifest": "imaging/glioma/manifest.json"
+    },
+    {
+      "module": "genomics",
+      "disease": "glioma-variant-pathogenicity",
+      "manifest": "genomics/glioma-variant-pathogenicity/manifest.json"
+    }
+  ]
+}

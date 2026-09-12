@@ -45,7 +45,7 @@ def prepare(source: Path, output: Path) -> int:
         for layer, mask in masks.items():
             if mask.shape != volume.shape or not set(np.unique(mask)).issubset({0, 1, 2, 4}):
                 raise ValueError(f"Invalid {layer} mask: {case_id}")
-        case_dir = output / case_id
+        case_dir = output / 'imaging' / 'glioma' / 'cases' / case_id
         case_dir.mkdir(parents=True, exist_ok=True)
         previews = []
         for axis, dimension in (("axial", 2), ("coronal", 1), ("sagittal", 0)):
@@ -64,8 +64,32 @@ def prepare(source: Path, output: Path) -> int:
                     overlay_dir = case_dir / 'overlays' / overlay / axis
                     overlay_dir.mkdir(parents=True, exist_ok=True)
                     overlay_image(mask_plane).save(overlay_dir / f'{layer}.png', optimize=True)
-            previews.append({"axis": axis, "index": index, "src": f"/api/demo/cases/{case_id}/slices/{axis}/{index}"})
-        records.append({"id": case_id, "source": "UCSF-PDGM", "mode": "demo", "status": "demo_ready", "shape": list(volume.shape), "modality": "FLAIR", "previews": previews, "overlays": ["prediction", "ground_truth"], "genomics": None})
+            previews.append({
+                "axis": axis,
+                "index": index,
+                "src": (f"/api/demo/modules/imaging/diseases/glioma/cases/"
+                        f"{case_id}/slices/{axis}/{index}"),
+            })
+        records.append({
+            "schemaVersion": 3,
+            "module": "imaging",
+            "disease": "glioma",
+            "caseId": case_id,
+            "id": case_id,
+            "source": "UCSF-PDGM",
+            "mode": "demo",
+            "status": "demo_ready",
+            "modelId": "uwcse-full",
+            "modelVersion": "unversioned-precomputed",
+            "inputKind": "prepared-mri-segmentation",
+            "hasPrediction": True,
+            "hasGroundTruth": True,
+            "shape": list(volume.shape),
+            "modality": "FLAIR",
+            "previews": previews,
+            "overlays": ["prediction", "ground_truth"],
+            "genomics": None,
+        })
         mesh_file = source / case_id / "mesh_ensemble.json"
         if mesh_file.is_file():
             meshes = json.loads(mesh_file.read_text())
@@ -78,14 +102,32 @@ def prepare(source: Path, output: Path) -> int:
                 meshes['BRAIN'] = {'vertices': (vertices - 1).tolist(), 'faces': faces.tolist()}
                 records[-1]['brainContext'] = 'mr-foreground-envelope'
             (case_dir / 'mesh_ensemble.json').write_text(json.dumps(meshes, separators=(',', ':')))
-            records[-1]["mesh"] = f"/api/demo/cases/{case_id}/mesh"
+            records[-1]["mesh"] = (f"/api/demo/modules/imaging/diseases/glioma/"
+                                    f"cases/{case_id}/mesh")
         print(f'Prepared {case_id}', flush=True)
     output.mkdir(parents=True, exist_ok=True)
-    temporary = output / "manifest.json.tmp"
     if not records:
         raise ValueError('No source cases found')
-    temporary.write_text(json.dumps({"version": 2, "cases": records}, indent=2), encoding="utf-8")
-    temporary.replace(output / "manifest.json")
+    collection_dir = output / 'imaging' / 'glioma'
+    temporary = collection_dir / 'manifest.json.tmp'
+    temporary.write_text(json.dumps({
+        "schemaVersion": 3,
+        "module": "imaging",
+        "disease": "glioma",
+        "cases": records,
+    }, indent=2), encoding="utf-8")
+    temporary.replace(collection_dir / 'manifest.json')
+    catalog = {
+        "schemaVersion": 3,
+        "collections": [{
+            "module": "imaging",
+            "disease": "glioma",
+            "manifest": "imaging/glioma/manifest.json",
+        }],
+    }
+    catalog_temporary = output / 'catalog.json.tmp'
+    catalog_temporary.write_text(json.dumps(catalog, indent=2), encoding='utf-8')
+    catalog_temporary.replace(output / 'catalog.json')
     print(f"Prepared {len(records)} demo cases; no inference executed.")
     return len(records)
 
@@ -93,6 +135,6 @@ def prepare(source: Path, output: Path) -> int:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=REPO / "models/imaging/results")
-    parser.add_argument("--output", type=Path, default=REPO / ".local/demo-v2")
+    parser.add_argument("--output", type=Path, default=REPO / ".local/demo-v3")
     args = parser.parse_args()
     prepare(args.source, args.output)
