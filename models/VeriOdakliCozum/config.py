@@ -8,15 +8,35 @@ ve hiperparametreler bu dosyada toplanır.
 Yazar: MERGEN Ekibi (TEKNOFEST Onkolojide 3T - 2026)
 """
 
+import os
 from pathlib import Path
+
+
+def _ortam_yolu(degisken: str, varsayilan: Path) -> Path:
+    """Ortam değişkeni doluysa onu, değilse varsayılanı döndürür.
+
+    Ağırlıklar ve veri Git dışıdır; worker, worktree veya ayrı bir kurulum
+    bunları başka bir yerde tutabilsin diye yollar yapılandırılabilir.
+    Değişken tanımlı değilse davranış eskisiyle birebir aynıdır.
+    """
+    ham = os.environ.get(degisken, "").strip()
+    return Path(ham).expanduser().resolve() if ham else varsayilan
+
+
+def _ortam_bayragi(degisken: str, varsayilan: bool) -> bool:
+    ham = os.environ.get(degisken, "").strip().lower()
+    if not ham:
+        return varsayilan
+    return ham in ("1", "true", "yes", "on", "evet")
+
 
 # ---------------------------------------------------------------------------
 # Dizin yolları (proje kökü = bu dosyanın bulunduğu klasör)
 # ---------------------------------------------------------------------------
 PROJE_KOKU = Path(__file__).resolve().parent
-VERI_DIZINI = PROJE_KOKU / "veri"
-SONUC_DIZINI = PROJE_KOKU / "sonuclar"
-MODEL_DIZINI = PROJE_KOKU / "modeller"
+VERI_DIZINI = _ortam_yolu("MERGEN_GENOMIK_VERI_DIZINI", PROJE_KOKU / "veri")
+SONUC_DIZINI = _ortam_yolu("MERGEN_GENOMIK_SONUC_DIZINI", PROJE_KOKU / "sonuclar")
+MODEL_DIZINI = _ortam_yolu("MERGEN_GENOMIK_MODEL_DIZINI", PROJE_KOKU / "modeller")
 ONBELLEK_DIZINI = VERI_DIZINI / "onbellek"
 
 for _dizin in (VERI_DIZINI, SONUC_DIZINI, MODEL_DIZINI, ONBELLEK_DIZINI):
@@ -106,6 +126,16 @@ HEDEF_GENLER = [
 ESM_MODEL_ADI = "facebook/esm2_t30_150M_UR50D"
 ESM_MAKS_DIZILIM_UZUNLUGU = 1022      # ESM-2 girişine sığacak şekilde
 ESM_PENCERE_YARI_GENISLIGI = 200      # Uzun proteinlerde mutasyon merkezli pencere
+
+# ESM-2 ağırlıklarının yeri ve çevrimdışı davranışı.
+#   MERGEN_ESM_YEREL_YOL   : indirilmiş snapshot dizini (config.json + ağırlık)
+#   MERGEN_ESM_CACHE_DIZINI: Hugging Face hub cache kökü (HF_HOME/hub karşılığı)
+#   MERGEN_ESM_INDIRME_IZNI: yalnız hazırlık adımında 1 yapılır
+# Varsayılan çevrimdışıdır: canlı çıkarım sırasında ağa çıkılmaz, ağırlık
+# bulunamazsa sessizce indirmek yerine açık hata verilir.
+ESM_YEREL_YOL = os.environ.get("MERGEN_ESM_YEREL_YOL", "").strip() or None
+ESM_CACHE_DIZINI = os.environ.get("MERGEN_ESM_CACHE_DIZINI", "").strip() or None
+ESM_INDIRME_IZNI = _ortam_bayragi("MERGEN_ESM_INDIRME_IZNI", False)
 
 # ---------------------------------------------------------------------------
 # Model eğitim yapılandırması

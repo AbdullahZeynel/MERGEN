@@ -41,7 +41,7 @@ from typing import Any
 
 from . import config
 from .moduller.aa_ozellikler import aaindex_delta_hesapla
-from .moduller.on_isleme import hgvsp_ayristir
+from .moduller.varyant_notasyonu import hgvsp_ayristir
 
 LOG = logging.getLogger(__name__)
 
@@ -72,6 +72,7 @@ class CikarimSonucu:
     esik: float
     ozellikler: dict[str, float]
     model: dict[str, Any]
+    aciklama: dict[str, Any] | None = None
     notlar: list[str] = field(default_factory=list)
 
     def sozluk(self) -> dict[str, Any]:
@@ -92,11 +93,28 @@ class CikarimSonucu:
             },
             "features": {k: round(v, 9) for k, v in self.ozellikler.items()},
             "featureOrder": list(self.ozellikler),
+            "explanation": self.aciklama,
             "notes": self.notlar,
         }
 
 
 # ---------------------------------------------------------------------------
+def dizilim_oku(yol: Path) -> str:
+    """FASTA ya da düz metin dosyasından tek protein dizilimi okur.
+
+    FASTA başlık satırları (``>`` ile başlayanlar) atılır; birden çok kayıt
+    varsa açık hata verilir, çünkü hangi izoformun kastedildiği belirsizdir.
+    """
+    metin = yol.read_text(encoding="utf-8")
+    satirlar = [s.strip() for s in metin.splitlines() if s.strip()]
+    basliklar = [s for s in satirlar if s.startswith(">")]
+    if len(basliklar) > 1:
+        raise CikarimHatasi(
+            f"{yol}: birden fazla FASTA kaydı var; tek dizilim verin."
+        )
+    return "".join(s for s in satirlar if not s.startswith(">")).upper()
+
+
 def sema_yukle(yol: Path = SEMA_YOLU) -> dict[str, Any]:
     if not yol.exists():
         raise CikarimHatasi(
@@ -161,7 +179,7 @@ def _esm_skorlayici_al(esm_skorlayici=None):
     if esm_skorlayici is not None:
         return esm_skorlayici
     try:
-        from .moduller.ozellik_cikarimi import ESM2Skorlayici
+        from .esm_skorlayici import ESM2Skorlayici
     except ImportError as exc:
         raise CikarimHatasi(
             f"ESM-2 bağımlılıkları yüklenemedi ({exc}). ESM özelliği sıfırlanarak "
@@ -266,6 +284,54 @@ def model_yukle(sema: dict[str, Any], yol: Path = MODEL_YOLU):
     return model
 
 
+def shap_aciklamasi(model, vektor, sira: list[str],
+                    olasilik: float, tolerans: float = 1e-4) -> dict[str, Any]:
+    """TreeSHAP katkılarını ham margin (log-odds) uzayında üretir.
+
+    XGBoost'un kendi ``pred_contribs`` çıkışı kullanılır; ``shap`` paketinin
+    ``TreeExplainer`` sonucuyla aynıdır ve ek bağımlılık gerektirmez.
+    Toplamsallık (taban + katkılar = margin) ve marginin olasılığa dönüşümü
+    burada doğrulanır; tutmazsa açık hata verilir.
+    """
+    import numpy as np
+    import xgboost as xgb
+
+    booster = model.get_booster()
+    matris = xgb.DMatrix(vektor, feature_names=list(sira))
+    katkilar = booster.predict(matris, pred_contribs=True)[0]
+    margin = float(booster.predict(matris, output_margin=True)[0])
+    taban = float(katkilar[-1])
+    degerler = [float(x) for x in katkilar[:-1]]
+
+    toplam_hatasi = abs(taban + sum(degerler) - margin)
+    if toplam_hatasi > tolerans:
+        raise CikarimHatasi(
+            f"SHAP toplamsallığı sağlanmadı: |taban+katkılar-margin| = "
+            f"{toplam_hatasi:.3e} > {tolerans:.0e}"
+        )
+    margin_olasilik = float(1.0 / (1.0 + np.exp(-margin)))
+    olasilik_hatasi = abs(margin_olasilik - olasilik)
+    if olasilik_hatasi > tolerans:
+        raise CikarimHatasi(
+            f"Margin ile olasılık uyuşmuyor: fark {olasilik_hatasi:.3e}"
+        )
+
+    esli = dict(zip(sira, degerler))
+    en_etkili = sorted(esli.items(), key=lambda kv: abs(kv[1]), reverse=True)
+    return {
+        "method": "TreeSHAP (xgboost pred_contribs)",
+        "space": "margin",                 # ham log-odds; olasılık değil
+        "link": "logit",
+        "baseValue": round(taban, 9),
+        "rawMargin": round(margin, 9),
+        "additivityError": float(f"{toplam_hatasi:.3e}"),
+        "additivityTolerance": tolerans,
+        "contributions": {k: round(v, 9) for k, v in esli.items()},
+        "topFeatures": [{"feature": k, "contribution": round(v, 9)}
+                        for k, v in en_etkili[:5]],
+    }
+
+
 def varyanti_skorla(
     girdi: VaryantGirdisi,
     sema: dict[str, Any] | None = None,
@@ -281,9 +347,11 @@ def varyanti_skorla(
     model = model or model_yukle(sema)
     import numpy as np
 
-    vektor = np.asarray([[ozellik[k] for k in sema["featureOrder"]]], dtype=float)
+    sira = list(sema["featureOrder"])
+    vektor = np.asarray([[ozellik[k] for k in sira]], dtype=float)
     olasilik = float(model.predict_proba(vektor)[0, 1])
     esik = float(sema["decisionThreshold"])
+    aciklama = shap_aciklamasi(model, vektor, sira, olasilik)
 
     return CikarimSonucu(
         gen=girdi.gen,
@@ -292,6 +360,7 @@ def varyanti_skorla(
         sinif=int(olasilik >= esik),
         esik=esik,
         ozellikler=ozellik,
+        aciklama=aciklama,
         model={
             "modelId": sema["modelId"],
             "modelVersion": sema["modelVersion"],
@@ -344,8 +413,7 @@ def main(argv: list[str] | None = None) -> int:
         girdi = VaryantGirdisi(
             gen=arg.gen,
             protein_degisim=arg.degisim,
-            protein_dizilim=arg.dizilim_dosyasi.read_text().split(">")[-1]
-                              .replace("\n", "").strip(),
+            protein_dizilim=dizilim_oku(arg.dizilim_dosyasi),
         )
     else:
         p.error("--girdi ya da --gen + --degisim + --dizilim-dosyasi gerekli")
