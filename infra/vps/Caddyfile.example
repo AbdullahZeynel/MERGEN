@@ -11,8 +11,7 @@
 		Cache-Control "no-cache"
 	}
 	handle /api/* {
-		# F4: replace with the private backend reverse_proxy after integration.
-		respond "API is not connected" 503
+		reverse_proxy 127.0.0.1:9000
 	}
 	handle /assets/* {
 		root * {$MERGEN_ROOT:/srv/mergen}/shared
@@ -20,8 +19,10 @@
 		file_server
 	}
 	handle /demo/* {
-		# Missing data must be a 404, never the SPA's index.html.
-		file_server
+		respond "Not found" 404
+	}
+	handle /mcp* {
+		respond "Not found" 404
 	}
 	handle {
 		try_files {path} /index.html

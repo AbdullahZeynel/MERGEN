@@ -4,12 +4,16 @@ on:
   pull_request:
     paths:
       - 'frontend/**'
+      - 'backend/**'
+      - 'mcp/**'
       - 'infra/vps/**'
       - '.github/workflows/frontend.yml'
   push:
     branches: [main, 'feat/frontend-*']
     paths:
       - 'frontend/**'
+      - 'backend/**'
+      - 'mcp/**'
       - 'infra/vps/**'
       - '.github/workflows/frontend.yml'
 
@@ -37,3 +41,9 @@ jobs:
         working-directory: frontend
       - run: python3 -m unittest discover -s infra/vps -p 'test_*.py'
       - run: bash -n infra/vps/package-frontend.sh
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -r backend/requirements.txt
+      - run: python -m unittest backend.test_demo
+      - run: bash -n infra/vps/install-services.sh

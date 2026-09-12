@@ -2,11 +2,8 @@
 # Build on the development machine, not on the VPS. Never uploads anything.
 set -euo pipefail
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
-include_demo=false
-if [[ "${1:-}" == "--include-demo" && "$#" -eq 1 ]]; then
-    include_demo=true
-elif [[ "$#" -ne 0 ]]; then
-    echo 'Usage: bash infra/vps/package-frontend.sh [--include-demo]' >&2
+if [[ "$#" -ne 0 ]]; then
+    echo 'Usage: bash infra/vps/package-frontend.sh (demo data is deployed separately to MCP)' >&2
     exit 2
 fi
 cd "$repo_dir/frontend"
@@ -19,12 +16,7 @@ if [[ -e "$artifact" ]]; then
     echo 'Artifact already exists; retry with a new timestamp.' >&2
     exit 1
 fi
-if "$include_demo"; then
-    [[ -f dist/demo/manifest.json ]] || { echo 'Prepare the demo package first.' >&2; exit 1; }
-    tar -czf "$artifact" -C dist .
-else
-    tar --exclude='./demo' -czf "$artifact" -C dist .
-fi
+tar --exclude='./demo' -czf "$artifact" -C dist .
 sha256sum "$artifact"
 echo "Package ready: $artifact"
 echo 'No upload or deployment performed. Supply the SHA-256 to deploy_frontend.py.'

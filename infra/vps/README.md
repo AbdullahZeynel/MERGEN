@@ -1,6 +1,6 @@
 # Frontend VPS dağıtımı
 
-Bu sprint yalnızca statik arayüzün paketlenmesini ve VPS üzerinde sürümlenmesini hazırlar. SSH bağlantısı, canlı deploy, DNS/TLS yapılandırması ve backend reverse proxy henüz yapılmadı.
+Statik arayüz paketi, özel demo MCP ve API servislerinin kurulum dosyaları hazırdır. Gerçek VPS üzerinde SSH/deploy ve DNS/TLS doğrulaması henüz yapılmadı. Demo dosyaları VPS'te tutulur; Ubuntu'ya bağımlı değildir.
 
 ## Paketi geliştirme makinesinde oluştur
 
@@ -8,8 +8,6 @@ Repo kökünde:
 
 ```bash
 bash infra/vps/package-frontend.sh
-# İnternetten alınmış, yayımlanabilir demo önizlemelerini de dahil etmek için:
-bash infra/vps/package-frontend.sh --include-demo
 ```
 
 Betik kilitli bağımlılıkları kurar, test/typecheck/build çalıştırır ve `.local/releases/` altında arşiv + SHA-256 çıktısı üretir. Varsayılan paket demo verisini dışlar. Kaynak kod, `.env`, ağırlıklar ve ham hacimler arşive alınmaz; yalnızca `frontend/dist/` paketlenir. `dist/` içeriği dağıtımdan önce gözden geçirilmelidir. Commitlenmemiş değişiklikler build'e girer; üretim paketini temiz sprint commitinden oluşturun.
@@ -37,9 +35,9 @@ caddy validate --config <CADDYFILE_YOLU> --adapter caddyfile
 # Ortam/ünite değişikliği ilk kurulumda daemon-reload ve servis restart gerektirir.
 ```
 
-Bu aşamada `/api/*` açıkça 503 döner. `/demo/*` ve `/assets/*` eksikse 404 döner; bunlar SPA HTML'ine dönüşmez. Diğer yollar `index.html` üzerinden açılır. Hash'li statik dosyalar uzun önbellek, HTML/manifest yeniden doğrulama kullanır. Backend tamamlanınca `/api/*` bloğu gerçek reverse proxy'ye çevrilecek; hedef Git dışı ayarda tutulacak.
+`/api/*` özel loopback API'ye yönlenir; `/mcp*` ve eski `/demo/*` yolları 404 döner. MCP internete açılmaz. Diğer yollar `index.html` üzerinden açılır. Hash'li statik dosyalar uzun önbellek, vaka listesi no-store, demo varlıkları kısa özel önbellek kullanır.
 
-Dağıtım sonrası ana sayfa, `/demo/manifest.json`, PNG/font/JS dosyaları ve `/api/health` durumunu kontrol edin. Hata varsa `rollback` çalıştırın. Caddy mevcut `current` yolunu okuduğundan yalnızca statik sürüm değişiminde servis restart gerekmez.
+Dağıtım sonrası ana sayfa, `/api/demo/cases`, kesit/mesh/font/JS dosyaları ve `/api/health` durumunu kontrol edin. Hata varsa frontend için `rollback` çalıştırın. Caddy mevcut `current` yolunu okuduğundan yalnızca statik sürüm değişiminde servis restart gerekmez. Frontend rollback servis kodunu veya demo paketini geri almaz; bunları uyumlu sürümde tutun.
 
 Yerel kurulum/rollback testleri:
 
@@ -47,3 +45,23 @@ Yerel kurulum/rollback testleri:
 python3 -m unittest discover -s infra/vps -p 'test_*.py'
 bash -n infra/vps/package-frontend.sh
 ```
+
+## Demo API ve MCP'yi kur
+
+VPS'te Python 3.11+, venv, pip ve systemd gerekir. Model/CUDA/bilimsel Python ortamı VPS'ye kurulmaz. Gözden geçirilmiş checkout'tan **VPS üzerinde**:
+
+```bash
+sudo bash infra/vps/install-services.sh
+```
+
+Betik `mergen` servis kullanıcısını ve `/srv/mergen/services` altındaki ayrı venv'i hazırlar; sistem Python'una paket kurmaz. Servisleri otomatik başlatmaz. Güncelleme mevcut servis dosyalarını değiştirir; bakım sırasında iki servisi durdurup kurulumu uygulayın. Bu ilk kurulum betiği servis kodunda atomik sürüm/rollback sağlamaz; güncellemeden önce mevcut servis dizinini yedekleyin.
+
+Geliştirme makinesinde [demo paketini](../../docs/DEMO_SERVICES.md) üretin. `.local/demo-v2` dizinini ayrı olarak VPS'te `/srv/mergen/demo-v2` yoluna rsync/SCP ile taşıyın; kopyalamadan önce/sonra checksum doğrulayın. Dizin `mergen` kullanıcısı tarafından okunabilmeli, Caddy'nin `current/shared` dizinleri altında olmamalıdır. `/etc/mergen/services.env` içindeki `MERGEN_DEMO_ROOT` değerini bu VPS dizinine ayarlayın. Örnek dosyada gerçek makine bilgisi yoktur.
+
+```bash
+sudo systemctl enable --now mergen-mcp mergen-api
+curl --fail http://127.0.0.1:9000/api/health
+python3 infra/vps/smoke-demo.py
+```
+
+Yalnızca Caddy'nin HTTP/HTTPS portlarını internete açın; 9000/9010 loopback'te kalır. Caddy ayarını doğruladıktan sonra yükleyin. Henüz oturum doğrulaması yoktur: sadece yayımlanabilir demo vakaları sunulur. 5–10 kullanıcı sınırı bu kurulumun parçası değildir; API bağlantı limiti kullanıcı sayısı olarak sunulmaz. Gerçek Oracle ARM/VPS kurulumu ayrıca prova edilecektir.
