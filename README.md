@@ -19,6 +19,7 @@ Mevcut kod araştırma/değerlendirme betikleri ve React vaka arayüzünü içer
 | `infra/` | VPS, Ubuntu, Caddy ve Tailscale kurulum dosyaları için yer |
 | `docs/PLAN.md` | Mimari kararlar, kapsam ve geliştirme sırası |
 | `docs/SYSTEM_SPRINTS.md` | Canlı oturum, GPU worker, model entegrasyonu ve sprint planı |
+| `docs/GENOMICS_AUDIT.md` | Genomik modelin denetim kaydı ve çıkarım adaptörünün sınırları |
 | `docs/LOCAL_ASSETS.md` | Git dışındaki ağırlık/veri/sonuçların konumları |
 | `docs/references/`, `docs/archive/` | Yerel raporlar ve tarihsel notlar; Git dışı |
 
