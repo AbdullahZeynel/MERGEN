@@ -176,6 +176,23 @@ S3 başlamadan şu denetim kayda geçirilir:
 
 Bu altı madde geçmeden arayüzde genom modeli “çalışıyor” olarak gösterilmez.
 
+Denetimin ölçülmüş sonucu, ne çalıştırıldığı ve özelliklerle ilgili üç bulgu
+[`GENOMICS_AUDIT.md`](GENOMICS_AUDIT.md) belgesindedir.
+
+### S3 güncel durum
+
+`feat/genomics-inference-service` dalında tek-varyant çıkarım adaptörü
+(`models/VeriOdakliCozum/cikarim.py`), sürümlenmiş özellik şeması
+(`semalar/ozellik_semasi.v1.json`, 15 özellik + karar eşiği + sağlama
+toplamları) ve üretici betik (`semayi_uret.py`) hazırlandı. Adaptör eğitim
+modüllerini import etmez; sentetik `X` kontekst, eksik dizilim, vahşi tip
+uyuşmazlığı, ESM'in sessiz sıfırı ve eksik CGGA tablosu açık hata verir.
+16 test geçti; AAindex/CGGA/pozisyon özellikleri eğitim matrisine karşı
+yeniden üretildi. Denetimin 1., 2. ve 6. maddeleri (xgboost ile özellik adı
+doğrulaması, ESM çevrimdışı yükleme, olasılık/SHAP fixture'ı) gerçek ortam
+gerektirdiği için açık; SHAP çıktısı ve genomik demo vakaları da S3'ün kalan
+işidir.
+
 ## Git ve ekip çalışma düzeni
 
 - Bir sprint dalı bir sorumluluk alanını değiştirir. Aynı dosyaları değiştirecek iki

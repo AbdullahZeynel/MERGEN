@@ -12,9 +12,16 @@ Dosyanın Git'te olmaması makinede olmadığı anlamına gelmez. İddiada bulun
 | Genomik veriler / özellik matrisi | `models/VeriOdakliCozum/veri/` |
 | Görüntü demo / değerlendirme | `models/imaging/results/`, `models/imaging/results_eval/` |
 | Genomik sonuçlar | `models/VeriOdakliCozum/sonuclar/` |
+| CGGA gen frekans tablosu (türetilmiş) | `models/VeriOdakliCozum/modeller/cgga_gen_frekans.v1.json` |
 | ESM-2 | `facebook/esm2_t30_150M_UR50D`; Hugging Face cache veya yapılandırılmış model yolu |
 
 ESM varsayılan cache'i kullanıcı dizinindeki `.cache/huggingface/hub/` altındadır; `HF_HOME` / `HF_HUB_CACHE` gibi ayarlar farklı bir yere yönlendirebilir. Cache'i repoya kopyalamayın.
+
+CGGA frekans tablosu `python -m VeriOdakliCozum.semayi_uret --cgga` ile yerel
+CGGA WESeq_286 dosyasından üretilir; kaynağın sha256'sı ve örneklem sayısı
+tablonun içinde tutulur. Tablo Git dışıdır, ona ait sağlama toplamı ise Git'te
+izlenen `models/VeriOdakliCozum/semalar/ozellik_semasi.v1.json` dosyasında
+kayıtlıdır. Çıkarım adaptörü tablo yoksa sıfır frekans varsaymaz, hata verir.
 
 Yeni makinede bu dosyalar ayrıca sağlanmalı. Kaynak URL'si, lisans, sürüm ve hash doğrulandıktan sonra varlık manifestine kaydedilmeli; eksik bilgi uydurulmamalı. Model servisi paketlenirken bu manifest tamamlanacak.
 
