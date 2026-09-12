@@ -70,6 +70,13 @@ async def slice_image(case_id: str, axis: Literal['axial', 'coronal', 'sagittal'
     return await asset_response('get_slice', {'case_id': case_id, 'axis': axis, 'index': index}, 'image/png')
 
 
+@app.get('/api/demo/cases/{case_id}/overlays/{layer}/{axis}/{index}')
+async def overlay_image(case_id: str, layer: Literal['prediction', 'ground_truth'],
+                        axis: Literal['axial', 'coronal', 'sagittal'], index: int):
+    return await asset_response('get_overlay', {'case_id': case_id, 'layer': layer,
+                                                'axis': axis, 'index': index}, 'image/png')
+
+
 @app.get('/api/demo/cases/{case_id}/mesh')
 async def mesh(case_id: str):
     return await asset_response('get_mesh', {'case_id': case_id}, 'application/json')

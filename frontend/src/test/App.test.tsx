@@ -107,4 +107,18 @@ describe('case workspace', () => {
     });
     expect(slider).toHaveValue('154');
   });
+  it('keeps prediction and reference overlays explicitly separate', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const prediction = screen.getByRole('button', { name: 'Tahmin' });
+    const reference = screen.getByRole('button', { name: 'Referans' });
+    expect(prediction).toHaveAttribute('aria-pressed', 'true');
+    expect(reference).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByAltText('Ensemble tahmin maskesi')).toBeVisible();
+    expect(screen.queryByAltText('Referans segmentasyon maskesi')).not.toBeInTheDocument();
+    await user.click(prediction);
+    await user.click(reference);
+    expect(screen.queryByAltText('Ensemble tahmin maskesi')).not.toBeInTheDocument();
+    expect(screen.getByAltText('Referans segmentasyon maskesi')).toBeVisible();
+  });
 });

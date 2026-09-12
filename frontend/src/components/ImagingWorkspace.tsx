@@ -12,6 +12,8 @@ export function ImagingWorkspace({ record }: { record: CaseRecord }) {
     () => Object.fromEntries(record.previews.map((p) => [p.axis, p.index])) as Record<Axis, number>,
   );
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
+  const [predictionVisible, setPredictionVisible] = useState(true);
+  const [groundTruthVisible, setGroundTruthVisible] = useState(false);
   const count = record.shape[{ axial: 2, coronal: 1, sagittal: 0 }[axis]];
   const index = indices[axis];
   const src = `/api/demo/cases/${record.id}/slices/${axis}/${index}`;
@@ -58,6 +60,20 @@ export function ImagingWorkspace({ record }: { record: CaseRecord }) {
                 alt={`${record.id} FLAIR ${axisLabels[axis]}, kesit ${index + 1}`}
               />
             )}
+            {record.overlays?.includes('prediction') && predictionVisible && (
+              <img
+                className="slice-overlay"
+                src={`/api/demo/cases/${record.id}/overlays/prediction/${axis}/${index}`}
+                alt="Ensemble tahmin maskesi"
+              />
+            )}
+            {record.overlays?.includes('ground_truth') && groundTruthVisible && (
+              <img
+                className="slice-overlay"
+                src={`/api/demo/cases/${record.id}/overlays/ground_truth/${axis}/${index}`}
+                alt="Referans segmentasyon maskesi"
+              />
+            )}
             <div className="image-caption">
               <span>{axisLabels[axis]}</span>
               <span>
@@ -67,6 +83,22 @@ export function ImagingWorkspace({ record }: { record: CaseRecord }) {
             </div>
           </div>
           <div className="viewer-controls">
+            {record.overlays && (
+              <div className="overlay-controls" aria-label="Segmentasyon katmanları">
+                <button
+                  aria-pressed={predictionVisible}
+                  onClick={() => setPredictionVisible(!predictionVisible)}
+                >
+                  <i className="prediction-dot" /> Tahmin
+                </button>
+                <button
+                  aria-pressed={groundTruthVisible}
+                  onClick={() => setGroundTruthVisible(!groundTruthVisible)}
+                >
+                  <i className="ground-truth-dot" /> Referans
+                </button>
+              </div>
+            )}
             <div className="segmented" aria-label="Görüntü düzlemi">
               {axes.map((a) => (
                 <button

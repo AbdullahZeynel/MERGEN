@@ -26,6 +26,12 @@ def get_slice(case_id: str, axis: str, index: int) -> dict[str, Any]:
 
 
 @server.tool()
+def get_overlay(case_id: str, layer: str, axis: str, index: int) -> dict[str, Any]:
+    """Read a transparent prediction or ground-truth mask for a demo slice."""
+    return store.asset(case_id, 'overlay', axis, index, layer)
+
+
+@server.tool()
 def get_mesh(case_id: str) -> dict[str, Any]:
     """Read tumor surfaces and approximate MR foreground envelope."""
     return store.asset(case_id, 'mesh')

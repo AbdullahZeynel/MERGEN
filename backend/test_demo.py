@@ -19,10 +19,13 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
         self.root = Path(self.tmp.name)
-        (self.root / 'manifest.json').write_text(json.dumps({'version': 2, 'cases': [{'id': 'TEST', 'shape': [2, 2, 2]}]}))
+        (self.root / 'manifest.json').write_text(json.dumps({'version': 2, 'cases': [{'id': 'TEST', 'shape': [2, 2, 2], 'overlays': ['prediction', 'ground_truth']}]}))
         directory = self.root / 'TEST/slices/axial'
         directory.mkdir(parents=True)
         (directory / '0.png').write_bytes(b'transport-test')
+        overlay = self.root / 'TEST/overlays/prediction/axial'
+        overlay.mkdir(parents=True)
+        (overlay / '0.png').write_bytes(b'overlay-test')
         self.store = module.DemoStore(self.root)
 
     async def test_bounds_and_unknown_case(self):
@@ -46,6 +49,16 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
             result['sha256'] = 'wrong'
             with patch('backend.api.call_tool', AsyncMock(return_value=result)):
                 self.assertEqual((await client.get('/api/demo/cases/TEST/slices/axial/0')).status_code, 502)
+
+    async def test_overlay_is_bounded_and_uses_mcp(self):
+        result = self.store.asset('TEST', 'overlay', 'axial', 0, 'prediction')
+        self.assertEqual(base64.b64decode(result['base64']), b'overlay-test')
+        self.assertEqual(self.store.asset('TEST', 'overlay', 'axial', 0, '../')['error'], 'invalid')
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://test') as client:
+            with patch('backend.api.call_tool', AsyncMock(return_value=result)) as call:
+                response = await client.get('/api/demo/cases/TEST/overlays/prediction/axial/0')
+                self.assertEqual(response.content, b'overlay-test')
+                call.assert_awaited_once_with('get_overlay', {'case_id': 'TEST', 'layer': 'prediction', 'axis': 'axial', 'index': 0})
 
     async def test_disconnected_mcp_does_not_return_demo(self):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://test') as client:

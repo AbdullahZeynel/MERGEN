@@ -14,7 +14,7 @@ backend/.venv/bin/python -m pip install -r frontend/scripts/requirements-demo.tx
 backend/.venv/bin/python frontend/scripts/prepare_demo.py
 ```
 
-Hazırlama `.local/demo-v2` üretir; mevcut hedefi ezmez, gerekirse `--output` ile yeni dizin seçin. Kaynak `models/imaging/results/` içindeki iki gözden geçirilmiş vakadır. Kaynak hacimler ve tümör mesh'leri değiştirilmez. Her eksendeki tüm kesitler PNG'ye dönüştürülür; beyin bağlamı aynı voxel koordinatlarında MR ön planının en büyük bağlantılı bölgesinden türetilir. Bu yaklaşık dış yüzeydir; sağlıklı doku/korteks segmentasyonu değildir. ET, kaynak etiketindeki *enhancing tumor* kısaltmasıdır; arayüzde “Kontrast tutan tümör” yazılır.
+Hazırlama `.local/demo-v2` üretir; mevcut hedefi ezmez, gerekirse `--output` ile yeni dizin seçin. Kaynak `models/imaging/results/` içindeki iki gözden geçirilmiş vakadır. Kaynak hacimler, tahmin maskeleri ve tümör mesh'leri değiştirilmez. Her eksendeki tüm FLAIR kesitleri ile şeffaf ensemble tahmin/referans katmanları PNG'ye dönüştürülür; bu iki katman arayüzde ayrı açılır. Tahmin maskeleri daha önce üretilmiş sonuçlardır; kaynak T1/T2 kanalları yeniden sağlanmadan çıkarım ve Dice skorları yeniden üretilemez. Beyin bağlamı aynı voxel koordinatlarında MR ön planının en büyük bağlantılı bölgesinden türetilir. Bu yaklaşık dış yüzeydir; sağlıklı doku/korteks segmentasyonu değildir. ET, kaynak etiketindeki *enhancing tumor* kısaltmasıdır; arayüzde “Kontrast tutan tümör” yazılır.
 
 Üç ayrı terminalde, repo kökünden:
 
@@ -38,6 +38,7 @@ npm run dev
 |---|---|---|
 | `/api/demo/cases` | `list_cases` | Version 2 manifest |
 | `/api/demo/cases/{id}/slices/{axis}/{index}` | `get_slice` | PNG, sıfır tabanlı indeks |
+| `/api/demo/cases/{id}/overlays/{layer}/{axis}/{index}` | `get_overlay` | Şeffaf tahmin veya referans PNG'si |
 | `/api/demo/cases/{id}/mesh` | `get_mesh` | JSON yüzeyler |
 | `/api/health` | `list_cases` | Demo MCP hazır; canlı AI bağlı değil |
 

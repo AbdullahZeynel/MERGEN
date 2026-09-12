@@ -46,6 +46,7 @@ export const caseSchema = z
     ]),
     modality: z.literal('FLAIR'),
     previews: z.array(preview).length(3),
+    overlays: z.array(z.enum(['prediction', 'ground_truth'])).optional(),
     genomics: z.literal(null),
     brainContext: z.literal('mr-foreground-envelope').optional(),
     mesh: z

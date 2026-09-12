@@ -13,6 +13,18 @@ from scipy import ndimage
 from skimage.measure import marching_cubes
 
 REPO = Path(__file__).resolve().parents[2]
+OVERLAY_COLORS = {
+    1: (79, 201, 155, 170),   # necrotic/non-enhancing core
+    2: (82, 145, 239, 150),   # edema
+    4: (255, 83, 102, 190),   # enhancing tumor
+}
+
+
+def overlay_image(mask: np.ndarray) -> Image.Image:
+    rgba = np.zeros((*mask.shape, 4), dtype=np.uint8)
+    for label, color in OVERLAY_COLORS.items():
+        rgba[mask == label] = color
+    return Image.fromarray(rgba, mode='RGBA')
 
 
 def prepare(source: Path, output: Path) -> int:
@@ -26,13 +38,20 @@ def prepare(source: Path, output: Path) -> int:
             continue
         with np.load(source_file, allow_pickle=False) as archive:
             volume = archive["data"]
+        with np.load(source / case_id / "seg_volumes.npz", allow_pickle=False) as archive:
+            masks = {"prediction": archive["ensemble"], "ground_truth": archive["gt"]}
         if volume.ndim != 3 or not np.isfinite(volume).all():
             raise ValueError(f"Invalid volume: {case_id}")
+        for layer, mask in masks.items():
+            if mask.shape != volume.shape or not set(np.unique(mask)).issubset({0, 1, 2, 4}):
+                raise ValueError(f"Invalid {layer} mask: {case_id}")
         case_dir = output / case_id
         case_dir.mkdir(parents=True, exist_ok=True)
         previews = []
         for axis, dimension in (("axial", 2), ("coronal", 1), ("sagittal", 0)):
-            index = volume.shape[dimension] // 2
+            projection_axes = tuple(i for i in range(3) if i != dimension)
+            tumor_per_layer = np.count_nonzero(masks["prediction"], axis=projection_axes)
+            index = int(tumor_per_layer.argmax())
             slice_dir = case_dir / 'slices' / axis
             slice_dir.mkdir(parents=True)
             for layer in range(volume.shape[dimension]):
@@ -40,8 +59,13 @@ def prepare(source: Path, output: Path) -> int:
                 low, high = float(plane.min()), float(plane.max())
                 normalized = (plane-low)/(high-low) if high > low else np.zeros_like(plane)
                 Image.fromarray(np.clip(normalized*255, 0, 255).astype(np.uint8)).save(slice_dir / f'{layer}.png')
+                for overlay, mask in masks.items():
+                    mask_plane = np.flipud(np.take(mask, layer, axis=dimension).T)
+                    overlay_dir = case_dir / 'overlays' / overlay / axis
+                    overlay_dir.mkdir(parents=True, exist_ok=True)
+                    overlay_image(mask_plane).save(overlay_dir / f'{layer}.png', optimize=True)
             previews.append({"axis": axis, "index": index, "src": f"/api/demo/cases/{case_id}/slices/{axis}/{index}"})
-        records.append({"id": case_id, "source": "UCSF-PDGM", "mode": "demo", "status": "demo_ready", "shape": list(volume.shape), "modality": "FLAIR", "previews": previews, "genomics": None})
+        records.append({"id": case_id, "source": "UCSF-PDGM", "mode": "demo", "status": "demo_ready", "shape": list(volume.shape), "modality": "FLAIR", "previews": previews, "overlays": ["prediction", "ground_truth"], "genomics": None})
         mesh_file = source / case_id / "mesh_ensemble.json"
         if mesh_file.is_file():
             meshes = json.loads(mesh_file.read_text())

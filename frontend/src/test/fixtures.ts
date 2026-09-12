@@ -9,6 +9,7 @@ export const makeCase = (id: string): CaseRecord => ({
   shape: [240, 240, 155],
   modality: 'FLAIR',
   genomics: null,
+  overlays: ['prediction', 'ground_truth'],
   previews: [
     { axis: 'axial', index: 77, src: `/api/demo/cases/${id}/slices/axial/77` },
     { axis: 'coronal', index: 120, src: `/api/demo/cases/${id}/slices/coronal/120` },
