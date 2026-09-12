@@ -23,6 +23,9 @@ import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 
+// Deferred until chatbot integration; keep the component for the next sprint.
+const assistantEnabled = false;
+
 export default function App() {
   const [mode, setMode] = useState<SourceMode>('demo');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -68,14 +71,16 @@ export default function App() {
         >
           <LayoutGrid size={21} />
         </button>
-        <button
-          className={`rail-button ${assistantOpen ? 'active' : ''}`}
-          aria-label="Asistanı aç"
-          aria-expanded={assistantOpen}
-          onClick={() => setAssistantOpen(!assistantOpen)}
-        >
-          <MessageSquare size={21} />
-        </button>
+        {assistantEnabled && (
+          <button
+            className={`rail-button ${assistantOpen ? 'active' : ''}`}
+            aria-label="Asistanı aç"
+            aria-expanded={assistantOpen}
+            onClick={() => setAssistantOpen(!assistantOpen)}
+          >
+            <MessageSquare size={21} />
+          </button>
+        )}
         <div className="rail-bottom">
           <Activity size={21} />
           <span>3T</span>
@@ -219,13 +224,15 @@ export default function App() {
                     : 'Vaka verileri hazır olduğunda burada görüntülenir.'}
                 </p>
               </div>
-              <button
-                className="button assistant-toggle"
-                onClick={() => setAssistantOpen(!assistantOpen)}
-                aria-expanded={assistantOpen}
-              >
-                <MessageSquare size={17} /> Asistan <ArrowRight size={16} />
-              </button>
+              {assistantEnabled && (
+                <button
+                  className="button assistant-toggle"
+                  onClick={() => setAssistantOpen(!assistantOpen)}
+                  aria-expanded={assistantOpen}
+                >
+                  <MessageSquare size={17} /> Asistan <ArrowRight size={16} />
+                </button>
+              )}
             </div>
             <div className="context-bar">
               <span className={`mode-badge ${mode}`}>
@@ -324,7 +331,7 @@ export default function App() {
                   </section>
                 )}
               </div>
-              {assistantOpen && (
+              {assistantEnabled && assistantOpen && (
                 <AssistantPanel
                   key={record?.id ?? mode}
                   caseId={record?.id ?? null}

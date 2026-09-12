@@ -26,6 +26,8 @@ Testler vaka/sohbet bağlamı, demo–canlı sınırı, filtreler, hata durumlar
 
 ## Sınırlar ve sonraki sprint
 
+- Chatbot ertelendi: panel ve açma düğmeleri şimdilik gizlidir; bileşen korunur. 2D ve 3D kartları eşit genişlikte, görüntü alanları eşit yüksekliktedir.
+
 - Üç eksenin bütün kesitleri kaydırıcı, düğmeler ve odaklı alanda ok tuşlarıyla gezilir. Gerçek ensemble mesh, 3D döndürme/yakınlaştırma, bölge görünürlüğü ve tümör opaklığı bağlandı. 2D/3D büyütme hem eni hem boyu kullanır; Escape ile kapanır.
 - `prepare_demo.py` sürüm 2 paketine yaklaşık MR dış yüzeyi ekler. Bu korteks segmentasyonu değildir. Eski hedef ezilmez; yeni çıktı dizini kullanın. WebGL hatası açıkça gösterilir; Three.js kaynakları temizlenir.
 - Mevcut görüntü vakalarına eşlenmiş genomik sonuç yoktur; XGBoost puanı veya SHAP açıklaması üretilmez.

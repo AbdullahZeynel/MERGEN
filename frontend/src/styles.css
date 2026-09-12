@@ -600,7 +600,7 @@ svg {
 }
 .imaging-grid {
   display: grid;
-  grid-template-columns: 1.25fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 18px;
 }
 .imaging-grid.is-expanded {
@@ -1294,6 +1294,7 @@ svg {
 }
 .region-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
   align-items: center;
 }
@@ -1376,6 +1377,13 @@ svg {
   .assistant {
     min-height: 520px;
   }
+}
+/* Match both normal viewing areas; expanded dialogs keep their full-height layout. */
+.imaging-grid .image-stage,
+.imaging-grid .mesh-stage {
+  height: clamp(280px, 28vw, 410px);
+  min-height: 0;
+  flex: 0 0 auto;
 }
 @media (prefers-reduced-motion: reduce) {
   *,

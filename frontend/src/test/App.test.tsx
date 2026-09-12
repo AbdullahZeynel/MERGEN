@@ -1,4 +1,4 @@
-import { render, screen, within, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -19,10 +19,10 @@ function mount(payload: unknown = { version: 2, cases }) {
 }
 
 describe('case workspace', () => {
-  it('switches all case context without retaining the previous preview or assistant case', async () => {
+  it('switches case context and keeps the deferred assistant hidden', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
-    await user.click(screen.getByRole('button', { name: 'Asistanı aç' }));
+    expect(screen.queryByRole('button', { name: /Asistan/ })).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Koronal' }));
     await user.click(screen.getByRole('button', { name: /TEST-0002/ }));
     expect(screen.getByRole('heading', { name: 'TEST-0002' })).toBeVisible();
@@ -30,11 +30,6 @@ describe('case workspace', () => {
       'src',
       '/api/demo/cases/TEST-0002/slices/axial/77',
     );
-    expect(
-      within(screen.getByRole('complementary', { name: 'MERGEN Asistan' })).getByText('TEST-0002'),
-    ).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Mesaj gönder' })).toBeDisabled();
-    await user.keyboard('{Escape}');
     expect(screen.queryByRole('complementary', { name: 'MERGEN Asistan' })).not.toBeInTheDocument();
   });
   it('never silently substitutes demo records for a disconnected live source', async () => {
