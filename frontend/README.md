@@ -28,7 +28,8 @@ Sekiz test: vaka/sohbet bağlamı değişimi, demo–canlı sınırı, arama ve 
 
 ## Sınırlar ve sonraki sprint
 
-- F1, FLAIR hacminin her eksendeki merkez kesitini gösterir. Serbest kesit gezinme, katman/opacity, 3D mesh ve model karşılaştırması F2 kapsamındadır.
+- FLAIR hacminin her eksendeki merkez kesiti gösterilir. Gerçek ensemble mesh, 3D döndürme/yakınlaştırma, bölge görünürlüğü ve opaklık kontrolleri bağlandı. 2D ve 3D büyütme düğmeleri ekranın hem enini hem boyunu kullanan modal pencere açar; Escape ile kapanır. Serbest 2D gezinme ve model karşılaştırması F2'nin kalan kapsamıdır.
+- `prepare_demo.py` artık mevcut ensemble mesh JSON'larını da Git dışı demo paketine kopyalar. Eski paket varsa betiği yeniden çalıştırın. WebGL kullanılamıyorsa açık hata gösterilir. Vaka/görünüm değişiminde istekler iptal edilir, Three.js kaynakları temizlenir.
 - Mevcut görüntü vakalarına eşlenmiş genomik sonuç yoktur; XGBoost puanı veya SHAP açıklaması üretilmez.
 - Asistan, canlı API ve servis sağlık kontrolü henüz bağlı değildir. “AI servisi bağlı değil” entegrasyon durumudur; makinenin çevrimdışı olduğuna dair ölçüm değildir.
 - Eksen adları veri dizisinin eksenleridir. Anatomik yön ve voxel aralığı doğrulanmadan R/L işaretleri, mm ölçümleri veya 2D–3D çapraz konumlama gösterilmez.

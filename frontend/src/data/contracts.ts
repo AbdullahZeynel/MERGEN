@@ -45,8 +45,14 @@ export const caseSchema = z
     modality: z.literal('FLAIR'),
     previews: z.array(preview).length(3),
     genomics: z.literal(null),
+    mesh: z
+      .string()
+      .regex(/^\/demo\/[A-Za-z0-9_-]+\/mesh_ensemble\.json$/)
+      .optional(),
   })
   .superRefine((item, ctx) => {
+    if (item.mesh && item.mesh !== `/demo/${item.id}/mesh_ensemble.json`)
+      ctx.addIssue({ code: 'custom', message: 'Vaka ve mesh uyuşmuyor.' });
     if (new Set(item.previews.map((p) => p.axis)).size !== 3)
       ctx.addIssue({ code: 'custom', message: 'Üç farklı eksen gerekli.' });
     for (const p of item.previews) {

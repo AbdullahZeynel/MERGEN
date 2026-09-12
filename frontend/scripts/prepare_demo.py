@@ -5,6 +5,7 @@ The resulting preview package is intentionally Git-ignored.
 """
 import argparse
 import json
+import shutil
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,10 @@ def prepare(source: Path, output: Path) -> int:
             Image.fromarray(np.clip(normalized * 255, 0, 255).astype(np.uint8)).save(case_dir / f"{axis}.png")
             previews.append({"axis": axis, "index": index, "src": f"/demo/{case_id}/{axis}.png"})
         records.append({"id": case_id, "source": "UCSF-PDGM", "mode": "demo", "status": "demo_ready", "shape": list(volume.shape), "modality": "FLAIR", "previews": previews, "genomics": None})
+        mesh_file = source / case_id / "mesh_ensemble.json"
+        if mesh_file.is_file():
+            shutil.copyfile(mesh_file, case_dir / "mesh_ensemble.json")
+            records[-1]["mesh"] = f"/demo/{case_id}/mesh_ensemble.json"
     output.mkdir(parents=True, exist_ok=True)
     temporary = output / "manifest.json.tmp"
     temporary.write_text(json.dumps({"version": 1, "cases": records}, indent=2), encoding="utf-8")
