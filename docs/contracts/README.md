@@ -17,3 +17,8 @@ yüklemede doğrulanır.
 Bu dizindeki değerler yalnız sözleşme örneğidir; hasta kaydı, gerçek tahmin veya
 model metriği değildir. Asıl doğrulama `backend/live_contracts.py` içindeki Pydantic
 modelleriyle yapılır.
+
+Hazır demo paketleri canlı iş ZIP'lerinden ayrıdır. Kök katalog örneği
+`demo-catalog.v3.example.json`, görüntü koleksiyonu örneği
+`demo-imaging-manifest.v3.example.json` dosyasındadır. Katalog yalnız modül,
+hastalık ve göreli manifest yolunu taşır; API bu disk yolunu tarayıcıya açmaz.

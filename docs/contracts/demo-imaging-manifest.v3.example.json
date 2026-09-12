@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 3,
+  "module": "imaging",
+  "disease": "glioma",
+  "cases": [
+    {
+      "schemaVersion": 3,
+      "module": "imaging",
+      "disease": "glioma",
+      "caseId": "DEMO-CASE-001",
+      "id": "DEMO-CASE-001",
+      "mode": "demo",
+      "status": "demo_ready",
+      "modelId": "example-model",
+      "modelVersion": "example-version",
+      "inputKind": "prepared-mri-segmentation",
+      "hasPrediction": true,
+      "hasGroundTruth": true,
+      "shape": [240, 240, 155],
+      "modality": "FLAIR",
+      "previews": [
+        {
+          "axis": "axial",
+          "index": 77,
+          "src": "/api/demo/modules/imaging/diseases/glioma/cases/DEMO-CASE-001/slices/axial/77"
+        }
+      ],
+      "overlays": ["prediction", "ground_truth"],
+      "mesh": "/api/demo/modules/imaging/diseases/glioma/cases/DEMO-CASE-001/mesh",
+      "genomics": null
+    }
+  ]
+}
