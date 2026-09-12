@@ -29,11 +29,35 @@ from monai.transforms import NormalizeIntensity
 
 from nnunet_predictor import NNUNetBraTSPredictor
 import uwcse_ensemble as ue
+# Seri adlandırmasının tek kaynağı; TCIA indirmesi kanalları `_bias`,
+# `T1gad_bias` gibi eklerle ve kimi zaman aynı adlı bir klasörün içinde verir.
+from prepare_example_dataset import MODALITIES, LABEL_KEYS, index_case, pick
 
 
 BASE_DIR = Path(__file__).parent.resolve()
-UCSF_DIR = BASE_DIR / "UCSF-PDGM" / "UCSF-PDGM-v5"
-METADATA = BASE_DIR / "UCSF-PDGM" / "UCSF-PDGM-metadata_v5.csv"
+
+
+def _ucsf_dir() -> Path:
+    """Veri seti kökü: sürüm alt klasörü varsa onu, yoksa düz düzeni kullan."""
+    kok = BASE_DIR / "UCSF-PDGM"
+    for aday in (kok / "UCSF-PDGM-v5", kok):
+        if aday.is_dir() and any(aday.glob("*_nifti")):
+            return aday
+    return kok
+
+
+def _metadata() -> Path:
+    kok = BASE_DIR / "UCSF-PDGM"
+    for aday in (kok / "UCSF-PDGM-metadata_v5.csv",
+                 BASE_DIR / "UCSF-PDGM-metadata.csv",
+                 kok / "UCSF-PDGM-metadata.csv"):
+        if aday.is_file():
+            return aday
+    return kok / "UCSF-PDGM-metadata_v5.csv"
+
+
+UCSF_DIR = _ucsf_dir()
+METADATA = _metadata()
 SWIN_PATH = (
     BASE_DIR / "SwinUNETR_BRATS21" / "pretrained_models"
     / "fold0_f48_ep300_4gpu_dice0_8854" / "model.pt"
@@ -77,43 +101,55 @@ def discover_safe_cases() -> list[str]:
 
     available = []
     for cid in candidates:
-        folder = UCSF_DIR / f"{cid}_nifti"
-        if not folder.is_dir():
-            continue
-        req = [f"{cid}_FLAIR.nii", f"{cid}_T1.nii", f"{cid}_T1c.nii",
-               f"{cid}_T2.nii", f"{cid}_tumor_segmentation.nii"]
-        if all(resolve_nii(folder, f).is_file() for f in req):
+        if case_paths(cid) is not None:
             available.append(cid)
     return sorted(available)
 
 
+def case_paths(case_id: str) -> dict | None:
+    """Bir vakanın dört kanalı ve etiketi için gerçek dosya yolları.
+
+    Eksik kanal varsa ``None`` döner: eksik kanalla değerlendirme yapılmaz,
+    kanal kopyalanarak doldurulmaz.
+    """
+    folder = UCSF_DIR / f"{case_id}_nifti"
+    if not folder.is_dir():
+        return None
+    found = index_case(str(folder), case_id)
+    yollar = {}
+    for mod, keys in MODALITIES.items():
+        src = pick(found, keys)
+        if src is None:
+            return None
+        yollar[mod.lower()] = Path(src)
+    etiket = pick(found, LABEL_KEYS)
+    if etiket is None:
+        return None
+    yollar["label"] = Path(etiket)
+    return yollar
+
+
 def build_case(case_id: str) -> dict:
-    return {
-        "name": case_id,
-        "dir": f"{case_id}_nifti",
-        "flair": f"{case_id}_FLAIR.nii",
-        "t1": f"{case_id}_T1.nii",
-        "t1c": f"{case_id}_T1c.nii",
-        "t2": f"{case_id}_T2.nii",
-        "label": f"{case_id}_tumor_segmentation.nii",
-    }
+    yollar = case_paths(case_id)
+    if yollar is None:
+        raise FileNotFoundError(
+            f"{case_id}: dört kanal (T1, T1c, T2, FLAIR) ve etiket eksiksiz "
+            f"bulunamadı. Bakılan dizin: {UCSF_DIR / (case_id + '_nifti')}"
+        )
+    return {"name": case_id, "dir": f"{case_id}_nifti", **{k: str(v) for k, v in yollar.items()}}
 
 
 def load_mri(case: dict, channel_order: list[str]) -> np.ndarray:
     mod_map = {"FLAIR": case["flair"], "T1": case["t1"],
                "T1c": case["t1c"], "T2": case["t2"]}
     vols = []
-    case_dir = UCSF_DIR / case["dir"]
     for mod in channel_order:
-        path = resolve_nii(case_dir, mod_map[mod])
-        vols.append(nib.load(str(path)).get_fdata().astype(np.float32))
+        vols.append(nib.load(mod_map[mod]).get_fdata().astype(np.float32))
     return np.stack(vols, axis=0)
 
 
 def load_label(case: dict) -> tuple[np.ndarray, np.ndarray]:
-    case_dir = UCSF_DIR / case["dir"]
-    path = resolve_nii(case_dir, case["label"])
-    lab = nib.load(str(path)).get_fdata().astype(np.float32)
+    lab = nib.load(case["label"]).get_fdata().astype(np.float32)
     tc = ((lab == 1) | (lab == 4)).astype(np.uint8)
     wt = ((lab == 1) | (lab == 2) | (lab == 4)).astype(np.uint8)
     et = (lab == 4).astype(np.uint8)
