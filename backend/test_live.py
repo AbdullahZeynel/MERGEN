@@ -101,7 +101,7 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.control = httpx.AsyncClient(transport=httpx.ASGITransport(app=control_app), base_url="https://worker.test")
         self.addAsyncCleanup(self.public.aclose)
         self.addAsyncCleanup(self.control.aclose)
-        self.token = "worker-control-token-that-is-long-enough"
+        self.token = "worker-control-token-that-is-long-enough"  # repo-guard: allow (test fixture)
         self.access_code = "presentation-access-code"
         self.worker_headers = {
             "Authorization": f"Bearer {self.token}",
