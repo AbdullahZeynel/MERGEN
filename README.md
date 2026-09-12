@@ -5,7 +5,7 @@ ERGENEKON takımının TEKNOFEST Onkolojide 3T için geliştirdiği çok modlu g
 - **Görüntü:** nnU-Net + Swin UNETR + UWCSE ile dört MR modalitesinden segmentasyon.
 - **Genomik:** ESM-2 + AAindex + XGBoost ile missense varyant patojenite tahmini.
 
-Mevcut kod araştırma/değerlendirme betikleri ve React vaka arayüzünü içerir. Hazır demo: tarayıcı → API → MCP → VPS diskindeki dosyalar. Tüm 2D kesitler, etkileşimli 3D tümör yüzeyleri ve yaklaşık MR dış yüzeyi hazırdır. Canlı çıkarım, oturum/kuyruk ve sohbet asistanı henüz bağlı değildir. İki modülün çıktısını birlikte göstermek, doğrulanmış bir klinik füzyon modeli anlamına gelmez.
+Mevcut kod araştırma/değerlendirme betikleri ve React vaka arayüzünü içerir. Hazır demo: tarayıcı → API → MCP → VPS diskindeki dosyalar. Tüm 2D kesitler, etkileşimli 3D tümör yüzeyleri ve yaklaşık MR dış yüzeyi hazırdır. Canlı oturum/kuyruk ve özel worker API'si geliştirme dalında hazırlanmıştır; GPU worker, model adaptörleri ve canlı arayüz henüz bağlı değildir. Sohbet asistanı ertelenmiştir. İki modülün çıktısını birlikte göstermek, doğrulanmış bir klinik füzyon modeli anlamına gelmez.
 
 ## Dizinler
 
@@ -18,6 +18,7 @@ Mevcut kod araştırma/değerlendirme betikleri ve React vaka arayüzünü içer
 | `mcp/` | VPS'teki salt okunur demo araçları |
 | `infra/` | VPS, Ubuntu, Caddy ve Tailscale kurulum dosyaları için yer |
 | `docs/PLAN.md` | Mimari kararlar, kapsam ve geliştirme sırası |
+| `docs/SYSTEM_SPRINTS.md` | Canlı oturum, GPU worker, model entegrasyonu ve sprint planı |
 | `docs/LOCAL_ASSETS.md` | Git dışındaki ağırlık/veri/sonuçların konumları |
 | `docs/references/`, `docs/archive/` | Yerel raporlar ve tarihsel notlar; Git dışı |
 

@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "module": "imaging",
+  "disease": "glioma",
+  "files": [
+    {"path": "volumes/t1.nii.gz", "role": "volume", "modality": "T1"},
+    {"path": "volumes/t1ce.nii.gz", "role": "volume", "modality": "T1CE"},
+    {"path": "volumes/t2.nii.gz", "role": "volume", "modality": "T2"},
+    {"path": "volumes/flair.nii.gz", "role": "volume", "modality": "FLAIR"}
+  ]
+}
