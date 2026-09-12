@@ -9,3 +9,5 @@ Ne değişti, neden?
 ## Sınırlar
 
 Doğrulanmamış varsayımlar veya kalan işler (varsa).
+
+- [ ] Seçilen diff ve örnek yapılandırmalar gerçek altyapı adresi / credential içermiyor.

@@ -12,3 +12,10 @@ Codex, Claude ve insan katkıcılar için ortak kaynak bu dosyadır.
 8. **Doğrula:** Değişikliğe uygun kontrolleri çalıştır. Sözdizimi kontrolünü model/arayüz çalıştı diye sunma. Yapılmayan testi ve engelini yaz.
 9. **Kayıt bırak:** Davranış veya kurulum değiştiğinde ilgili kısa belgeyi güncelle. Gelecek işler için ayrı dal/PR kullan; commit başlığı `feat:`, `fix:`, `docs:` veya `chore:` ile başlasın.
 10. **Yetki ve belirsizlik:** Mevcut kullanıcı talebi kapsamındaki geri alınabilir işleri tamamla. Veri silme, geçmişi yeniden yazma veya izinsiz yayınlama yapma. Kritik belirsizlikte somut soruyu sor; aynı hatayı körlemesine tekrarlama.
+
+## Sırlar ve örnek yapılandırmalar
+
+- Gerçek VPS/ev/Tailscale IP'si, özel hostname, kullanıcı/parola, token, SSH anahtarı ve bağlantı sırrı kodda, belgede, testte veya logda yer almaz; yerel yapılandırmada tutulur.
+- `.env.example`, `*.env.example` ve diğer örneklerde yalnızca boş değer veya açık yer tutucu kullan. `example.com`, `<VPS_HOST>` gibi örnekler uygundur; gerçek altyapı adresi veya çalışır credential kopyalama. `localhost`, `127.0.0.1`, `0.0.0.0` yerel/dinleme ayarı olarak kullanılabilir.
+- `.env` otomatik yüklenmez: servis okuyucusunu açıkça yapılandır; gerekli sır eksikse anlaşılır hatayla dur, koda gömülü yedek sır kullanma. Tarayıcıya çıkan değişkenlere sır koyma.
+- Commit/push öncesi seçilmiş diff'i credential ve altyapı adresleri açısından kontrol et; eşleşen sırrı çıktıya yazma. `.gitignore` içerik taramaz ve daha önce takip edilen dosyayı korumaz. Sır yayımlandıysa önce iptal/yenileme gerekir; dosyayı sonraki committe silmek geçmişten kaldırmaz.

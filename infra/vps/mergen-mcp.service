@@ -1,0 +1,20 @@
+[Unit]
+Description=MERGEN private demo MCP
+After=network.target
+
+[Service]
+User=mergen
+Group=mergen
+WorkingDirectory=/srv/mergen/services
+EnvironmentFile=/etc/mergen/services.env
+ExecStart=/srv/mergen/services/.venv/bin/python /srv/mergen/services/mcp/server.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+Environment=PYTHONDONTWRITEBYTECODE=1
+
+[Install]
+WantedBy=multi-user.target

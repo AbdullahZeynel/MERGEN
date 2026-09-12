@@ -1,3 +1,3 @@
 # Backend
 
-`legacy/serve_dashboard.py` mevcut hazır sonuç sunucusudur. Yeni oturum, yükleme, iş kuyruğu ve sonuç API burada geliştirilecek; henüz uygulanmadı. Model çıkarımı Ubuntu üzerinde yürütülür. Legacy sunucu şu anda görüntü ortamının NumPy/Matplotlib bağımlılıklarını kullanır.
+`api.py` tarayıcıya demo vaka/kesit/mesh uçlarını sunar; bütün dosya okumalarını MCP araçlarına devreder. Salt okunur ve loopback üzerinde çalışır. Oturum, yükleme, iş kuyruğu ve canlı çıkarım henüz bağlı değil. Model çıkarımı Ubuntu üzerinde yürütülecek. Kurulum ve sözleşme: [demo servisleri](../docs/DEMO_SERVICES.md). `legacy/` eski sunucuyu korur.

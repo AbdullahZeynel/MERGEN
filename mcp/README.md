@@ -1,3 +1,3 @@
-# MCP — planlanan
+# MCP — hazır demo
 
-Chatbot ve diğer MCP istemcilerine izinli vaka/sonuç araçları sunacak. Backend işlevlerini yeniden kullanacak; model algoritması, dosya yükleme veya iş kuyruğu burada çoğaltılmayacak. Henüz MCP servisi yok.
+`server.py`: Streamable HTTP, yalnızca `127.0.0.1:9010/mcp`. `list_cases`, `get_slice`, `get_mesh` araçları VPS'teki `MERGEN_DEMO_ROOT` dizinini salt okunur kullanır. `demo_store.py` dosya sınırlarını ve vaka/indeks eşleşmesini denetler. Tarayıcı doğrudan MCP'ye bağlanmaz. Model/LLM çıkarımı veya kuyruk içermez. [Kurulum ve sözleşme](../docs/DEMO_SERVICES.md).

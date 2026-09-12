@@ -1,0 +1,31 @@
+# Copy into the server's Caddy configuration after setting MERGEN_DOMAIN.
+# Real domain/host values belong in the server's local environment only.
+{$MERGEN_DOMAIN} {
+	root * {$MERGEN_ROOT:/srv/mergen}/current
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		X-Frame-Options DENY
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+		Cache-Control "no-cache"
+	}
+	handle /api/* {
+		reverse_proxy 127.0.0.1:9000
+	}
+	handle /assets/* {
+		root * {$MERGEN_ROOT:/srv/mergen}/shared
+		header Cache-Control "public, max-age=31536000, immutable"
+		file_server
+	}
+	handle /demo/* {
+		respond "Not found" 404
+	}
+	handle /mcp* {
+		respond "Not found" 404
+	}
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
