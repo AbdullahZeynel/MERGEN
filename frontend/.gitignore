@@ -1,0 +1,4 @@
+# Generated scientific demo files must not be committed.
+/public/demo/
+/test-results/
+/playwright-report/

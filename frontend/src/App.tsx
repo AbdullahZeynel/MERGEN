@@ -1,0 +1,346 @@
+import { useCallback, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  Activity,
+  ArrowRight,
+  ChevronRight,
+  Database,
+  Dna,
+  FolderOpen,
+  Info,
+  LayoutGrid,
+  Link2Off,
+  Menu,
+  MessageSquare,
+  RefreshCw,
+  Search,
+  ScanLine,
+  X,
+} from 'lucide-react';
+import { demoSource, liveSource } from './data/source';
+import { statusLabels, type SourceMode } from './data/contracts';
+import { EmptyState } from './components/EmptyState';
+import { ImagingWorkspace } from './components/ImagingWorkspace';
+import { AssistantPanel } from './components/AssistantPanel';
+
+export default function App() {
+  const [mode, setMode] = useState<SourceMode>('demo');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [filter, setFilter] = useState('all');
+  const [view, setView] = useState<'imaging' | 'genomics'>('imaging');
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const [mobileCases, setMobileCases] = useState(false);
+  const closeAssistant = useCallback(() => setAssistantOpen(false), []);
+  const query = useQuery({
+    queryKey: ['cases', mode],
+    queryFn: ({ signal }) => (mode === 'demo' ? demoSource : liveSource).listCases(signal),
+  });
+  const cases = query.data ?? [];
+  const record = cases.find((c) => c.id === selectedId) ?? cases[0] ?? null;
+  const filtered = cases.filter(
+    (c) =>
+      c.id.toLowerCase().includes(search.toLowerCase().trim()) &&
+      (filter === 'all' || c.status === filter),
+  );
+  const changeMode = (value: SourceMode) => {
+    setMode(value);
+    setSelectedId(null);
+    setSearch('');
+    setFilter('all');
+    setView('imaging');
+  };
+
+  return (
+    <div className="app">
+      <a className="skip-link" href="#workspace">
+        Çalışma alanına geç
+      </a>
+      <nav className="rail" aria-label="Ana gezinme">
+        <a href="#workspace" className="brand-mark" aria-label="MERGEN çalışma alanı">
+          M<span />
+        </a>
+        <button
+          className="rail-button active"
+          aria-label="Vaka listesi"
+          aria-expanded={mobileCases}
+          onClick={() => setMobileCases(!mobileCases)}
+        >
+          <LayoutGrid size={21} />
+        </button>
+        <button
+          className={`rail-button ${assistantOpen ? 'active' : ''}`}
+          aria-label="Asistanı aç"
+          aria-expanded={assistantOpen}
+          onClick={() => setAssistantOpen(!assistantOpen)}
+        >
+          <MessageSquare size={21} />
+        </button>
+        <div className="rail-bottom">
+          <Activity size={21} />
+          <span>3T</span>
+        </div>
+      </nav>
+      <div className="app-body">
+        <header className="topbar">
+          <div className="wordmark">
+            MERGEN<span>ONKOLOJİ KARAR DESTEĞİ</span>
+          </div>
+          <div className="topbar-right">
+            <span className="prototype">Araştırma prototipi</span>
+            <span className="team">
+              ERGENEKON <span className="team-avatar">E</span>
+            </span>
+          </div>
+        </header>
+        <div className="app-content">
+          <aside
+            className={`case-sidebar ${mobileCases ? 'mobile-open' : ''}`}
+            aria-label="Vakalar"
+          >
+            <div className="sidebar-title">
+              <h1>
+                Vakalar <span>{cases.length.toString().padStart(2, '0')}</span>
+              </h1>
+              <button
+                className="icon-button mobile-only"
+                aria-label="Vaka listesini kapat"
+                onClick={() => setMobileCases(false)}
+              >
+                <X />
+              </button>
+            </div>
+            <p className="sidebar-description">İncelemek için bir vaka seçin.</p>
+            <div className="source-switch segmented" aria-label="Veri kaynağı">
+              <button
+                className={mode === 'demo' ? 'selected' : ''}
+                aria-pressed={mode === 'demo'}
+                onClick={() => changeMode('demo')}
+              >
+                Hazır demo
+              </button>
+              <button
+                className={mode === 'live' ? 'selected' : ''}
+                aria-pressed={mode === 'live'}
+                onClick={() => changeMode('live')}
+              >
+                Canlı analiz
+              </button>
+            </div>
+            <label className="search-box">
+              <Search size={17} />
+              <span className="sr-only">Vaka ara</span>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Vaka kimliği ile ara"
+              />
+            </label>
+            <div className="list-label">
+              <span>VAKA LİSTESİ</span>
+              <select
+                aria-label="Vaka durumunu filtrele"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value)}
+              >
+                <option value="all">Tüm durumlar</option>
+                {Object.entries(statusLabels).map(([key, label]) => (
+                  <option key={key} value={key}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="case-list" aria-busy={query.isPending}>
+              {query.isPending ? (
+                <p role="status" className="list-message">
+                  Vakalar yükleniyor…
+                </p>
+              ) : (
+                filtered.map((c) => (
+                  <button
+                    key={c.id}
+                    className={`case-item ${record?.id === c.id ? 'selected' : ''}`}
+                    aria-pressed={record?.id === c.id}
+                    onClick={() => {
+                      setSelectedId(c.id);
+                      setMobileCases(false);
+                    }}
+                  >
+                    <span className="case-icon">
+                      <FolderOpen size={20} />
+                    </span>
+                    <span className="case-item-text">
+                      <strong>{c.id}</strong>
+                      <span>MR görüntüleme</span>
+                      <span className="status-pill">
+                        <span />
+                        {statusLabels[c.status]}
+                      </span>
+                    </span>
+                    <ChevronRight size={15} />
+                  </button>
+                ))
+              )}
+              {!query.isPending && filtered.length === 0 && (
+                <p className="list-message">
+                  {query.isError ? 'Vaka listesi alınamadı.' : 'Eşleşen vaka bulunamadı.'}
+                </p>
+              )}
+            </div>
+            <div className="sidebar-footer">
+              <Database size={18} />
+              <div>
+                <strong>{mode === 'demo' ? 'Hazır vaka arşivi' : 'Canlı analiz'}</strong>
+                <p>{mode === 'demo' ? 'Önceden işlenmiş veriler' : 'Servis bağlantısı gerekli'}</p>
+              </div>
+            </div>
+          </aside>
+          <main id="workspace" className="workspace" tabIndex={-1}>
+            <div className="breadcrumb">
+              <button
+                className="icon-button mobile-only"
+                aria-label="Vakaları göster"
+                onClick={() => setMobileCases(true)}
+              >
+                <Menu size={18} />
+              </button>
+              <span>Çalışma alanı</span>
+              <ChevronRight size={14} />
+              <strong>{record?.id ?? (mode === 'demo' ? 'Hazır demo' : 'Canlı analiz')}</strong>
+            </div>
+            <div className="workspace-title">
+              <div>
+                <span className="eyebrow">VAKA İNCELEME</span>
+                <h2>{record?.id ?? 'Vaka çalışma alanı'}</h2>
+                <p>
+                  {record
+                    ? 'Görüntüler ve analiz sonuçları tek çalışma alanında.'
+                    : 'Vaka verileri hazır olduğunda burada görüntülenir.'}
+                </p>
+              </div>
+              <button
+                className="button assistant-toggle"
+                onClick={() => setAssistantOpen(!assistantOpen)}
+                aria-expanded={assistantOpen}
+              >
+                <MessageSquare size={17} /> Asistan <ArrowRight size={16} />
+              </button>
+            </div>
+            <div className="context-bar">
+              <span className={`mode-badge ${mode}`}>
+                <Database size={14} />
+                {mode === 'demo' ? 'HAZIR DEMO' : 'CANLI ANALİZ'}
+              </span>
+              <span className="context-note">
+                {mode === 'demo'
+                  ? 'Önceden hazırlanmış vaka verisi'
+                  : 'Canlı veri bağlantısı bekleniyor'}
+              </span>
+              <span className="service-state">
+                <Link2Off size={14} /> AI servisi bağlı değil
+              </span>
+            </div>
+            <div className="content-with-assistant">
+              <div className="analysis-content">
+                <div className="view-tabs" aria-label="Analiz görünümü">
+                  <button
+                    aria-pressed={view === 'imaging'}
+                    className={view === 'imaging' ? 'selected' : ''}
+                    onClick={() => setView('imaging')}
+                  >
+                    <ScanLine size={18} /> Görüntüleme
+                  </button>
+                  <button
+                    aria-pressed={view === 'genomics'}
+                    className={view === 'genomics' ? 'selected' : ''}
+                    onClick={() => setView('genomics')}
+                  >
+                    <Dna size={18} /> Genomik analiz
+                  </button>
+                  <button
+                    className="refresh"
+                    aria-label="Vaka verilerini yenile"
+                    disabled={query.isFetching}
+                    onClick={() => void query.refetch()}
+                  >
+                    <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
+                  </button>
+                </div>
+                {query.isPending ? (
+                  <div className="panel loading-panel" role="status">
+                    <RefreshCw className="spin" /> Vaka verileri yükleniyor…
+                  </div>
+                ) : query.isError ? (
+                  <div className="panel" role="alert">
+                    <EmptyState
+                      icon={<Link2Off />}
+                      title={
+                        mode === 'live' ? 'Canlı bağlantı henüz kurulmadı' : 'Demo paketi okunamadı'
+                      }
+                      action={
+                        <button
+                          className="button"
+                          onClick={() =>
+                            mode === 'live' ? changeMode('demo') : void query.refetch()
+                          }
+                        >
+                          {mode === 'live' ? 'Hazır demolara dön' : 'Yeniden dene'}
+                        </button>
+                      }
+                    >
+                      {mode === 'live'
+                        ? 'Canlı analiz için model servislerinin bağlanması gerekiyor.'
+                        : 'Hazır vaka dosyaları bulunamadı veya geçerli değil. Demo paketinin hazırlanması gerekiyor.'}
+                    </EmptyState>
+                  </div>
+                ) : !record ? (
+                  <div className="panel">
+                    <EmptyState icon={<FolderOpen />} title="Henüz vaka yok">
+                      Bu veri kaynağında görüntülenecek vaka bulunmuyor.
+                    </EmptyState>
+                  </div>
+                ) : view === 'imaging' ? (
+                  <ImagingWorkspace key={`${mode}:${record.id}`} record={record} />
+                ) : (
+                  <section className="panel genomics-panel">
+                    <div className="panel-heading">
+                      <span>
+                        <Dna size={18} /> Varyant patojenite tahmini
+                      </span>
+                      <span className="small muted">XGBoost</span>
+                    </div>
+                    <EmptyState icon={<Dna size={34} />} title="Bu vakaya ait genomik sonuç yok">
+                      Bu görüntü vakasıyla eşleştirilmiş varyant kaydı bulunmuyor. Sonuç geldiğinde
+                      varyant, model skoru ve mevcut açıklamalar burada gösterilecek.
+                    </EmptyState>
+                    <div className="notice">
+                      <Info size={16} />
+                      <span>
+                        Görüntü ve genomik veriler yalnızca doğrulanmış vaka eşleşmesiyle birlikte
+                        gösterilir.
+                      </span>
+                    </div>
+                  </section>
+                )}
+              </div>
+              {assistantOpen && (
+                <AssistantPanel
+                  key={record?.id ?? mode}
+                  caseId={record?.id ?? null}
+                  close={closeAssistant}
+                />
+              )}
+            </div>
+            <footer className="workspace-footer">
+              <span>
+                MERGEN <span className="muted">/</span> ERGENEKON
+              </span>
+              <span>Onkolojide 3T · Araştırma ve gösterim amaçlı</span>
+            </footer>
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
