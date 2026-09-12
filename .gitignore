@@ -1,8 +1,17 @@
 # Secrets and machine-local configuration
 .env
 .env.*
+*.env
+*.env.*
 !.env.example
 !.env.*.example
+!*.env.example
+!*.env.*.example
+.claude/settings.local.json
+.netrc
+.pypirc
+*.tfstate
+*.tfstate.*
 *.pem
 *.key
 *.p12
