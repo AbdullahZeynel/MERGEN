@@ -1,3 +1,13 @@
 # Backend
 
-`api.py` tarayıcıya demo vaka/kesit/mesh uçlarını sunar; bütün dosya okumalarını MCP araçlarına devreder. Salt okunur ve loopback üzerinde çalışır. Oturum, yükleme, iş kuyruğu ve canlı çıkarım henüz bağlı değil. Model çıkarımı Ubuntu üzerinde yürütülecek. Kurulum ve sözleşme: [demo servisleri](../docs/DEMO_SERVICES.md). `legacy/` eski sunucuyu korur.
+`api.py` loopback üzerinde tarayıcıya demo ve canlı oturum uçlarını sunar. Demo
+okumalarını MCP araçlarına devreder. `live_api.py` geçici yükleme, oturum ve sonuç
+indirmeyi; `live_store.py` SQLite kuyruğunu yönetir. Model kodu VPS'te çalışmaz.
+
+`control.py`, GPU worker'ların Tailscale üzerinden iş çektiği ayrı ve kimlik
+doğrulamalı uygulamadır. `run_control.py` bu uygulamayı yalnız yapılandırılmış
+Tailscale adresine bağlar. `cleanup.py` süresi dolan oturumları silen tek seferlik
+systemd timer işidir. Genel API ile worker API aynı dinleme adresini paylaşmaz.
+
+Hazır demo kurulumu: [demo servisleri](../docs/DEMO_SERVICES.md). Canlı mimari ve
+sprintler: [sistem sprintleri](../docs/SYSTEM_SPRINTS.md). `legacy/` eski sunucuyu korur.
