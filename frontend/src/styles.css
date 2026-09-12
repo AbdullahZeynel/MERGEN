@@ -616,6 +616,29 @@ svg {
   justify-content: center;
   overflow: hidden;
 }
+.slice-navigation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.slice-navigation label {
+  flex: 1;
+  min-width: 70px;
+  font-size: 0.75rem;
+}
+.slice-navigation input {
+  display: block;
+  width: 100%;
+  accent-color: var(--accent, #d84956);
+}
+.image-stage:focus-visible {
+  outline: 2px solid #d84956;
+  outline-offset: -2px;
+}
+.region-BRAIN i {
+  background: #cbd5e1;
+}
 .image-stage img {
   width: 100%;
   height: 100%;

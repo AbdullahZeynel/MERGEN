@@ -5,8 +5,13 @@ import { RotateCcw, Box } from 'lucide-react';
 import { parseMesh, regions, type Region } from '../data/mesh';
 import { EmptyState } from './EmptyState';
 
-const colors = { ET: 0xff596c, TC_NCR: 0x57cea2, ED: 0x599eee };
-const labels = { ET: 'ET', TC_NCR: 'NCR', ED: 'Ödem' };
+const colors = { ET: 0xff596c, TC_NCR: 0x57cea2, ED: 0x599eee, BRAIN: 0xe2e8f0 };
+const labels = {
+  ET: 'Kontrast tutan tümör',
+  TC_NCR: 'Nekrotik çekirdek',
+  ED: 'Ödem',
+  BRAIN: 'Beyin dış yüzeyi',
+};
 export function VolumeViewer({ url }: { url?: string }) {
   const host = useRef<HTMLDivElement>(null);
   const sceneControl = useRef<{ group: THREE.Group; draw: () => void; reset: () => void } | null>(
@@ -14,10 +19,12 @@ export function VolumeViewer({ url }: { url?: string }) {
   );
   const [state, setState] = useState('loading');
   const [attempt, setAttempt] = useState(0);
+  const [available, setAvailable] = useState<Region[]>([]);
   const [visible, setVisible] = useState<Record<Region, boolean>>({
     ET: true,
     TC_NCR: true,
     ED: true,
+    BRAIN: true,
   });
   const [opacity, setOpacity] = useState(75);
   useEffect(() => {
@@ -94,6 +101,7 @@ export function VolumeViewer({ url }: { url?: string }) {
       .then((value) => {
         if (controller.signal.aborted) return;
         const meshes = parseMesh(value);
+        setAvailable(regions.filter((region) => meshes[region]));
         for (const region of regions) {
           const data = meshes[region];
           if (!data) continue;
@@ -146,7 +154,7 @@ export function VolumeViewer({ url }: { url?: string }) {
     control.group.children.forEach((object) => {
       const mesh = object as THREE.Mesh<THREE.BufferGeometry, THREE.MeshPhongMaterial>;
       mesh.visible = visible[mesh.userData.region as Region];
-      mesh.material.opacity = opacity / 100;
+      mesh.material.opacity = mesh.userData.region === 'BRAIN' ? 0.12 : opacity / 100;
     });
     control.draw();
   }, [visible, opacity, state]);
@@ -191,7 +199,12 @@ export function VolumeViewer({ url }: { url?: string }) {
             <button
               key={region}
               className={`region-${region}`}
-              disabled={state !== 'ready'}
+              disabled={state !== 'ready' || !available.includes(region)}
+              title={
+                region === 'BRAIN'
+                  ? 'MR ön planından yaklaşık dış yüzey; anatomik korteks segmentasyonu değildir.'
+                  : labels[region]
+              }
               aria-pressed={visible[region]}
               onClick={() => setVisible((v) => ({ ...v, [region]: !v[region] }))}
             >
@@ -209,7 +222,7 @@ export function VolumeViewer({ url }: { url?: string }) {
           </button>
         </div>
         <label>
-          Opaklık{' '}
+          Tümör opaklığı{' '}
           <input
             type="range"
             min="10"

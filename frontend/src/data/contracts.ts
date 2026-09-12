@@ -25,7 +25,9 @@ export const axisLabels: Record<Axis, string> = {
   coronal: 'Koronal',
   sagittal: 'Sagittal',
 };
-const assetPath = z.string().regex(/^\/demo\/[A-Za-z0-9_/-]+\.png$/);
+const assetPath = z
+  .string()
+  .regex(/^\/api\/demo\/cases\/[A-Za-z0-9_-]+\/slices\/(axial|coronal|sagittal)\/\d+$/);
 const preview = z.object({
   axis: z.enum(axes),
   index: z.number().int().nonnegative(),
@@ -45,13 +47,14 @@ export const caseSchema = z
     modality: z.literal('FLAIR'),
     previews: z.array(preview).length(3),
     genomics: z.literal(null),
+    brainContext: z.literal('mr-foreground-envelope').optional(),
     mesh: z
       .string()
-      .regex(/^\/demo\/[A-Za-z0-9_-]+\/mesh_ensemble\.json$/)
+      .regex(/^\/api\/demo\/cases\/[A-Za-z0-9_-]+\/mesh$/)
       .optional(),
   })
   .superRefine((item, ctx) => {
-    if (item.mesh && item.mesh !== `/demo/${item.id}/mesh_ensemble.json`)
+    if (item.mesh && item.mesh !== `/api/demo/cases/${item.id}/mesh`)
       ctx.addIssue({ code: 'custom', message: 'Vaka ve mesh uyuşmuyor.' });
     if (new Set(item.previews.map((p) => p.axis)).size !== 3)
       ctx.addIssue({ code: 'custom', message: 'Üç farklı eksen gerekli.' });
@@ -59,12 +62,12 @@ export const caseSchema = z
       const dimension = { axial: 2, coronal: 1, sagittal: 0 }[p.axis];
       if (p.index >= item.shape[dimension])
         ctx.addIssue({ code: 'custom', message: 'Kesit boyut dışında.' });
-      if (!p.src.startsWith(`/demo/${item.id}/`))
+      if (p.src !== `/api/demo/cases/${item.id}/slices/${p.axis}/${p.index}`)
         ctx.addIssue({ code: 'custom', message: 'Vaka ve görüntü uyuşmuyor.' });
     }
   });
 export const manifestSchema = z
-  .object({ version: z.literal(1), cases: z.array(caseSchema) })
+  .object({ version: z.literal(2), cases: z.array(caseSchema) })
   .superRefine((manifest, ctx) => {
     if (new Set(manifest.cases.map((c) => c.id)).size !== manifest.cases.length)
       ctx.addIssue({ code: 'custom', message: 'Tekrarlanan vaka kimliği.' });

@@ -10,8 +10,8 @@ export const makeCase = (id: string): CaseRecord => ({
   modality: 'FLAIR',
   genomics: null,
   previews: [
-    { axis: 'axial', index: 77, src: `/demo/${id}/axial.png` },
-    { axis: 'coronal', index: 120, src: `/demo/${id}/coronal.png` },
-    { axis: 'sagittal', index: 120, src: `/demo/${id}/sagittal.png` },
+    { axis: 'axial', index: 77, src: `/api/demo/cases/${id}/slices/axial/77` },
+    { axis: 'coronal', index: 120, src: `/api/demo/cases/${id}/slices/coronal/120` },
+    { axis: 'sagittal', index: 120, src: `/api/demo/cases/${id}/slices/sagittal/120` },
   ],
 });

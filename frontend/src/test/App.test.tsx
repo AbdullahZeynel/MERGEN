@@ -7,7 +7,7 @@ import { makeCase } from './fixtures';
 
 afterEach(() => vi.unstubAllGlobals());
 const cases = [makeCase('TEST-0001'), makeCase('TEST-0002')];
-function mount(payload: unknown = { version: 1, cases }) {
+function mount(payload: unknown = { version: 2, cases }) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(
@@ -26,7 +26,10 @@ describe('case workspace', () => {
     await user.click(screen.getByRole('button', { name: 'Koronal' }));
     await user.click(screen.getByRole('button', { name: /TEST-0002/ }));
     expect(screen.getByRole('heading', { name: 'TEST-0002' })).toBeVisible();
-    expect(screen.getByRole('img')).toHaveAttribute('src', '/demo/TEST-0002/axial.png');
+    expect(screen.getByAltText(/TEST-0002 FLAIR/)).toHaveAttribute(
+      'src',
+      '/api/demo/cases/TEST-0002/slices/axial/77',
+    );
     expect(
       within(screen.getByRole('complementary', { name: 'MERGEN Asistan' })).getByText('TEST-0002'),
     ).toBeVisible();
@@ -59,17 +62,38 @@ describe('case workspace', () => {
     expect(screen.getByRole('heading', { name: 'Bu vakaya ait genomik sonuç yok' })).toBeVisible();
   });
   it('shows malformed and empty packages explicitly', async () => {
-    mount({ version: 2, cases });
+    mount({ version: 99, cases });
     expect(await screen.findByRole('alert')).toHaveTextContent('Demo paketi okunamadı');
   });
   it('shows a genuine empty archive', async () => {
-    mount({ version: 1, cases: [] });
+    mount({ version: 2, cases: [] });
     expect(await screen.findByRole('heading', { name: 'Henüz vaka yok' })).toBeVisible();
   });
   it('handles a missing image instead of leaving a broken preview', async () => {
     mount();
-    const image = await screen.findByRole('img');
+    const image = await screen.findByAltText(/TEST-0001 FLAIR/);
     fireEvent.error(image);
     expect(screen.getByRole('heading', { name: 'Kesit görüntüsü yüklenemedi' })).toBeVisible();
+  });
+  it('navigates all slices, clamps bounds and remembers each axis', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const slider = screen.getByRole('slider', { name: 'Kesit seç' });
+    fireEvent.change(slider, { target: { value: '155' } });
+    expect(screen.getByRole('button', { name: 'Sonraki kesit' })).toBeDisabled();
+    expect(screen.getByAltText(/FLAIR/)).toHaveAttribute(
+      'src',
+      '/api/demo/cases/TEST-0001/slices/axial/154',
+    );
+    await user.click(screen.getByRole('button', { name: 'Koronal' }));
+    expect(slider).toHaveValue('121');
+    fireEvent.change(slider, { target: { value: '1' } });
+    expect(screen.getByRole('button', { name: 'Önceki kesit' })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: 'Aksiyel' }));
+    expect(slider).toHaveValue('155');
+    fireEvent.keyDown(screen.getByLabelText('Kesit görüntüsü; ok tuşlarıyla gezin'), {
+      key: 'ArrowLeft',
+    });
+    expect(slider).toHaveValue('154');
   });
 });

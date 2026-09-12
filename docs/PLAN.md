@@ -6,7 +6,7 @@
 
 - **VPS:** arayüz, oturumlar, iş kuyruğu, hazır demo ve tamamlanan sonuçlar. Başlangıç tasarımı: SQLite iş kayıtları, 10 aktif oturum, kullanıcı başına 1 iş, aynı anda 1 ağır analiz. Değerler ölçümle değiştirilecek.
 - **Ubuntu:** mevcut görüntü ve genomik modeller; ayrı bağımlılık ortamları ve işe özel çıktı dizinleri.
-- **MCP:** ileride backend işlevlerine araç erişimi; kuyruk veya backend yerine geçmez. Sohbet LLM'si ayrı gelecek işidir.
+- **MCP:** hazır demo araçları VPS'te uygulanmıştır. API demo dosyalarını MCP üzerinden okur; MCP kuyruk veya backend yerine geçmez. Sohbet LLM'si ayrı gelecek işidir.
 - **Demo:** Ubuntu kapalıyken gösterim devam etmeli; canlı hata sessizce demo sonucuna dönüşmemeli. İnternetsiz sunum için yerel bağımlılıklar hazırlanmalı.
 
 ## İş sırası
@@ -21,7 +21,7 @@
 
 ## Kapsam sınırı
 
-Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu değildir. Yeni arayüz, API ve MCP klasörleri planlanan bileşenlerdir; çalışır servis olarak sunulmaz. Donanım ve hız bilgileri ölçülmedikçe varsayımdır.
+Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu değildir. Arayüz, salt okunur demo API'si ve MCP yerelde çalışır; canlı model adaptörleri henüz uygulanmadı. Donanım ve hız bilgileri ölçülmedikçe varsayımdır. Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
 
 ## Taşıma kararı
 

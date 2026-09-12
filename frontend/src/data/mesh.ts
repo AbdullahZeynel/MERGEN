@@ -1,4 +1,4 @@
-export const regions = ['ET', 'TC_NCR', 'ED'] as const;
+export const regions = ['ET', 'TC_NCR', 'ED', 'BRAIN'] as const;
 export type Region = (typeof regions)[number];
 export type MeshData = Partial<Record<Region, { vertices: number[][]; faces: number[][] }>>;
 

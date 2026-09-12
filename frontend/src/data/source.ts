@@ -2,8 +2,8 @@ import { manifestSchema, type DataSource } from './contracts';
 
 export const demoSource: DataSource = {
   async listCases(signal) {
-    const response = await fetch('/demo/manifest.json', { signal, cache: 'no-cache' });
-    if (!response.ok) throw new Error('Demo vaka paketi yüklenemedi.');
+    const response = await fetch('/api/demo/cases', { signal, cache: 'no-cache' });
+    if (!response.ok) throw new Error('Demo servisine ulaşılamadı. API ve MCP bağlantısını kontrol edin.');
     const result = manifestSchema.safeParse(await response.json());
     if (!result.success) throw new Error('Demo vaka paketi beklenen biçimde değil.');
     return result.data.cases;

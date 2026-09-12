@@ -11,13 +11,13 @@ describe('demo boundary validation', () => {
     ]) {
       const c = makeCase('TEST-0001');
       Object.assign(c.previews[0], patch);
-      expect(manifestSchema.safeParse({ version: 1, cases: [c] }).success).toBe(false);
+      expect(manifestSchema.safeParse({ version: 2, cases: [c] }).success).toBe(false);
     }
   });
   it('rejects duplicate case identities and duplicate axes', () => {
     const c = makeCase('TEST-0001');
-    expect(manifestSchema.safeParse({ version: 1, cases: [c, c] }).success).toBe(false);
+    expect(manifestSchema.safeParse({ version: 2, cases: [c, c] }).success).toBe(false);
     c.previews[1].axis = 'axial';
-    expect(manifestSchema.safeParse({ version: 1, cases: [c] }).success).toBe(false);
+    expect(manifestSchema.safeParse({ version: 2, cases: [c] }).success).toBe(false);
   });
 });

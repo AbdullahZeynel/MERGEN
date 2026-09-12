@@ -5,7 +5,7 @@ ERGENEKON takımının TEKNOFEST Onkolojide 3T için geliştirdiği çok modlu g
 - **Görüntü:** nnU-Net + Swin UNETR + UWCSE ile dört MR modalitesinden segmentasyon.
 - **Genomik:** ESM-2 + AAindex + XGBoost ile missense varyant patojenite tahmini.
 
-Mevcut kod araştırma/değerlendirme betikleri, eski sonuç görüntüleyicisi ve yeni React vaka arayüzünün F1 temelini içerir. Canlı API, iş kuyruğu, MCP ve sohbet asistanı henüz uygulanmadı. İki modülün çıktısını birlikte göstermek, doğrulanmış bir klinik füzyon modeli anlamına gelmez.
+Mevcut kod araştırma/değerlendirme betikleri ve React vaka arayüzünü içerir. Hazır demo: tarayıcı → API → MCP → VPS diskindeki dosyalar. Tüm 2D kesitler, etkileşimli 3D tümör yüzeyleri ve yaklaşık MR dış yüzeyi hazırdır. Canlı çıkarım, oturum/kuyruk ve sohbet asistanı henüz bağlı değildir. İki modülün çıktısını birlikte göstermek, doğrulanmış bir klinik füzyon modeli anlamına gelmez.
 
 ## Dizinler
 
@@ -15,7 +15,7 @@ Mevcut kod araştırma/değerlendirme betikleri, eski sonuç görüntüleyicisi 
 | `models/VeriOdakliCozum/` | Genomik Python paketi; mevcut import adı korundu |
 | `frontend/legacy/` | Mevcut HTML/Three.js dashboard; yeni arayüz `frontend/` altında |
 | `backend/legacy/` | Mevcut demo sunucusu; yeni uygulama API'si `backend/` altında |
-| `mcp/` | Gelecekteki MCP araç katmanı |
+| `mcp/` | VPS'teki salt okunur demo araçları |
 | `infra/` | VPS, Ubuntu, Caddy ve Tailscale kurulum dosyaları için yer |
 | `docs/PLAN.md` | Mimari kararlar, kapsam ve geliştirme sırası |
 | `docs/LOCAL_ASSETS.md` | Git dışındaki ağırlık/veri/sonuçların konumları |
@@ -26,11 +26,10 @@ Mevcut kod araştırma/değerlendirme betikleri, eski sonuç görüntüleyicisi 
 ```bash
 cd frontend
 npm ci
-python3 scripts/prepare_demo.py
 npm run dev
 ```
 
-Yerel adres: `http://127.0.0.1:5173/`. Python adımı mevcut yerel FLAIR hacimlerinden önizleme üretir; NumPy/Pillow gerekir. Görüntü verileri Git dışıdır. Kurulum, testler ve F1 sınırları için [frontend rehberi](frontend/README.md); VPS paketleme için [dağıtım rehberi](infra/vps/README.md).
+Yerel adres: `http://127.0.0.1:5173/`. Önce [demo servis rehberindeki](docs/DEMO_SERVICES.md) API ve MCP'yi başlatın. Görüntü verileri Git dışıdır. Arayüz sınırları için [frontend rehberi](frontend/README.md); VPS paketleme için [dağıtım rehberi](infra/vps/README.md).
 
 ## Eski demoyu açma
 
