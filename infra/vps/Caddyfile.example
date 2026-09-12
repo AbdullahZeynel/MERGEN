@@ -11,6 +11,9 @@
 	}
 	handle /api/live/* {
 		header Cache-Control "no-store"
+		request_body {
+			max_size 2GB
+		}
 		reverse_proxy 127.0.0.1:9000
 	}
 	handle /api/* {

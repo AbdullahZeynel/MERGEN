@@ -16,6 +16,22 @@ class InvalidArchive(ValueError):
     pass
 
 
+class UploadTooLarge(ValueError):
+    pass
+
+
+async def write_stream(chunks, destination: Path, limit: int):
+    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    size = 0
+    with destination.open("xb") as output:
+        async for chunk in chunks:
+            size += len(chunk)
+            if size > limit:
+                raise UploadTooLarge
+            output.write(chunk)
+    return size
+
+
 async def file_chunks(path: Path):
     with path.open("rb") as handle:
         while chunk := handle.read(1024 * 1024):

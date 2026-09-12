@@ -148,8 +148,8 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         csrf = await self.create_session()
         input_payload = imaging_input()
         created = await self.public.post(
-            "/api/live/jobs", headers=csrf,
-            files={"bundle": ("input.zip", input_payload, "application/zip")},
+            "/api/live/jobs", headers={**csrf, "Content-Type": "application/zip"},
+            content=input_payload,
         )
         self.assertEqual(created.status_code, 202, created.text)
         job_id = created.json()["jobId"]
@@ -160,6 +160,10 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         )
         self.assertEqual(claim.status_code, 200, claim.text)
         self.assertEqual(claim.json()["job"]["jobId"], job_id)
+        wrong_worker = {**self.worker_headers, "X-Mergen-Worker": "gpu-standby"}
+        self.assertEqual((await self.control.get(
+            f"/internal/jobs/{job_id}/input", headers=wrong_worker
+        )).status_code, 404)
         downloaded_input = await self.control.get(f"/internal/jobs/{job_id}/input", headers=self.worker_headers)
         self.assertEqual(downloaded_input.content, input_payload)
 
@@ -167,8 +171,9 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
             (await self.control.post(f"/internal/jobs/{job_id}/lease", headers=self.worker_headers)).status_code, 200
         )
         completed = await self.control.post(
-            f"/internal/jobs/{job_id}/result", headers=self.worker_headers,
-            files={"bundle": ("result.zip", imaging_result(job_id), "application/zip")},
+            f"/internal/jobs/{job_id}/result",
+            headers={**self.worker_headers, "Content-Type": "application/zip"},
+            content=imaging_result(job_id),
         )
         self.assertEqual(completed.status_code, 200, completed.text)
 
@@ -199,14 +204,14 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         csrf = await self.create_session()
         unsafe = zip_bytes({"input.json": b"{}", "../escape": b"bad"})
         response = await self.public.post(
-            "/api/live/jobs", headers=csrf,
-            files={"bundle": ("unsafe.zip", unsafe, "application/zip")},
+            "/api/live/jobs", headers={**csrf, "Content-Type": "application/zip"},
+            content=unsafe,
         )
         self.assertEqual(response.status_code, 422)
 
         created = await self.public.post(
-            "/api/live/jobs", headers=csrf,
-            files={"bundle": ("input.zip", imaging_input(), "application/zip")},
+            "/api/live/jobs", headers={**csrf, "Content-Type": "application/zip"},
+            content=imaging_input(),
         )
         job_id = created.json()["jobId"]
         await self.control.post("/internal/jobs/claim", headers=self.worker_headers, json={"capabilities": ["imaging"]})
@@ -215,6 +220,17 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.cleanup()["staleJobs"], 1)
         with self.store.connect() as db:
             self.assertEqual(db.execute("SELECT status FROM jobs WHERE id=?", (job_id,)).fetchone()[0], "queued")
+
+    async def test_streaming_upload_limit_removes_partial_file(self):
+        csrf = await self.create_session()
+        response = await self.public.post(
+            "/api/live/jobs",
+            headers={**csrf, "Content-Type": "application/zip"},
+            content=b"x" * (self.store.settings.max_upload_bytes + 1),
+        )
+        self.assertEqual(response.status_code, 413)
+        session = self.store.get_session(self.public.cookies.get("mergen_session"))
+        self.assertEqual(list(self.store.session_directory(session["id"]).glob("*.part")), [])
 
     async def test_worker_authentication_is_required(self):
         self.assertEqual((await self.control.get("/internal/health")).status_code, 401)

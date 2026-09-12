@@ -10,10 +10,13 @@ import shutil
 import zipfile
 from pathlib import Path
 
-from fastapi import APIRouter, Cookie, Depends, File, Header, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Cookie, Depends, Header, HTTPException, Request, Response
 from fastapi.responses import StreamingResponse
 
-from backend.archive_io import InvalidArchive, file_chunks, sha256_file, validate_input_archive
+from backend.archive_io import (
+    InvalidArchive, UploadTooLarge, file_chunks, sha256_file,
+    validate_input_archive, write_stream,
+)
 from backend.live_store import CapacityError, LiveSettings, LiveStore
 from backend.live_contracts import LIVE_PROFILES
 
@@ -121,18 +124,6 @@ async def close_session(response: Response, session: dict = Depends(mutation_ses
     response.delete_cookie(CSRF_COOKIE, path="/")
 
 
-async def _write_upload(upload: UploadFile, destination: Path, limit: int):
-    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    size = 0
-    with destination.open("xb") as output:
-        while chunk := await upload.read(1024 * 1024):
-            size += len(chunk)
-            if size > limit:
-                raise HTTPException(413, "Upload is too large")
-            output.write(chunk)
-    return size
-
-
 async def _zip_chunks(path: Path, member: str):
     with zipfile.ZipFile(path) as archive, archive.open(member) as handle:
         while chunk := handle.read(1024 * 1024):
@@ -145,18 +136,20 @@ def _validate_input(path: Path, max_expanded: int):
 
 @router.post("/jobs", status_code=202)
 async def create_job(
+    request: Request,
     response: Response,
-    bundle: UploadFile = File(...),
     session: dict = Depends(mutation_session),
     store: LiveStore = Depends(get_live_store),
 ):
     response.headers["Cache-Control"] = "no-store"
-    if bundle.content_type not in {"application/zip", "application/x-zip-compressed"}:
+    if request.headers.get("content-type", "").split(";", 1)[0].strip() not in {
+        "application/zip", "application/x-zip-compressed"
+    }:
         raise HTTPException(415, "A ZIP input bundle is required")
     staging = store.session_directory(session["id"]) / f"upload-{secrets.token_hex(8)}.part"
     job_directory = None
     try:
-        await _write_upload(bundle, staging, store.settings.max_upload_bytes)
+        await write_stream(request.stream(), staging, store.settings.max_upload_bytes)
         manifest, checksum = await asyncio.to_thread(
             _validate_input, staging, store.settings.max_expanded_bytes
         )
@@ -174,9 +167,10 @@ async def create_job(
                 "disease": manifest.disease}
     except InvalidArchive as exc:
         raise HTTPException(422, str(exc)) from None
+    except UploadTooLarge:
+        raise HTTPException(413, "Upload is too large") from None
     finally:
         staging.unlink(missing_ok=True)
-        await bundle.close()
 
 
 @router.get("/jobs/{job_id}")

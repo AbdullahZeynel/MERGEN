@@ -7,11 +7,14 @@ import secrets
 from pathlib import Path
 from typing import Literal
 
-from fastapi import Depends, FastAPI, File, Header, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from backend.archive_io import InvalidArchive, file_chunks, sha256_file, validate_result_archive
+from backend.archive_io import (
+    InvalidArchive, UploadTooLarge, file_chunks, sha256_file,
+    validate_result_archive, write_stream,
+)
 from backend.live_contracts import valid_worker_id
 from backend.live_store import LiveSettings, LiveStore
 
@@ -103,30 +106,24 @@ async def lease(job_id: str, worker_id: str = Depends(worker_header), store: Liv
     return {"status": "running", "leaseSeconds": store.settings.lease_seconds}
 
 
-async def _write_result(upload: UploadFile, destination: Path, limit: int):
-    size = 0
-    with destination.open("xb") as output:
-        while chunk := await upload.read(1024 * 1024):
-            size += len(chunk)
-            if size > limit:
-                raise HTTPException(413, "Result is too large")
-            output.write(chunk)
-
-
 def _validate_result(path: Path, max_expanded: int, job: dict):
     return validate_result_archive(path, max_expanded, job), sha256_file(path)
 
 
 @app.post("/internal/jobs/{job_id}/result", dependencies=[Depends(authenticate)])
-async def result(job_id: str, bundle: UploadFile = File(...), worker_id: str = Depends(worker_header),
+async def result(job_id: str, request: Request, worker_id: str = Depends(worker_header),
                  store: LiveStore = Depends(get_store)):
+    if request.headers.get("content-type", "").split(";", 1)[0].strip() not in {
+        "application/zip", "application/x-zip-compressed"
+    }:
+        raise HTTPException(415, "A ZIP result bundle is required")
     job = store.worker_job(job_id, worker_id)
     if not job or job["status"] not in {"claimed", "running"} or job["lease_until"] <= store.now():
         raise HTTPException(409, "Lease is no longer valid")
     directory = store.job_directory(job["session_id"], job_id)
     staging, destination = directory / "result.part", directory / "result.zip"
     try:
-        await _write_result(bundle, staging, store.settings.max_result_bytes)
+        await write_stream(request.stream(), staging, store.settings.max_result_bytes)
         manifest, checksum = await asyncio.to_thread(
             _validate_result, staging, store.settings.max_expanded_bytes, job
         )
@@ -137,9 +134,10 @@ async def result(job_id: str, bundle: UploadFile = File(...), worker_id: str = D
         return {"status": "completed", "sha256": checksum}
     except InvalidArchive as exc:
         raise HTTPException(422, str(exc)) from None
+    except UploadTooLarge:
+        raise HTTPException(413, "Result is too large") from None
     finally:
         staging.unlink(missing_ok=True)
-        await bundle.close()
 
 
 @app.post("/internal/jobs/{job_id}/failure", dependencies=[Depends(authenticate)])
