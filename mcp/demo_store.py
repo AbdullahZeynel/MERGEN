@@ -15,7 +15,7 @@ class DemoStore:
         if len(self.cases) != len(self.manifest['cases']):
             raise ValueError('Duplicate case IDs')
 
-    def asset(self, case_id, kind, axis=None, index=None):
+    def asset(self, case_id, kind, axis=None, index=None, layer=None):
         case = self.cases.get(case_id)
         if case is None:
             return {'error': 'missing'}
@@ -24,6 +24,13 @@ class DemoStore:
             if axis not in dimensions or type(index) is not int or not 0 <= index < case['shape'][dimensions[axis]]:
                 return {'error': 'invalid'}
             relative = Path(case_id) / 'slices' / axis / f'{index}.png'
+            mime = 'image/png'
+        elif kind == 'overlay':
+            dimensions = {'axial': 2, 'coronal': 1, 'sagittal': 0}
+            if (layer not in case.get('overlays', []) or axis not in dimensions or type(index) is not int
+                    or not 0 <= index < case['shape'][dimensions[axis]]):
+                return {'error': 'invalid'}
+            relative = Path(case_id) / 'overlays' / layer / axis / f'{index}.png'
             mime = 'image/png'
         elif kind == 'mesh':
             relative = Path(case_id) / 'mesh_ensemble.json'

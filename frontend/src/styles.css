@@ -705,6 +705,43 @@ svg {
   padding: 30px 15px;
   image-rendering: auto;
 }
+.image-stage img.slice-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  object-fit: contain;
+  pointer-events: none;
+}
+.overlay-controls {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+.overlay-controls button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font-size: 0.75rem;
+  opacity: 0.5;
+}
+.overlay-controls button[aria-pressed='true'] {
+  opacity: 1;
+  background: var(--control);
+}
+.overlay-controls i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.prediction-dot {
+  background: #ff5366;
+}
+.ground-truth-dot {
+  background: #f5c451;
+}
 .image-meta,
 .image-caption {
   position: absolute;
@@ -714,7 +751,7 @@ svg {
   justify-content: space-between;
   font-size: 0.65rem;
   letter-spacing: 0.04em;
-  z-index: 1;
+  z-index: 2;
   pointer-events: none;
 }
 .image-meta {
