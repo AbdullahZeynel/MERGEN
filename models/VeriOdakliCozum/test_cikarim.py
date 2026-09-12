@@ -18,7 +18,11 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -182,7 +186,7 @@ class EgitimMatrisiYenidenUretimTesti(unittest.TestCase):
 
     def test_aaindex_kolonlari_birebir(self):
         from .moduller.aa_ozellikler import aaindex_delta_hesapla
-        from .moduller.on_isleme import hgvsp_ayristir
+        from .moduller.varyant_notasyonu import hgvsp_ayristir
 
         kolonlar = [k for k in self.sema["featureOrder"] if k.startswith("delta_")]
         kolonlar.append("grantham_yakl")
@@ -218,3 +222,190 @@ class EgitimMatrisiYenidenUretimTesti(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ===========================================================================
+# Gerçek çalışma zamanı testleri
+# ===========================================================================
+# Bu bölüm gerçek XGBoost modelini ve gerçek ESM-2 ağırlığını ister. Varlıklar
+# Git dışıdır; yoksa testler gerekçesiyle atlanır (CI'da beklenen durum budur).
+
+FIXTURE_YOLU = config.PROJE_KOKU / "fixtures" / "idh1_r132h.json"
+FIXTURE_FASTA = config.PROJE_KOKU / "fixtures" / "IDH1_O75874.fasta"
+EGITIM_MODULLERI = ("veri_indirme", "model_egitim", "degerlendirme", "rapor",
+                    "gorseller", "shap_analiz", "on_isleme", "ozellik_cikarimi",
+                    "pandas", "requests")
+
+
+def _fixture() -> dict:
+    return json.loads(FIXTURE_YOLU.read_text(encoding="utf-8"))
+
+
+def _esm_hazir() -> bool:
+    from .esm_yerel import ESMYokHatasi, kaynagi_coz
+    try:
+        return kaynagi_coz().yol is not None
+    except ESMYokHatasi:
+        return False
+
+
+def _model_hazir() -> bool:
+    from .cikarim import CGGA_TABLO_YOLU, MODEL_YOLU
+    if not (MODEL_YOLU.is_file() and CGGA_TABLO_YOLU.is_file()):
+        return False
+    try:
+        import xgboost  # noqa: F401
+    except ImportError:
+        return False
+    return True
+
+
+def _agsiz():
+    """Ağ soketlerini kapatan bağlam yöneticisi: indirme denenirse patlar."""
+    import socket
+    from contextlib import contextmanager
+    from unittest.mock import patch
+
+    def _yasak(*args, **kwargs):
+        raise AssertionError("çıkarım sırasında ağ bağlantısı denendi")
+
+    @contextmanager
+    def kapali():
+        with patch.object(socket, "socket", _yasak), \
+             patch.object(socket, "create_connection", _yasak):
+            yield
+    return kapali()
+
+
+class CevrimdisiESMKaynagi(unittest.TestCase):
+    """Varlık gerektirmez: çözümleyicinin yokluk davranışı."""
+
+    def test_cache_yoksa_acik_hata(self):
+        from unittest.mock import patch
+        from . import esm_yerel
+        with tempfile.TemporaryDirectory() as bos:
+            with patch.object(esm_yerel, "_cache_adaylari", lambda: [Path(bos)]), \
+                 patch.object(esm_yerel.config, "ESM_YEREL_YOL", None), \
+                 patch.object(esm_yerel.config, "ESM_INDIRME_IZNI", False):
+                with self.assertRaises(esm_yerel.ESMYokHatasi) as ctx:
+                    esm_yerel.kaynagi_coz()
+        self.assertIn("MERGEN_ESM_INDIRME_IZNI", str(ctx.exception))
+
+    def test_yerel_yol_gecersizse_hata(self):
+        from unittest.mock import patch
+        from . import esm_yerel
+        with tempfile.TemporaryDirectory() as bos:
+            with patch.object(esm_yerel.config, "ESM_YEREL_YOL", bos):
+                with self.assertRaises(esm_yerel.ESMYokHatasi) as ctx:
+                    esm_yerel.kaynagi_coz()
+        self.assertIn("config.json", str(ctx.exception))
+
+    def test_indirme_varsayilan_olarak_kapali(self):
+        self.assertFalse(config.ESM_INDIRME_IZNI,
+                         "canlı çıkarım varsayılanı indirmeye izin vermemeli")
+
+
+class EgitimAyrimi(unittest.TestCase):
+    """Canlı çıkarım eğitim modüllerini ve ağ kütüphanesini yüklememeli."""
+
+    def test_cikarim_importu_egitim_modulu_cekmiyor(self):
+        betik = (
+            "import sys, json;"
+            "sys.path.insert(0, %r);"
+            "import VeriOdakliCozum.cikarim;"
+            "print(json.dumps(sorted(m for m in sys.modules "
+            "if m.startswith('VeriOdakliCozum') or m in ('pandas','requests'))))"
+            % str(config.PROJE_KOKU.parent)
+        )
+        cikti = subprocess.run([sys.executable, "-c", betik], check=True,
+                               capture_output=True, text=True).stdout
+        yuklu = json.loads(cikti)
+        for ad in EGITIM_MODULLERI:
+            with self.subTest(modul=ad):
+                self.assertFalse([m for m in yuklu if m.endswith(ad) or m == ad],
+                                 f"{ad} çıkarım yolunda yüklenmemeli: {yuklu}")
+
+
+@unittest.skipUnless(_model_hazir(), "model/CGGA tablosu veya xgboost yok (Git dışı varlık)")
+class ModelSemaUyumu(unittest.TestCase):
+    def test_model_kendi_ozellik_adlarini_bildiriyor(self):
+        from .cikarim import model_yukle
+        sema = sema_yukle()
+        model = model_yukle(sema)
+        adlar = getattr(model, "feature_names_in_", None)
+        if adlar is None:
+            adlar = model.get_booster().feature_names
+        self.assertIsNotNone(adlar, "model özellik adı taşımıyor")
+        self.assertEqual(list(adlar), list(sema["featureOrder"]))
+
+    def test_sira_degisirse_cikarim_reddedilir(self):
+        from .cikarim import CikarimHatasi, model_yukle
+        bozuk = dict(sema_yukle())
+        sira = list(bozuk["featureOrder"])
+        sira[0], sira[1] = sira[1], sira[0]
+        bozuk["featureOrder"] = sira
+        with self.assertRaises(CikarimHatasi) as ctx:
+            model_yukle(bozuk)
+        self.assertIn("uyuşmuyor", str(ctx.exception))
+
+    def test_sema_semasi_dogrulanmis_olarak_isaretli(self):
+        sema = sema_yukle()
+        self.assertTrue(sema["featureNamesVerifiedFromModel"])
+        self.assertTrue(sema["traceColumnsVerifiedFromTrainingModule"])
+
+
+@unittest.skipUnless(_model_hazir() and _esm_hazir(),
+                     "model veya yerel ESM-2 ağırlığı yok (Git dışı varlık)")
+class GercekFixture(unittest.TestCase):
+    """IDH1 p.R132H: gerçek ESM-2 + gerçek XGBoost, ağ kapalı."""
+
+    @classmethod
+    def setUpClass(cls):
+        from .cikarim import VaryantGirdisi, dizilim_oku, varyanti_skorla
+        cls.f = _fixture()
+        dizi = dizilim_oku(FIXTURE_FASTA)
+        girdi = VaryantGirdisi(cls.f["girdi"]["gen"],
+                               cls.f["girdi"]["proteinDegisim"], dizi)
+        with _agsiz():                     # indirme denenirse test patlar
+            cls.sonuc = varyanti_skorla(girdi)
+
+    def test_fixture_dizilimi_kaynakla_uyusuyor(self):
+        from .cikarim import dizilim_oku
+        dizi = dizilim_oku(FIXTURE_FASTA)
+        kaynak = self.f["kaynak"]
+        self.assertEqual(len(dizi), kaynak["uzunluk"])
+        self.assertEqual(dizi[131], kaynak["pozisyon132"])
+        self.assertEqual(hashlib.sha256(dizi.encode()).hexdigest(),
+                         kaynak["diziSha256"])
+
+    def test_esm_llr_sabit(self):
+        b = self.f["beklenen"]
+        self.assertAlmostEqual(self.sonuc.ozellikler["esm_llr"], b["esmLlr"],
+                               delta=b["esmLlrTolerans"])
+        self.assertNotEqual(self.sonuc.ozellikler["esm_llr"], 0.0)
+
+    def test_olasilik_ve_sinif_sabit(self):
+        b = self.f["beklenen"]
+        self.assertAlmostEqual(self.sonuc.olasilik, b["olasilik"],
+                               delta=b["olasilikTolerans"])
+        self.assertEqual(self.sonuc.esik, b["kararEsigi"])
+        self.assertEqual("pathogenic" if self.sonuc.sinif else "benign", b["sinif"])
+
+    def test_shap_toplamsalligi(self):
+        b = self.f["beklenen"]
+        a = self.sonuc.aciklama
+        self.assertIsNotNone(a)
+        self.assertEqual(a["space"], b["shapUzayi"])
+        toplam = a["baseValue"] + sum(a["contributions"].values())
+        self.assertAlmostEqual(toplam, a["rawMargin"],
+                               delta=b["shapToplamsallikTolerans"])
+        self.assertEqual(list(a["contributions"]), list(sema_yukle()["featureOrder"]))
+        self.assertEqual(a["contributions"]["cosmic_frekans_log"], 0.0)
+
+    def test_rapor_alanlari_makinece_okunabilir(self):
+        rapor = self.sonuc.sozluk()
+        self.assertEqual(rapor["module"], "genomics")
+        self.assertIs(rapor["hasGroundTruth"], False)
+        for alan in ("baseValue", "rawMargin", "contributions", "space", "method"):
+            self.assertIn(alan, rapor["explanation"])
+        json.dumps(rapor)              # serileştirilebilir olmalı

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "IDH1-p.R132H",
+  "aciklama": "Kamuya açık referans varyant; hasta verisi içermez.",
+  "kaynak": {
+    "veritabani": "UniProtKB",
+    "erisim": "O75874",
+    "girdiAdi": "IDHC_HUMAN",
+    "diziSurumu": "SV=2",
+    "url": "https://rest.uniprot.org/uniprotkb/O75874.fasta",
+    "erisimTarihi": "2026-09-12",
+    "dosya": "IDH1_O75874.fasta",
+    "dosyaSha256": "65fa7147ad08a3a8862e6d86d6bd2a85385de050ea8c997bf6b076a283ffdfb5",
+    "diziSha256": "5c99fe8bf1991cd76f6c3552589adbbf6067dea9f85a4be30a041aed43113415",
+    "uzunluk": 414,
+    "pozisyon132": "R"
+  },
+  "girdi": {"gen": "IDH1", "proteinDegisim": "p.R132H"},
+  "beklenen": {
+    "esmLlr": -0.20437836647033691,
+    "esmLlrTolerans": 0.001,
+    "olasilik": 0.9996862411499023,
+    "olasilikTolerans": 0.001,
+    "sinif": "pathogenic",
+    "kararEsigi": 0.5,
+    "shapTabanDegeri": 1.063351393,
+    "shapMargin": 8.066596985,
+    "shapUzayi": "margin",
+    "shapToplamsallikTolerans": 0.0001
+  },
+  "uretimOrtami": {
+    "not": "Değerler CPU üzerinde üretildi; farklı donanım/BLAS esm_llr'yi az da olsa kaydırabilir. Test toleransı bunun içindir.",
+    "python": "3.12.11",
+    "torch": "2.14.0+cu130 (CPU)",
+    "transformers": "5.17.0",
+    "xgboost": "3.4.1",
+    "shap": "0.52.0",
+    "esmRevision": "a695f6045e2e32885fa60af20c13cb35398ce30c"
+  }
+}
