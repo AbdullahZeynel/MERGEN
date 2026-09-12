@@ -14,3 +14,7 @@ F1 bağımlılığı: `chore/security-guardrails` yerel commitini içerir. `main
 Hazır merkez kesit, tamamlanmış görüntüleyici değildir. F2'de mevcut demo API yalnızca FLAIR ve görüntüye gömülü segmentasyon PNG'si sağlar; diğer modaliteler ve ayrı maskeler veri adaptörü desteği olmadan etkinleştirilmez. Doğrulanmış affine/spacing olmadan ölçüm veya 2D–3D eşzamanlama yapılmaz. GT/Dice yalnızca referans etiketi mevcut değerlendirme verisiyle gösterilir.
 
 Bağımsız görüntü ve varyant kayıtları aynı hastanın sonucu gibi birleştirilmez. Chatbot/SHAP/canlı sağlık durumu mevcut veri olmadan taklit edilmez.
+
+## F1 doğrulama kaydı
+
+Tamamlandı: 8 frontend testi, TypeScript kontrolü ve üretim build'i; 5 deploy testi; Caddy şablon doğrulaması. Yerel Caddy altında demo dışlayan ve demo dahil paket kurulumları, 6 PNG, SPA yolu, eksik dosya 404 ve API 503 davranışları ve rollback doğrulandı. Tarayıcıda gerçek vaka/sohbet bağlamı değişimi ve 390px mobil görünüm incelendi. Canlı VPS/TLS, GPU çıkarımı, 10 oturum yük testi ve GitHub Actions koşusu yapılmadı; push henüz yapılmadı.

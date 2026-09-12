@@ -4,7 +4,7 @@ React + TypeScript + Vite. F1: vaka listesi, filtre/arama, demo ve canlı ayrım
 
 ## Yerel çalıştırma
 
-Node.js 22.12+ (24 LTS önerilir), npm ve demo ihracı için NumPy/Pillow içeren Python ortamı gerekir.
+Node.js 22.22.2+, 24.15+ veya 26+ (24 LTS önerilir), npm ve demo ihracı için NumPy/Pillow içeren Python ortamı gerekir. Alt sürüm sınırını test ortamı bağımlılığı belirler.
 
 ```bash
 cd frontend

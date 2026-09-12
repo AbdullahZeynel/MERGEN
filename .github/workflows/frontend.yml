@@ -1,0 +1,39 @@
+name: Frontend checks
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - 'infra/vps/**'
+      - '.github/workflows/frontend.yml'
+  push:
+    branches: [main, 'feat/frontend-*']
+    paths:
+      - 'frontend/**'
+      - 'infra/vps/**'
+      - '.github/workflows/frontend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: frontend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run check
+        working-directory: frontend
+      - run: python3 -m unittest discover -s infra/vps -p 'test_*.py'
+      - run: bash -n infra/vps/package-frontend.sh
