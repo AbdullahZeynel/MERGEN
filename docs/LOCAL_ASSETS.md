@@ -17,6 +17,15 @@ Dosyanın Git'te olmaması makinede olmadığı anlamına gelmez. İddiada bulun
 
 ESM varsayılan cache'i kullanıcı dizinindeki `.cache/huggingface/hub/` altındadır; `HF_HOME` / `HF_HUB_CACHE` gibi ayarlar farklı bir yere yönlendirebilir. Cache'i repoya kopyalamayın.
 
+Çıkarım adaptörü ağırlığı yalnız yerelden yükler ve şu sırayla arar:
+`MERGEN_ESM_YEREL_YOL` (doğrudan snapshot dizini) → `MERGEN_ESM_CACHE_DIZINI`
+→ `HF_HUB_CACHE` / `HF_HOME` → `~/.cache/huggingface/hub`. Bulamazsa açık hata
+verir; indirme yalnızca hazırlık adımında `MERGEN_ESM_INDIRME_IZNI=1` ile
+yapılır. Genomik model ve veri dizinleri de taşınabilir:
+`MERGEN_GENOMIK_MODEL_DIZINI`, `MERGEN_GENOMIK_VERI_DIZINI`,
+`MERGEN_GENOMIK_SONUC_DIZINI`. Değişken verilmezse yollar eskisi gibi paket
+içindedir.
+
 CGGA frekans tablosu `python -m VeriOdakliCozum.semayi_uret --cgga` ile yerel
 CGGA WESeq_286 dosyasından üretilir; kaynağın sha256'sı ve örneklem sayısı
 tablonun içinde tutulur. Tablo Git dışıdır, ona ait sağlama toplamı ise Git'te

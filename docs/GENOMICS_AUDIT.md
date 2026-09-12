@@ -15,14 +15,17 @@ Model: `mergen_xgb.json`, sha256 `6e5d99f1…c785`.
 
 | # | Madde | Durum |
 |---|---|---|
-| 1 | XGBoost dosyasının açılması, özellik adları/sırası, kütüphane sürümü | **Bekliyor** — bu makinede xgboost kurulu değil. Sıra eğitim matrisinden türetildi; `semayi_uret --sema` xgboost varsa modelin kendi adlarıyla karşılaştırır ve uyuşmazlıkta durur. Şemada `featureNamesVerifiedFromModel: false`. |
-| 2 | ESM-2 ağırlıklarının çevrimdışı yüklenmesi ve checksum'u | **Bekliyor** — GPU VM kurulmadı (S4). |
+| 1 | XGBoost dosyasının açılması, özellik adları/sırası, kütüphane sürümü | **Geçti** — `mergen_xgb.json` XGBoost 3.4.1 ile açıldı; dosya kendi içinde `version: [3,4,1]` bildiriyor. Modelin taşıdığı 15 özellik adı şemayla ve eğitim matrisinin kolon sırasıyla birebir aynı. Şemada `featureNamesVerifiedFromModel: true`, `traceColumnsVerifiedFromTrainingModule: true`. |
+| 2 | ESM-2 ağırlıklarının çevrimdışı yüklenmesi ve checksum'u | **Geçti** — ağırlık yerel snapshot'tan `local_files_only=True` ile yüklendi; revision ve dosya checksum'ları aşağıda. Fixture koşusu soket düzeyinde ağ kapatılarak yapıldı ve indirme denenmedi. |
 | 3 | ESM kolonlarının gerçekten ESM açıkken üretildiği kanıtı | **Geçti** — `esm_llr` 1151 satırda 459 benzersiz sürekli değer taşıyor (min −13.5809, maks 3.3797, ortalama −2.5833). `--esm-yok` yolu bu kolonu sabit 0.0 yapar; matris o yoldan gelmemiş. |
 | 4 | Bir varyant için gerekli minimum giriş | **Tanımlandı** — aşağıdaki "Minimum girdi" bölümü. |
 | 5 | Sentetik `X` dizisi ve sentetik COSMIC yollarının canlıda yasaklanması | **Uygulandı** — `cikarim.py` reddediyor, `test_cikarim.py` bunu test ediyor. |
-| 6 | Sabit fixture, beklenen olasılık ve SHAP değerleri | **Kısmi** — özellik vektörü fixture'ı kilitlendi (`test_fixture_vektoru_sabit`). Olasılık ve SHAP toleransı gerçek ortam gerektiriyor; madde 1–2 ile birlikte bekliyor. |
+| 6 | Sabit fixture, beklenen olasılık ve SHAP değerleri | **Geçti** — IDH1 p.R132H için gerçek olasılık, ESM LLR ve TreeSHAP katkıları `fixtures/idh1_r132h.json` içinde toleranslarıyla kilitlendi. |
 
-Madde 1, 2 ve 6 kapanmadan arayüzde genom modeli "çalışıyor" gösterilmez.
+Altı madde de kapandı. Bu, modelin klinik olarak doğrulandığı anlamına gelmez;
+yalnız çalışma zamanının tekrar üretilebilir ve sessiz varsayılansız olduğunu
+gösterir. Aşağıdaki "Katkı dağılımı" bölümü sunumda dikkat edilmesi gereken
+noktayı içerir.
 
 ## Özellik tanımının yeniden üretilebilirliği
 
@@ -120,9 +123,101 @@ Gerçek ortamda (xgboost + torch + transformers kurulu) kapatılacak kontroller:
 3. Bir sabit varyant için olasılığın ve SHAP değerlerinin toleransla bu
    belgeye yazılması.
 
+## Çalışma zamanı doğrulaması
+
+Nerede koştu: bu oturumun Linux konteynerinde, **CPU üzerinde**. Kullanıcının
+Arch + RTX 5060 kurulumu değil; ağırlıklar ve model dosyaları oradan checksum
+doğrulanarak kopyalandı. Farklı donanım `esm_llr`'yi son basamaklarda
+kaydırabilir — fixture toleransları bunun içindir.
+
+| Bileşen | Sürüm |
+|---|---|
+| Python | 3.12.11 |
+| xgboost | 3.4.1 (model dosyası `version: [3,4,1]` bildiriyor) |
+| torch | 2.14.0+cu130, `cuda.is_available()=False` |
+| transformers | 5.17.0 |
+| shap | 0.52.0 (yalnız çapraz kontrol için) |
+| scikit-learn / pandas / numpy / joblib | 1.9.1 / 3.0.5 / 2.5.3 / 1.6.0 |
+
+### Varlık checksum'ları
+
+| Dosya | SHA-256 | Bayt |
+|---|---|---|
+| `mergen_xgb.json` | `6e5d99f1…c785` | 1 159 701 |
+| `ozellik_matrisi.csv` | `c7616ea3…7684` | 296 641 |
+| `cgga_gen_frekans.v1.json` | `4b067493…97af` | 240 557 |
+
+### ESM-2 kaynağı
+
+- Model kimliği: `facebook/esm2_t30_150M_UR50D`
+- Revision: `a695f6045e2e32885fa60af20c13cb35398ce30c`
+- `model.safetensors`: `c3f1da8aea53bddd32c246c86168c23b9fd72341fb9db9a94436f855f5053566` (595 257 706 bayt)
+- `config.json`: `e512f68e…72dc` · `vocab.txt`: `0b82cc0a…8e03` · `tokenizer_config.json`: `7e9161ec…a29d` · `special_tokens_map.json`: `3aedcd42…9ee1`
+
+Yükleme yolu `MERGEN_ESM_YEREL_YOL`, `MERGEN_ESM_CACHE_DIZINI` veya HF cache
+üzerinden çözülür. Varsayılan çevrimdışıdır; indirme yalnız
+`MERGEN_ESM_INDIRME_IZNI=1` verilen hazırlık adımında yapılır. Ağırlık
+bulunamazsa `ESMYokHatasi` ile durulur, sessizce indirilmez.
+
+### Sabit fixture — IDH1 p.R132H
+
+Kaynak: UniProtKB `O75874` (IDHC_HUMAN), dizi sürümü SV=2, 414 aminoasit,
+`https://rest.uniprot.org/uniprotkb/O75874.fasta`, erişim 2026-09-12.
+132. pozisyondaki vahşi tip amino asidin gerçekten `R` olduğu dosyadan
+doğrulandı. Dizi SHA-256 `5c99fe8b…3415`, dosya SHA-256 `65fa7147…dfdf`.
+Kamuya açık referans dizidir; hasta verisi içermez.
+
+| Çıktı | Değer | Tolerans |
+|---|---|---|
+| `esm_llr` | −0.20437836647033691 | 1e-3 |
+| Patojenite olasılığı | 0.9996862411499023 | 1e-3 |
+| Sınıf / eşik | `pathogenic` / 0.50 | — |
+| SHAP taban değeri | 1.063351393 | — |
+| Ham margin | 8.066596985 | — |
+| Toplamsallık hatası | 2.03e-07 | 1e-4 |
+
+SHAP uzayı **ham margin (log-odds)**, bağlantı fonksiyonu logit; olasılık
+değil. `taban + katkılar = margin` ve `sigmoid(margin) = olasılık` her
+çıkarımda doğrulanır, tutmazsa çıkarım hata verir. Katkılar XGBoost'un kendi
+`pred_contribs` çıkışıdır (tam TreeSHAP, ek bağımlılık yok); `shap` paketinin
+`TreeExplainer` sonucuyla karşılaştırıldı: en büyük fark 4.83e-10, taban
+farkı 2.54e-10. Arka arkaya iki koşu bit düzeyinde aynı sonucu verdi.
+
+### Katkı dağılımı — sunumda dikkat
+
+Margin'in tabandan sapmasının büyük kısmı tek bir özellikten geliyor:
+
+| Özellik | Katkı |
+|---|---|
+| `cgga_missense_frekans` | +4.734 |
+| `nispi_pozisyon` | +0.737 |
+| `esm_pathojenite` | +0.623 |
+| `delta_hidrofobiklik` | +0.373 |
+| `cosmic_frekans_log` | 0.000 |
+
+Yani model bu vakada esas olarak "varyant IDH1'de mi?" bilgisine dayanıyor;
+ESM'in evrimsel sinyali (`esm_llr` = −0.204) zayıf kalıyor. Yukarıdaki üç
+bulgunun ikisi burada sayıyla doğrulanmış oluyor: COSMIC katkısı tam sıfır,
+CGGA gen-kimliği vekili baskın. Doğru olasılık üretmesi modelin bilinen
+sürücü genlerde iyi, yeni/rare genlerde zayıf olacağı anlamına gelir.
+
+### Çalıştırılan komutlar
+
+```bash
+python -m VeriOdakliCozum.semayi_uret --sema
+python -m VeriOdakliCozum.cikarim --gen IDH1 --degisim p.R132H \
+    --dizilim-dosyasi VeriOdakliCozum/fixtures/IDH1_O75874.fasta
+python -m unittest VeriOdakliCozum.test_cikarim -v
+```
+
+Sonuç: 28 test, hepsi geçti (varlıklar mevcutken atlama yok). Testler
+arasında ağırlık eksikken açık hata, özellik sırası bozulunca çıkarımın
+reddi, ağ soketleri kapatılmışken fixture koşusu ve canlı çıkarımın eğitim
+modüllerini (`pandas`, `requests` dâhil) hiç yüklememesi de var.
+
 ## Kapsam dışı
 
 Bu denetim yeniden eğitim, eşik değiştirme, ön işleme değişikliği veya klinik
 doğrulama içermez. Adaptör eğitim modüllerini (`veri_indirme`, `model_egitim`,
-`degerlendirme`, `rapor`) import etmez. SHAP açıklaması ve genomik demo
-vakaları S3'ün kalan işidir.
+`degerlendirme`, `rapor`) import etmez. Genomik demo vakaları S3'ün kalan işidir; SHAP açıklaması
+artık çıkarım raporunun `explanation` alanında üretiliyor.

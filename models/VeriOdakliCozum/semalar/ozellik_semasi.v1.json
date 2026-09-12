@@ -22,8 +22,8 @@
     "cgga_missense_frekans",
     "nispi_pozisyon"
   ],
-  "featureNamesVerifiedFromModel": false,
-  "traceColumnsVerifiedFromTrainingModule": false,
+  "featureNamesVerifiedFromModel": true,
+  "traceColumnsVerifiedFromTrainingModule": true,
   "constantInTraining": {
     "cosmic_frekans_log": 0.0
   },
