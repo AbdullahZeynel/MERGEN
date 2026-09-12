@@ -6,11 +6,13 @@ import os
 from typing import Literal
 from urllib.parse import urlparse
 
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import Depends, FastAPI, HTTPException, Response
 from mcp import ClientSession
 from mcp.client.streamable_http import streamablehttp_client
+from backend.live_api import get_live_store, router as live_router
 
 app = FastAPI(title='MERGEN demo gateway', docs_url=None, redoc_url=None, openapi_url=None)
+app.include_router(live_router)
 MCP_URL = os.environ.get('MERGEN_MCP_URL', 'http://127.0.0.1:9010/mcp')
 parsed = urlparse(MCP_URL)
 if parsed.scheme != 'http' or parsed.hostname not in ('127.0.0.1', 'localhost') or parsed.username or parsed.password:
@@ -50,9 +52,11 @@ async def asset_response(tool, arguments, expected_mime):
 
 
 @app.get('/api/health')
-async def health():
+async def health(live_store=Depends(get_live_store)):
     await call_tool('list_cases', {})
-    return {'demoMcp': 'ready', 'liveAi': 'not_connected'}
+    capabilities = live_store.available_capabilities()
+    return {'demoMcp': 'ready', 'liveAi': 'ready' if capabilities else 'not_connected',
+            'liveCapabilities': capabilities}
 
 
 @app.get('/api/demo/cases')

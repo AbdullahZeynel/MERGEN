@@ -1,7 +1,7 @@
 :root {
   font-family: 'Manrope Variable', sans-serif;
-  color: #192439;
-  background: #f5f6f8;
+  color: var(--text);
+  background: var(--page);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   font-size: 16px;
@@ -10,12 +10,43 @@
   --red: #d9293b;
   --line: #e5e8ee;
   --surface: #fff;
+  --page: #f5f6f8;
+  --text: #192439;
+  --surface-subtle: #f2f3f6;
+  --control: #eef0f4;
+  --hover: #f7f8fa;
+  --selected: #fff5f5;
+  --selected-line: #f5d5d9;
+  --icon: #8792a2;
+  --secondary-text: #526075;
+  --panel-shadow: 0 12px 30px rgb(17 26 44 / 0.05);
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #090f1d;
+  --surface: #121a2a;
+  --surface-subtle: #1b2435;
+  --control: #202a3d;
+  --hover: #202a3d;
+  --selected: #2a1b28;
+  --selected-line: #66303c;
+  --line: #2b3548;
+  --text: #eef2f8;
+  --muted: #9ba7b9;
+  --icon: #8796ad;
+  --secondary-text: #b8c2d1;
+  --panel-shadow: 0 18px 42px rgb(0 0 0 / 0.22);
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
+  background: var(--page);
+  color: var(--text);
 }
 button,
 input,
@@ -85,7 +116,7 @@ svg {
   left: 90px;
   z-index: 100;
   padding: 16px;
-  background: white;
+  background: var(--surface);
 }
 .skip-link:focus {
   top: 10px;
@@ -99,6 +130,8 @@ svg {
 .app {
   display: flex;
   min-height: 100vh;
+  background:
+    radial-gradient(circle at 92% 4%, rgb(132 18 45 / 0.08), transparent 30rem), var(--page);
 }
 .rail {
   width: 72px;
@@ -161,7 +194,7 @@ svg {
 }
 .topbar {
   height: 84px;
-  background: white;
+  background: var(--surface);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -206,10 +239,27 @@ svg {
   place-items: center;
   width: 34px;
   height: 34px;
-  background: #f2f3f6;
+  background: var(--surface-subtle);
   border: 1px solid var(--line);
   border-radius: 50%;
   font-size: 0.875rem;
+}
+.theme-toggle {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-subtle);
+  color: var(--secondary-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+.theme-toggle:hover {
+  border-color: #d9293b;
+  color: var(--text);
 }
 .app-content {
   display: flex;
@@ -218,7 +268,7 @@ svg {
 .case-sidebar {
   width: 260px;
   flex-shrink: 0;
-  background: white;
+  background: var(--surface);
   border-right: 1px solid var(--line);
   padding: 30px 20px 20px;
   display: flex;
@@ -242,7 +292,7 @@ svg {
   letter-spacing: 0;
   font-weight: 650;
   color: var(--muted);
-  background: #f0f2f5;
+  background: var(--surface-subtle);
   border-radius: 5px;
   padding: 3px 7px;
 }
@@ -254,7 +304,7 @@ svg {
 .segmented {
   display: flex;
   gap: 3px;
-  background: #eef0f4;
+  background: var(--control);
   padding: 4px;
   border-radius: 7px;
 }
@@ -268,8 +318,8 @@ svg {
   color: #677387;
 }
 .segmented button.selected {
-  background: white;
-  color: var(--navy);
+  background: var(--surface);
+  color: var(--text);
   box-shadow: 0 1px 4px #17243912;
 }
 .source-switch {
@@ -336,8 +386,8 @@ svg {
   position: relative;
 }
 .case-item.selected {
-  background: #fff5f5;
-  border-color: #f5d5d9;
+  background: var(--selected);
+  border-color: var(--selected-line);
 }
 .case-item.selected::before {
   position: absolute;
@@ -350,14 +400,14 @@ svg {
   border-radius: 0 2px 2px 0;
 }
 .case-item:hover {
-  background: #f7f8fa;
+  background: var(--hover);
 }
 .case-icon {
   width: 30px;
   height: 34px;
   display: grid;
   place-items: center;
-  color: #8792a2;
+  color: var(--icon);
 }
 .case-item.selected .case-icon {
   color: var(--red);
@@ -378,7 +428,7 @@ svg {
 }
 .case-item > svg {
   margin-top: 7px;
-  color: #8792a2;
+  color: var(--icon);
 }
 .case-item-text .status-pill {
   color: #398068;
@@ -409,7 +459,7 @@ svg {
 }
 .sidebar-footer strong {
   font-size: 0.75rem;
-  color: #526075;
+  color: var(--secondary-text);
   font-weight: 650;
 }
 .sidebar-footer p {
@@ -432,7 +482,7 @@ svg {
 }
 .breadcrumb strong {
   font-weight: 550;
-  color: #536074;
+  color: var(--secondary-text);
 }
 .workspace-title {
   display: flex;
@@ -472,11 +522,11 @@ svg {
   padding: 10px 14px;
   font-size: 0.875rem;
   font-weight: 650;
-  background: #fff;
+  background: var(--surface);
   min-height: 42px;
 }
 .button:hover {
-  background: #f7f8fa;
+  background: var(--hover);
   border-color: #a8b1c0;
 }
 .assistant-toggle {
@@ -516,6 +566,14 @@ svg {
   background: #e3edf9;
   color: #316da7;
 }
+:root[data-theme='dark'] .mode-badge {
+  background: #392d22;
+  color: #f0b86e;
+}
+:root[data-theme='dark'] .mode-badge.live {
+  background: #182e47;
+  color: #8fc7fa;
+}
 .service-state {
   margin-left: auto;
   display: flex;
@@ -549,7 +607,7 @@ svg {
   color: var(--muted);
 }
 .view-tabs > button.selected {
-  color: var(--navy);
+  color: var(--text);
 }
 .view-tabs > button.selected:after {
   content: '';
@@ -565,10 +623,11 @@ svg {
   padding: 12px;
 }
 .panel {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 9px;
   overflow: hidden;
+  box-shadow: var(--panel-shadow);
 }
 .panel-heading {
   display: flex;
@@ -596,7 +655,7 @@ svg {
   border-radius: 4px;
 }
 .icon-button:hover {
-  background: #eef0f3;
+  background: var(--control);
 }
 .imaging-grid {
   display: grid;
@@ -688,7 +747,7 @@ svg {
 .volume-panel {
   display: flex;
   flex-direction: column;
-  background: #fff;
+  background: var(--surface);
 }
 .empty-state {
   min-height: 330px;
@@ -704,7 +763,7 @@ svg {
   width: 64px;
   display: grid;
   place-items: center;
-  background: #f2f4f7;
+  background: var(--surface-subtle);
   color: #8c99ad;
   border-radius: 16px;
   margin-bottom: 20px;
@@ -729,7 +788,7 @@ svg {
   min-height: 300px;
 }
 .volume-panel .empty-icon {
-  background: #eef1f6;
+  background: var(--control);
   color: #95a2b7;
   height: 84px;
   width: 84px;
@@ -824,7 +883,7 @@ svg {
 .assistant-context {
   padding: 18px;
   border-bottom: 1px solid var(--line);
-  background: #fafbfc;
+  background: var(--surface-subtle);
 }
 .assistant-context strong {
   display: block;
@@ -867,7 +926,7 @@ svg {
   position: absolute;
   right: 7px;
   bottom: 9px;
-  background: #eef0f4;
+  background: var(--control);
   color: #9ba6b7;
   border-radius: 5px;
   padding: 6px;
@@ -1224,8 +1283,8 @@ svg {
   padding: 0;
   border: 0;
   border-radius: 12px;
-  background: #fff;
-  color: var(--navy);
+  background: var(--surface);
+  color: var(--text);
 }
 .viewer-dialog::backdrop {
   background: rgb(6 12 24 / 0.82);

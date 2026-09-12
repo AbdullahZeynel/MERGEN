@@ -19,9 +19,13 @@
 6. **Sunum provası:** 10 oturum, tek analiz, tekrar istek, bağlantı kesintisi, servis yeniden başlama ve dosya bütünlüğü. Gerçek süre/bellek ölçümlerini kaydet.
 7. **MCP/chatbot:** ilk iki analiz modülü kararlı çalıştıktan sonra ortak servislere bağla.
 
+Canlı oturum, GPU worker, modül/hastalık bazlı demo kataloğu, tahmin/referans
+katmanları ve indirme formatlarının ayrıntılı uygulama sırası
+[`SYSTEM_SPRINTS.md`](SYSTEM_SPRINTS.md) belgesindedir.
+
 ## Kapsam sınırı
 
-Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu değildir. Arayüz, salt okunur demo API'si ve MCP yerelde çalışır; canlı model adaptörleri henüz uygulanmadı. Donanım ve hız bilgileri ölçülmedikçe varsayımdır. Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
+Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu değildir. Arayüz, salt okunur demo API'si ve MCP çalışır; canlı oturum/kuyruk temeli geliştirme dalındadır, model adaptörleri henüz uygulanmadı. Donanım ve hız bilgileri ölçülmedikçe varsayımdır. Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
 
 ## Taşıma kararı
 

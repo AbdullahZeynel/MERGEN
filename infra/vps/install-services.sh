@@ -23,14 +23,31 @@ fi
 echo "Using $python_bin ($("$python_bin" --version 2>&1))"
 id mergen >/dev/null 2>&1 || useradd --system --home-dir /srv/mergen --shell /usr/sbin/nologin mergen
 install -d -m 755 /srv/mergen/services/backend /srv/mergen/services/mcp
+install -d -m 700 -o mergen -g mergen /srv/mergen/runtime
 install -d -m 750 -o root -g mergen /etc/mergen
-install -m 644 "$repo_dir/backend/api.py" "$repo_dir/backend/requirements.txt" /srv/mergen/services/backend/
+install -m 644 \
+    "$repo_dir/backend/api.py" \
+    "$repo_dir/backend/archive_io.py" \
+    "$repo_dir/backend/cleanup.py" \
+    "$repo_dir/backend/control.py" \
+    "$repo_dir/backend/live_api.py" \
+    "$repo_dir/backend/live_contracts.py" \
+    "$repo_dir/backend/live_store.py" \
+    "$repo_dir/backend/run_control.py" \
+    "$repo_dir/backend/requirements.txt" \
+    /srv/mergen/services/backend/
 install -m 644 "$repo_dir/mcp/server.py" "$repo_dir/mcp/demo_store.py" /srv/mergen/services/mcp/
 "$python_bin" -m venv /srv/mergen/services/.venv
 /srv/mergen/services/.venv/bin/python -m pip install -r /srv/mergen/services/backend/requirements.txt
-install -m 644 "$repo_dir/infra/vps/mergen-api.service" "$repo_dir/infra/vps/mergen-mcp.service" /etc/systemd/system/
+install -m 644 \
+    "$repo_dir/infra/vps/mergen-api.service" \
+    "$repo_dir/infra/vps/mergen-mcp.service" \
+    "$repo_dir/infra/vps/mergen-control.service" \
+    "$repo_dir/infra/vps/mergen-cleanup.service" \
+    "$repo_dir/infra/vps/mergen-cleanup.timer" \
+    /etc/systemd/system/
 if [[ ! -e /etc/mergen/services.env ]]; then
     install -m 640 -o root -g mergen "$repo_dir/infra/vps/services.env.example" /etc/mergen/services.env
 fi
 systemctl daemon-reload
-echo 'Installed. Set MERGEN_DEMO_ROOT in /etc/mergen/services.env, then enable/start the services.'
+echo 'Installed. Configure /etc/mergen/services.env before enabling the services.'

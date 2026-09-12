@@ -1,0 +1,53 @@
+// MERGEN tailnet erişim politikası — ÖRNEK.
+// Bu dosya yalnızca etiketlerle çalışır; gerçek tailnet adı, hostname,
+// 100.x adresi veya e-posta buraya yazılmaz (bkz. AGENTS.md).
+// Tailscale admin konsolunda Access Controls bölümüne yapıştırılır.
+{
+	// Etiketleri kimin verebileceği. Kişisel tailnet'te sahip = admin.
+	"tagOwners": {
+		"tag:mergen-edge": ["autogroup:admin"],
+		"tag:mergen-gpu":  ["autogroup:admin"],
+	},
+
+	// Varsayılan: kural yoksa erişim yok. Aşağıdakiler tek tek açılır.
+	"acls": [
+		// GPU pull-worker -> VPS özel kontrol API'si. Tek uygulama portu.
+		{
+			"action": "accept",
+			"src":    ["tag:mergen-gpu"],
+			"proto":  "tcp",
+			"dst":    ["tag:mergen-edge:9100"],
+		},
+
+		// İnsan kullanıcı (sen) -> her iki sunucu, yönetim için.
+		{
+			"action": "accept",
+			"src":    ["autogroup:member"],
+			"dst":    ["tag:mergen-edge:*", "tag:mergen-gpu:*"],
+		},
+	],
+
+	// Tailscale SSH kullanılacaksa. "check" periyodik yeniden doğrulama ister.
+	// Klasik SSH tercih edilirse bu blok tamamen silinir.
+	"ssh": [
+		{
+			"action": "check",
+			"src":    ["autogroup:member"],
+			"dst":    ["tag:mergen-edge", "tag:mergen-gpu"],
+			"users":  ["autogroup:nonroot"],
+		},
+	],
+
+	// Politika kaydedilirken konsolda otomatik çalışır; başarısızsa kayıt reddedilir.
+	"tests": [
+		{
+			"src":    "tag:mergen-gpu",
+			"accept": ["tag:mergen-edge:9100"],
+			"deny":   ["tag:mergen-edge:22", "tag:mergen-edge:443", "tag:mergen-edge:9000"],
+		},
+		{
+			"src":    "tag:mergen-edge",
+			"deny":   ["tag:mergen-gpu:22", "tag:mergen-gpu:8081", "tag:mergen-gpu:8082"],
+		},
+	],
+}

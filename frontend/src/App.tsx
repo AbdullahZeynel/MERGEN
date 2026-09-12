@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Activity,
@@ -12,8 +12,10 @@ import {
   Link2Off,
   Menu,
   MessageSquare,
+  Moon,
   RefreshCw,
   Search,
+  Sun,
   ScanLine,
   X,
 } from 'lucide-react';
@@ -25,8 +27,16 @@ import { AssistantPanel } from './components/AssistantPanel';
 
 // Deferred until chatbot integration; keep the component for the next sprint.
 const assistantEnabled = false;
+type Theme = 'light' | 'dark';
+
+function initialTheme(): Theme {
+  const saved = window.localStorage.getItem('mergen-theme');
+  if (saved === 'light' || saved === 'dark') return saved;
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
 
 export default function App() {
+  const [theme, setTheme] = useState<Theme>(initialTheme);
   const [mode, setMode] = useState<SourceMode>('demo');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -35,6 +45,11 @@ export default function App() {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [mobileCases, setMobileCases] = useState(false);
   const closeAssistant = useCallback(() => setAssistantOpen(false), []);
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+    window.localStorage.setItem('mergen-theme', theme);
+  }, [theme]);
   const query = useQuery({
     queryKey: ['cases', mode],
     queryFn: ({ signal }) => (mode === 'demo' ? demoSource : liveSource).listCases(signal),
@@ -93,6 +108,16 @@ export default function App() {
           </div>
           <div className="topbar-right">
             <span className="prototype">Araştırma prototipi</span>
+            <button
+              className="theme-toggle"
+              type="button"
+              aria-label={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
+              aria-pressed={theme === 'dark'}
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+              <span>{theme === 'dark' ? 'Açık' : 'Koyu'}</span>
+            </button>
             <span className="team">
               ERGENEKON <span className="team-avatar">E</span>
             </span>

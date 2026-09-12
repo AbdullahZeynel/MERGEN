@@ -5,7 +5,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { makeCase } from './fixtures';
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  window.localStorage.clear();
+  delete document.documentElement.dataset.theme;
+  document.documentElement.style.removeProperty('color-scheme');
+});
 const cases = [makeCase('TEST-0001'), makeCase('TEST-0002')];
 function mount(payload: unknown = { version: 2, cases }) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
@@ -19,6 +24,17 @@ function mount(payload: unknown = { version: 2, cases }) {
 }
 
 describe('case workspace', () => {
+  it('switches theme and remembers the preference', async () => {
+    window.localStorage.setItem('mergen-theme', 'light');
+    const user = mount();
+    const toggle = screen.getByRole('button', { name: 'Koyu temaya geç' });
+    expect(document.documentElement).toHaveAttribute('data-theme', 'light');
+    await user.click(toggle);
+    expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    expect(window.localStorage.getItem('mergen-theme')).toBe('dark');
+    expect(toggle).toHaveAccessibleName('Açık temaya geç');
+  });
+
   it('switches case context and keeps the deferred assistant hidden', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });

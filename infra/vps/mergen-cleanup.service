@@ -1,0 +1,17 @@
+[Unit]
+Description=Remove expired MERGEN live sessions and recover stale jobs
+
+[Service]
+Type=oneshot
+User=mergen
+Group=mergen
+WorkingDirectory=/srv/mergen/services
+EnvironmentFile=/etc/mergen/services.env
+ExecStart=/srv/mergen/services/.venv/bin/python /srv/mergen/services/backend/cleanup.py
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/srv/mergen/runtime
+UMask=0077
+Environment=PYTHONDONTWRITEBYTECODE=1
