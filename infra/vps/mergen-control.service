@@ -1,14 +1,14 @@
 [Unit]
-Description=MERGEN demo API gateway
-After=network.target mergen-mcp.service
-Wants=mergen-mcp.service
+Description=MERGEN private GPU worker control API
+After=network-online.target tailscaled.service
+Wants=network-online.target
 
 [Service]
 User=mergen
 Group=mergen
 WorkingDirectory=/srv/mergen/services
 EnvironmentFile=/etc/mergen/services.env
-ExecStart=/srv/mergen/services/.venv/bin/python -m uvicorn backend.api:app --host 127.0.0.1 --port 9000 --limit-concurrency 40 --no-access-log
+ExecStart=/srv/mergen/services/.venv/bin/python /srv/mergen/services/backend/run_control.py
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true

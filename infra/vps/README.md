@@ -1,6 +1,9 @@
 # Frontend VPS dağıtımı
 
-Statik arayüz paketi, özel demo MCP ve API servislerinin kurulum dosyaları hazırdır. Gerçek VPS üzerinde SSH/deploy ve DNS/TLS doğrulaması henüz yapılmadı. Demo dosyaları VPS'te tutulur; Ubuntu'ya bağımlı değildir.
+Statik arayüz, özel demo MCP ve API mevcut VPS'te HTTPS üzerinden doğrulanmıştır.
+Demo dosyaları VPS'te tutulur; Ubuntu'ya bağımlı değildir. Canlı oturum ve worker
+kontrol servisleri bu geliştirme dalında eklenmiştir; henüz gerçek VPS'e kurulup GPU
+worker ile uçtan uca denenmemiştir.
 
 ## Paketi geliştirme makinesinde oluştur
 
@@ -35,7 +38,10 @@ caddy validate --config <CADDYFILE_YOLU> --adapter caddyfile
 # Ortam/ünite değişikliği ilk kurulumda daemon-reload ve servis restart gerektirir.
 ```
 
-`/api/*` özel loopback API'ye yönlenir; `/mcp*` ve eski `/demo/*` yolları 404 döner. MCP internete açılmaz. Diğer yollar `index.html` üzerinden açılır. Hash'li statik dosyalar uzun önbellek, vaka listesi no-store, demo varlıkları kısa özel önbellek kullanır.
+`/api/*` özel loopback API'ye yönlenir; `/mcp*`, `/internal/*` ve eski `/demo/*`
+yolları 404 döner. MCP ve worker kontrol API'si internete açılmaz. Diğer yollar
+`index.html` üzerinden açılır. Hash'li statik dosyalar uzun önbellek, vaka listesi
+no-store, demo varlıkları kısa özel önbellek kullanır.
 
 Dağıtım sonrası ana sayfa, `/api/demo/cases`, kesit/mesh/font/JS dosyaları ve `/api/health` durumunu kontrol edin. Hata varsa frontend için `rollback` çalıştırın. Caddy mevcut `current` yolunu okuduğundan yalnızca statik sürüm değişiminde servis restart gerekmez. Frontend rollback servis kodunu veya demo paketini geri almaz; bunları uyumlu sürümde tutun.
 
@@ -74,4 +80,35 @@ curl --fail http://127.0.0.1:9000/api/health
 python3 infra/vps/smoke-demo.py
 ```
 
-Yalnızca Caddy'nin HTTP/HTTPS portlarını internete açın; 9000/9010 loopback'te kalır. Caddy ayarını doğruladıktan sonra yükleyin. Henüz oturum doğrulaması yoktur: sadece yayımlanabilir demo vakaları sunulur. 5–10 kullanıcı sınırı bu kurulumun parçası değildir; API bağlantı limiti kullanıcı sayısı olarak sunulmaz. Gerçek Oracle ARM/VPS kurulumu ayrıca prova edilecektir.
+Yalnızca Caddy'nin HTTP/HTTPS portlarını internete açın; 9000/9010 loopback'te kalır.
+Caddy ayarını doğruladıktan sonra yükleyin. Gerçek Oracle ARM/VPS kurulumu ayrıca
+prova edilecektir.
+
+## Canlı oturum ve GPU worker kontrolü
+
+`/etc/mergen/services.env` içinde runtime yollarını ve limitleri ayarlayın. Ardından
+VPS'in Tailscale IPv4/IPv6 adresini `MERGEN_CONTROL_HOST` olarak yazın ve en az 32
+karakterlik rastgele `MERGEN_CONTROL_TOKEN` üretin. Gerçek değerler Git'e girmez.
+Worker kontrol servisi adresin Tailscale aralığında olduğunu doğrulamadan başlamaz.
+`MERGEN_LIVE_ACCESS_HASH`, sunumda kullanıcıya verilecek güçlü erişim kodunun
+SHA-256 özetidir. Kodun kendisi env dosyasına veya frontend paketine yazılmaz.
+
+```bash
+sudo systemctl enable --now mergen-cleanup.timer
+sudo systemctl enable --now mergen-control
+sudo systemctl status mergen-control mergen-cleanup.timer
+```
+
+`mergen-control` portu yalnız Tailscale arayüzünde dinler. Tailscale ACL ve işletim
+sistemi güvenlik duvarı ayrıca yalnız `tag:mergen-gpu` kaynağından TCP 9100'e izin
+vermelidir. Caddy bu portu veya `/internal/*` yollarını yayınlamaz. Token, Tailscale
+ACL'nin yerine geçmez; ikisi birlikte kullanılır.
+
+Canlı veriler `/srv/mergen/runtime` altında tutulur ve yedeklemeye dahil edilmez.
+Temizlik timer'ı her dakika 3 dakika hareketsiz kalan oturumları siler, lease'i
+düşen işleri en fazla yapılandırılmış deneme sayısına kadar tekrar kuyruğa alır.
+Mevcut demo verileri bu dizinin dışında kalır.
+
+Cloudflare üzerinde `/api/live/session` için IP bazlı kısa süreli istek sınırı
+uygulanmalıdır. Uygulamadaki 10 aktif oturum sınırı kapasiteyi korur; erişim kodu ve
+Cloudflare sınırı bu kapasitenin anonim isteklerle doldurulmasını zorlaştırır.

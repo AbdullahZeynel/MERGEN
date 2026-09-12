@@ -8,7 +8,10 @@
 		Referrer-Policy same-origin
 		X-Frame-Options DENY
 		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
-		Cache-Control "no-cache"
+	}
+	handle /api/live/* {
+		header Cache-Control "no-store"
+		reverse_proxy 127.0.0.1:9000
 	}
 	handle /api/* {
 		reverse_proxy 127.0.0.1:9000
@@ -24,7 +27,11 @@
 	handle /mcp* {
 		respond "Not found" 404
 	}
+	handle /internal/* {
+		respond "Not found" 404
+	}
 	handle {
+		header Cache-Control "no-cache"
 		try_files {path} /index.html
 		file_server
 	}
