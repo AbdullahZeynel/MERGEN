@@ -21,7 +21,10 @@ if __name__ == '__main__':
     assert health['demoMcp'] == 'ready' and health['liveAi'] in ('ready', 'not_connected')
     catalog = json.loads(read('/api/demo/catalog'))
     assert catalog['schemaVersion'] == 3 and catalog['collections']
-    selected = catalog['collections'][0]
+    selected = next(
+        collection for collection in catalog['collections']
+        if collection['module'] == 'imaging' and collection['disease'] == 'glioma'
+    )
     collection_base = (f'/api/demo/modules/{selected["module"]}'
                        f'/diseases/{selected["disease"]}/cases')
     manifest = json.loads(read(collection_base))
