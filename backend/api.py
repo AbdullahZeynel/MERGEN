@@ -146,6 +146,14 @@ async def collection_overlay(module: str, disease: str, case_id: str,
     }, 'image/png')
 
 
+@app.get('/api/demo/modules/{module}/diseases/{disease}/cases/{case_id}/report/{name}')
+async def collection_report(module: str, disease: str, case_id: str,
+                            name: Literal['result', 'explanation', 'input']):
+    return await asset_response('get_report', {
+        'module': module, 'disease': disease, 'case_id': case_id, 'name': name,
+    }, 'application/json')
+
+
 @app.get('/api/demo/modules/{module}/diseases/{disease}/cases/{case_id}/mesh')
 async def collection_mesh(module: str, disease: str, case_id: str):
     return await asset_response('get_mesh', {

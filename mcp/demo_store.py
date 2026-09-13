@@ -10,6 +10,8 @@ DEFAULT_MODULE = 'imaging'
 DEFAULT_DISEASE = 'glioma'
 COLLECTION_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 CASE_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$')
+# Genomik vakada okunabilecek JSON belgeleri; serbest dosya adı kabul edilmez.
+REPORT_NAMES = ('result', 'explanation', 'input')
 
 
 class DemoStore:
@@ -132,6 +134,11 @@ class DemoStore:
             mime = 'image/png'
         elif kind == 'mesh':
             relative = Path(case_id) / 'mesh_ensemble.json'
+            mime = 'application/json'
+        elif kind == 'report':
+            if layer not in REPORT_NAMES or layer not in case.get('reports', []):
+                return {'error': 'invalid'}
+            relative = Path(case_id) / f'{layer}.json'
             mime = 'application/json'
         else:
             return {'error': 'invalid'}
