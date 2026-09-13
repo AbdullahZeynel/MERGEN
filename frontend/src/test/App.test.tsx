@@ -98,6 +98,8 @@ describe('case workspace', () => {
   it('shows malformed and empty packages explicitly', async () => {
     mount({ version: 99, cases });
     expect(await screen.findByRole('alert')).toHaveTextContent('Demo paketi okunamadı');
+    // Durum satırı istek başarısızken hazır olduğunu iddia etmiyor.
+    expect(screen.getByText('Demo servisine ulaşılamadı')).toBeVisible();
   });
   it('shows a genuine empty archive', async () => {
     mount({ version: 2, cases: [] });
@@ -181,7 +183,7 @@ describe('genomik modülü', () => {
     expect((await screen.findAllByText('IDH1-R132H')).length).toBeGreaterThan(0);
     expect(await screen.findByText('%99.97')).toBeVisible();
     expect(screen.getByText('Patojenik')).toBeVisible();
-    expect(screen.getByText('VPS demo servisi hazır')).toBeVisible();
+    expect(screen.getByText('Demo vaka listesi alındı')).toBeVisible();
     expect(
       screen.getByText('Varyant tahmini ve model açıklaması tek çalışma alanında.'),
     ).toBeVisible();

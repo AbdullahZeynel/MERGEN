@@ -304,11 +304,21 @@ export default function App() {
                   ? 'Önceden hazırlanmış vaka verisi'
                   : 'Canlı veri bağlantısı bekleniyor'}
               </span>
-              <span className="service-state">
-                {mode === 'demo' ? (
-                  <><Database size={14} /> VPS demo servisi hazır</>
+              {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh/rapor
+                  istekleri ayrica hata verebilir, o yuzden metin liste diyor. */}
+              <span className="service-state" role="status">
+                {query.isPending ? (
+                  <><RefreshCw size={14} className="spin" /> Servis yanıtı bekleniyor</>
+                ) : query.isError ? (
+                  <>
+                    <Link2Off size={14} />{' '}
+                    {mode === 'demo' ? 'Demo servisine ulaşılamadı' : 'AI servisi bağlı değil'}
+                  </>
                 ) : (
-                  <><Link2Off size={14} /> AI servisi bağlı değil</>
+                  <>
+                    <Database size={14} />{' '}
+                    {mode === 'demo' ? 'Demo vaka listesi alındı' : 'Canlı vaka listesi alındı'}
+                  </>
                 )}
               </span>
             </div>
