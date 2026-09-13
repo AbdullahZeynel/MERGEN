@@ -172,14 +172,6 @@ svg {
   background: #d9293b;
   box-shadow: 0 5px 18px #d9293b22;
 }
-.rail-bottom {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-direction: column;
-  font-size: 0.75rem;
-}
 .app-body {
   flex: 1;
   min-width: 0;
@@ -210,31 +202,6 @@ svg {
   display: flex;
   align-items: center;
   gap: 32px;
-}
-.prototype {
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-.team {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  font-weight: 750;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.team-avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  background: var(--surface-subtle);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  font-size: 0.875rem;
 }
 .theme-toggle {
   min-height: 36px;
@@ -440,23 +407,6 @@ svg {
   color: var(--muted);
   line-height: 1.6;
   padding: 18px 0;
-}
-.sidebar-footer {
-  display: flex;
-  gap: 12px;
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
-  margin-top: auto;
-  color: var(--muted);
-}
-.sidebar-footer strong {
-  font-size: 0.75rem;
-  color: var(--secondary-text);
-  font-weight: 650;
-}
-.sidebar-footer p {
-  font-size: 0.7rem;
-  margin-top: 4px;
 }
 .workspace {
   flex: 1;
@@ -1110,13 +1060,6 @@ svg {
   .topbar-right {
     gap: 8px;
   }
-  .prototype {
-    display: none;
-  }
-  .team {
-    font-size: 0;
-    gap: 0;
-  }
   .wordmark {
     font-size: 1.1rem;
   }
@@ -1139,9 +1082,6 @@ svg {
     z-index: 20;
     box-shadow: 18px 0 40px #111a2c30;
     overflow: auto;
-  }
-  .sidebar-footer {
-    margin-top: 32px;
   }
   .mobile-only {
     display: inline-grid;
@@ -1204,17 +1144,12 @@ svg {
 }
 /* Regular controls remain readable; compact metadata never drops below 12px. */
 .small,
-.prototype,
-.team,
-.rail-bottom,
 .sidebar-description,
 .search-box input,
 .source-switch button,
 .case-item-text > span,
 .case-item-text .status-pill,
 .list-label select,
-.sidebar-footer strong,
-.sidebar-footer p,
 .breadcrumb,
 .context-bar,
 .service-state,
@@ -1269,9 +1204,6 @@ svg {
 @media (max-width: 760px) {
   .wordmark > span {
     display: none;
-  }
-  .team {
-    font-size: 0;
   }
   .viewer-controls {
     align-items: stretch;

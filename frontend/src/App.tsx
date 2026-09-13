@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Activity,
   ArrowRight,
   ChevronRight,
   Database,
@@ -116,10 +115,6 @@ export default function App() {
             <MessageSquare size={21} />
           </button>
         )}
-        <div className="rail-bottom">
-          <Activity size={21} />
-          <span>3T</span>
-        </div>
       </nav>
       <div className="app-body">
         <header className="topbar">
@@ -127,7 +122,6 @@ export default function App() {
             MERGEN<span>ONKOLOJİ KARAR DESTEĞİ</span>
           </div>
           <div className="topbar-right">
-            <span className="prototype">Araştırma prototipi</span>
             <button
               className="theme-toggle"
               type="button"
@@ -138,9 +132,6 @@ export default function App() {
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
               <span>{theme === 'dark' ? 'Açık' : 'Koyu'}</span>
             </button>
-            <span className="team">
-              ERGENEKON <span className="team-avatar">E</span>
-            </span>
           </div>
         </header>
         <div className="app-content">
@@ -258,13 +249,6 @@ export default function App() {
                   {query.isError ? 'Vaka listesi alınamadı.' : 'Eşleşen vaka bulunamadı.'}
                 </p>
               )}
-            </div>
-            <div className="sidebar-footer">
-              <Database size={18} />
-              <div>
-                <strong>{mode === 'demo' ? 'Hazır vaka arşivi' : 'Canlı analiz'}</strong>
-                <p>{mode === 'demo' ? 'Önceden işlenmiş veriler' : 'Servis bağlantısı gerekli'}</p>
-              </div>
             </div>
           </aside>
           <main id="workspace" className="workspace" tabIndex={-1}>
