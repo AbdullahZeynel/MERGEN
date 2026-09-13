@@ -67,12 +67,12 @@ export default function App() {
   });
   const query = module === 'imaging' ? imagingQuery : genomicsQuery;
   const cases = query.data ?? [];
-  const record = cases.find((c) => c.id === selectedId) ?? cases[0] ?? null;
   const filtered = cases.filter(
     (c) =>
       c.id.toLowerCase().includes(search.toLowerCase().trim()) &&
       (filter === 'all' || c.status === filter),
   );
+  const record = filtered.find((c) => c.id === selectedId) ?? filtered[0] ?? null;
   const genomicsRecord = module === 'genomics' ? (record as GenomicsCase | null) : null;
   const changeMode = (value: SourceMode) => {
     setMode(value);
@@ -286,7 +286,9 @@ export default function App() {
                 <h2>{record?.id ?? 'Vaka çalışma alanı'}</h2>
                 <p>
                   {record
-                    ? 'Görüntüler ve analiz sonuçları tek çalışma alanında.'
+                    ? module === 'imaging'
+                      ? 'Görüntüler ve analiz sonuçları tek çalışma alanında.'
+                      : 'Varyant tahmini ve model açıklaması tek çalışma alanında.'
                     : 'Vaka verileri hazır olduğunda burada görüntülenir.'}
                 </p>
               </div>
@@ -311,7 +313,11 @@ export default function App() {
                   : 'Canlı veri bağlantısı bekleniyor'}
               </span>
               <span className="service-state">
-                <Link2Off size={14} /> AI servisi bağlı değil
+                {mode === 'demo' ? (
+                  <><Database size={14} /> VPS demo servisi hazır</>
+                ) : (
+                  <><Link2Off size={14} /> AI servisi bağlı değil</>
+                )}
               </span>
             </div>
             <div className="content-with-assistant">

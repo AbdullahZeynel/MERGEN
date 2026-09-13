@@ -70,6 +70,21 @@ export const genomicsResultSchema = z.object({
   features: z.record(z.string(), z.number()),
   featureOrder: z.array(z.string()).min(1),
   notes: z.array(z.string()),
+}).superRefine((item, ctx) => {
+  const featureNames = Object.keys(item.features);
+  if (
+    new Set(item.featureOrder).size !== item.featureOrder.length ||
+    featureNames.length !== item.featureOrder.length ||
+    featureNames.some((name) => !item.featureOrder.includes(name))
+  )
+    ctx.addIssue({ code: 'custom', message: 'Özellik sırası sonuç özellikleriyle uyuşmuyor.' });
+
+  const expectedClass =
+    item.prediction.pathogenicityProbability >= item.prediction.decisionThreshold
+      ? 'pathogenic'
+      : 'benign';
+  if (item.prediction.class !== expectedClass)
+    ctx.addIssue({ code: 'custom', message: 'Tahmin sınıfı olasılık ve eşikle uyuşmuyor.' });
 });
 export type GenomicsResult = z.infer<typeof genomicsResultSchema>;
 
@@ -93,6 +108,16 @@ export const genomicsExplanationSchema = z
       item.baseValue + Object.values(item.contributions).reduce((a, b) => a + b, 0);
     if (Math.abs(total - item.rawMargin) > Math.max(item.additivityTolerance, 1e-4))
       ctx.addIssue({ code: 'custom', message: 'SHAP toplamsallığı sağlanmıyor.' });
+    const seen = new Set<string>();
+    for (const feature of item.topFeatures) {
+      if (seen.has(feature.feature) || !(feature.feature in item.contributions)) {
+        ctx.addIssue({ code: 'custom', message: 'SHAP özellik listesi tutarsız.' });
+        continue;
+      }
+      seen.add(feature.feature);
+      if (Math.abs(item.contributions[feature.feature] - feature.contribution) > 1e-9)
+        ctx.addIssue({ code: 'custom', message: 'SHAP katkı değeri tutarsız.' });
+    }
   });
 export type GenomicsExplanation = z.infer<typeof genomicsExplanationSchema>;
 
@@ -109,16 +134,30 @@ export async function listGenomicsCases(signal?: AbortSignal): Promise<GenomicsC
 }
 
 export async function loadGenomicsReport(
-  id: string,
+  record: GenomicsCase,
   signal?: AbortSignal,
 ): Promise<{ result: GenomicsResult; explanation: GenomicsExplanation }> {
   const [rawResult, rawExplanation] = await Promise.all([
-    okuJson(`${collectionBase}/${encodeURIComponent(id)}/report/result`, signal),
-    okuJson(`${collectionBase}/${encodeURIComponent(id)}/report/explanation`, signal),
+    okuJson(`${collectionBase}/${encodeURIComponent(record.id)}/report/result`, signal),
+    okuJson(`${collectionBase}/${encodeURIComponent(record.id)}/report/explanation`, signal),
   ]);
   const result = genomicsResultSchema.safeParse(rawResult);
   const explanation = genomicsExplanationSchema.safeParse(rawExplanation);
   if (!result.success || !explanation.success)
     throw new Error('Genomik sonuç beklenen biçimde değil.');
+  if (
+    result.data.variant.gene !== record.gene ||
+    result.data.variant.proteinChange !== record.proteinChange ||
+    result.data.modelId !== record.modelId ||
+    result.data.modelVersion !== record.modelVersion
+  )
+    throw new Error('Genomik sonuç seçilen vaka kaydıyla eşleşmiyor.');
+  const resultFeatures = Object.keys(result.data.features);
+  const explanationFeatures = Object.keys(explanation.data.contributions);
+  if (
+    resultFeatures.length !== explanationFeatures.length ||
+    resultFeatures.some((name) => !(name in explanation.data.contributions))
+  )
+    throw new Error('Genomik sonuç ile SHAP açıklaması eşleşmiyor.');
   return { result: result.data, explanation: explanation.data };
 }

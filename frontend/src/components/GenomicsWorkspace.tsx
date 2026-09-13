@@ -9,7 +9,7 @@ const isaretli = (deger: number) => `${deger >= 0 ? '+' : '−'}${Math.abs(deger
 export function GenomicsWorkspace({ record }: { record: GenomicsCase }) {
   const query = useQuery({
     queryKey: ['genomics-report', record.id],
-    queryFn: ({ signal }) => loadGenomicsReport(record.id, signal),
+    queryFn: ({ signal }) => loadGenomicsReport(record, signal),
   });
 
   if (query.isPending)
