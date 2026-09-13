@@ -72,7 +72,15 @@ sudo env PYTHON_BIN=/usr/bin/python3.12 bash infra/vps/install-services.sh
 
 Betik `mergen` servis kullanıcısını ve `/srv/mergen/services` altındaki ayrı venv'i hazırlar; sistem Python'una paket kurmaz. Servisleri otomatik başlatmaz. Güncelleme mevcut servis dosyalarını değiştirir; bakım sırasında iki servisi durdurup kurulumu uygulayın. Bu ilk kurulum betiği servis kodunda atomik sürüm/rollback sağlamaz; güncellemeden önce mevcut servis dizinini yedekleyin.
 
-Geliştirme makinesinde [demo paketini](../../docs/DEMO_SERVICES.md) üretin. `.local/demo-v2` dizinini ayrı olarak VPS'te `/srv/mergen/demo-v2` yoluna rsync/SCP ile taşıyın; kopyalamadan önce/sonra checksum doğrulayın. Dizin `mergen` kullanıcısı tarafından okunabilmeli, Caddy'nin `current/shared` dizinleri altında olmamalıdır. `/etc/mergen/services.env` içindeki `MERGEN_DEMO_ROOT` değerini bu VPS dizinine ayarlayın. Örnek dosyada gerçek makine bilgisi yoktur.
+Geliştirme makinesinde [demo paketini](../../docs/DEMO_SERVICES.md) üretin.
+`.local/demo-v3` dizinini ayrı olarak VPS'te `/srv/mergen/demo-v3` yoluna
+rsync/SCP ile taşıyın; kopyalamadan önce/sonra checksum doğrulayın. Dizin
+`mergen` kullanıcısı tarafından okunabilmeli, Caddy'nin `current/shared`
+dizinleri altında olmamalıdır. `/etc/mergen/services.env` içindeki
+`MERGEN_DEMO_ROOT` değerini `/srv/mergen/demo-v3` olarak ayarlayın. Örnek dosyada
+gerçek makine bilgisi yoktur. Kod güncellemesi eski v2 paketi okumaya devam eder;
+v3 pakete geçiş yalnız bu ortam değişkeni değiştirilip MCP yeniden başlatıldığında
+gerçekleşir.
 
 ```bash
 sudo systemctl enable --now mergen-mcp mergen-api
