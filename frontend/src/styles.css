@@ -145,23 +145,15 @@ svg {
   gap: 16px;
 }
 .brand-mark {
-  position: relative;
-  text-decoration: none;
-  color: white;
-  font-size: 2rem;
-  font-weight: 850;
-  letter-spacing: -5px;
-  padding-right: 4px;
-  margin-bottom: 45px;
-  line-height: 1;
+  display: block;
+  width: 56px;
+  margin-bottom: 32px;
+  line-height: 0;
 }
-.brand-mark span {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #ed3047;
-  right: -7px;
-  bottom: 2px;
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .rail-button {
   border-radius: 10px;
@@ -1108,8 +1100,8 @@ svg {
     height: 40px;
   }
   .brand-mark {
-    font-size: 1.6rem;
-    margin-bottom: 28px;
+    width: 42px;
+    margin-bottom: 18px;
   }
   .topbar {
     height: 72px;

@@ -96,7 +96,7 @@ export default function App() {
       </a>
       <nav className="rail" aria-label="Ana gezinme">
         <a href="#workspace" className="brand-mark" aria-label="MERGEN çalışma alanı">
-          M<span />
+          <img src="/ergenekon-logo.png" alt="" width={192} height={88} />
         </a>
         <button
           className="rail-button active"

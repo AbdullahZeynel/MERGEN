@@ -14,6 +14,7 @@ Dosyanın Git'te olmaması makinede olmadığı anlamına gelmez. İddiada bulun
 | Genomik sonuçlar | `models/VeriOdakliCozum/sonuclar/` |
 | CGGA gen frekans tablosu (türetilmiş) | `models/VeriOdakliCozum/modeller/cgga_gen_frekans.v1.json` |
 | ESM-2 | `facebook/esm2_t30_150M_UR50D`; Hugging Face cache veya yapılandırılmış model yolu |
+| Takım logosu kaynağı | `~/Assets/Sosyal Medya PP 3 (2).png` (Git dışı; türevleri `frontend/public/` içinde izlenir) |
 
 ESM varsayılan cache'i kullanıcı dizinindeki `.cache/huggingface/hub/` altındadır; `HF_HOME` / `HF_HUB_CACHE` gibi ayarlar farklı bir yere yönlendirebilir. Cache'i repoya kopyalamayın.
 
@@ -31,6 +32,12 @@ CGGA WESeq_286 dosyasından üretilir; kaynağın sha256'sı ve örneklem sayıs
 tablonun içinde tutulur. Tablo Git dışıdır, ona ait sağlama toplamı ise Git'te
 izlenen `models/VeriOdakliCozum/semalar/ozellik_semasi.v1.json` dosyasında
 kayıtlıdır. Çıkarım adaptörü tablo yoksa sıfır frekans varsaymaz, hata verir.
+
+Arayüzdeki `frontend/public/ergenekon-logo.png` ve `frontend/public/favicon.png`
+dosyaları kaynak logodan türetilmiştir; kaynak siyah zemin üzerine beyaz kartaldır
+ve alfa kanalı yoktur. Türetme `python frontend/scripts/prepare_logo.py "<kaynak>"`
+ile tekrarlanır: parlaklık kanalı alfaya taşınır, RGB beyaza sabitlenir. Kaynak
+dosya repoya kopyalanmaz.
 
 Yeni makinede bu dosyalar ayrıca sağlanmalı. Kaynak URL'si, lisans, sürüm ve hash doğrulandıktan sonra varlık manifestine kaydedilmeli; eksik bilgi uydurulmamalı. Model servisi paketlenirken bu manifest tamamlanacak.
 
