@@ -74,8 +74,10 @@ describe('case workspace', () => {
       'processing',
     );
     expect(screen.getByText('Eşleşen vaka bulunamadı.')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Genomik analiz' }));
-    expect(screen.getByRole('heading', { name: 'Bu vakaya ait genomik sonuç yok' })).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Bu vakanın varyantı' }));
+    expect(
+      screen.getByRole('heading', { name: 'Bu görüntü vakasının varyant kaydı yok' }),
+    ).toBeVisible();
   });
   it('shows malformed and empty packages explicitly', async () => {
     mount({ version: 99, cases });
@@ -196,5 +198,39 @@ describe('genomik modülü', () => {
     await user.click(screen.getByRole('button', { name: 'Görüntü' }));
     expect((await screen.findAllByText('TEST-0001')).length).toBeGreaterThan(0);
     expect(screen.queryByText('IDH1-R132H')).toBeNull();
+  });
+});
+
+describe('modül karışıklığı', () => {
+  it('görüntü vakasının boş varyant sekmesi genomik modülüne geçirir', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/modules/genomics/') && url.endsWith('/report/result'))
+        return { ok: true, json: async () => makeGenomicsResult() };
+      if (url.includes('/modules/genomics/') && url.endsWith('/report/explanation'))
+        return { ok: true, json: async () => makeGenomicsExplanation() };
+      if (url.includes('/modules/genomics/'))
+        return {
+          ok: true,
+          json: async () => ({
+            schemaVersion: 3,
+            module: 'genomics',
+            disease: 'glioma-variant-pathogenicity',
+            decisionThreshold: 0.5,
+            cases: [makeGenomicsCase()],
+          }),
+        };
+      return { ok: true, json: async () => ({ version: 2, cases }) };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    render(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>,
+    );
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Bu vakanın varyantı' }));
+    await user.click(screen.getByRole('button', { name: /Genomik vakalara geç/ }));
+    expect((await screen.findAllByText('IDH1-R132H')).length).toBeGreaterThan(0);
   });
 });

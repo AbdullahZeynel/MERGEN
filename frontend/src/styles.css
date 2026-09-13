@@ -1525,12 +1525,12 @@ svg {
   font-size: 0.85rem;
 }
 .genomics-class.pathogenic {
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
-  color: var(--accent);
+  background: color-mix(in srgb, var(--red) 14%, transparent);
+  color: var(--red);
 }
 .genomics-class.benign {
-  background: color-mix(in srgb, var(--ok, #16a34a) 16%, transparent);
-  color: var(--ok, #16a34a);
+  background: color-mix(in srgb, #4c997b 18%, transparent);
+  color: #398068;
 }
 .genomics-shap {
   border-top: 1px solid var(--line);
@@ -1557,8 +1557,9 @@ svg {
 .shap-bar {
   display: block;
   height: 8px;
+  min-width: 40px;
   border-radius: 999px;
-  background: var(--line);
+  background: var(--control);
   overflow: hidden;
 }
 .shap-bar i {
@@ -1567,10 +1568,10 @@ svg {
   border-radius: 999px;
 }
 .shap-bar i.positive {
-  background: var(--accent);
+  background: var(--red);
 }
 .shap-bar i.negative {
-  background: var(--muted);
+  background: var(--secondary-text);
 }
 .shap-value {
   font-variant-numeric: tabular-nums;

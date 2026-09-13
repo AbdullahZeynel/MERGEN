@@ -331,7 +331,7 @@ export default function App() {
                         className={view === 'genomics' ? 'selected' : ''}
                         onClick={() => setView('genomics')}
                       >
-                        <Dna size={18} /> Genomik analiz
+                        <Dna size={18} /> Bu vakanın varyantı
                       </button>
                     </>
                   )}
@@ -400,9 +400,18 @@ export default function App() {
                       </span>
                       <span className="small muted">XGBoost</span>
                     </div>
-                    <EmptyState icon={<Dna size={34} />} title="Bu vakaya ait genomik sonuç yok">
-                      Bu görüntü vakasıyla eşleştirilmiş varyant kaydı bulunmuyor. Sonuç geldiğinde
-                      varyant, model skoru ve mevcut açıklamalar burada gösterilecek.
+                    <EmptyState
+                      icon={<Dna size={34} />}
+                      title="Bu görüntü vakasının varyant kaydı yok"
+                      action={
+                        <button className="ghost" onClick={() => changeModule('genomics')}>
+                          Genomik vakalara geç <ArrowRight size={16} />
+                        </button>
+                      }
+                    >
+                      Bu MR vakasıyla eşleştirilmiş bir varyant bulunmuyor. Hazır genomik
+                      vakalar kenar çubuğundaki <strong>Genomik</strong> modülünde; onlar ayrı
+                      kayıtlardır, bu hastaya ait değildir.
                     </EmptyState>
                     <div className="notice">
                       <Info size={16} />
