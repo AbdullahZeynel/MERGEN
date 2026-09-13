@@ -27,6 +27,27 @@ planının en büyük bağlantılı bölgesinden türetilir. Bu yaklaşık dış
 sağlıklı doku/korteks segmentasyonu değildir. ET, kaynak etiketindeki *enhancing
 tumor* kısaltmasıdır; arayüzde “Kontrast tutan tümör” yazılır.
 
+Değerlendirme sırasında kaydedilmiş olasılık önbelleklerinden ek vaka hazırlamak
+için `materialize_eval_cases.py` kullanılır. Betik model çalıştırmaz veya ağırlık
+aramaz; `results_eval/optimal_weights.json` içindeki kayıtlı validation
+ağırlıklarını uygular. Cache, veri, ara sonuç ve demo paketi Git dışında kalır.
+Yayımlanacak vakalar `prepare_demo.py --cases ...` ile açıkça seçilir;
+`--all-cases` yalnız kaynak dizindeki bütün vakalar gözden geçirildiyse kullanılır.
+
+```bash
+models/imaging/.venv/bin/python models/imaging/materialize_eval_cases.py \
+  --cache models/imaging/results_eval/_probs_cache \
+  --dataset models/imaging/UCSF-PDGM \
+  --weights models/imaging/results_eval/optimal_weights.json \
+  --output .local/eval-demo-source \
+  --cases UCSF-PDGM-0026 UCSF-PDGM-0056
+
+models/imaging/.venv/bin/python frontend/scripts/prepare_demo.py \
+  --source .local/eval-demo-source \
+  --output .local/demo-v3-expanded \
+  --all-cases
+```
+
 Üç ayrı terminalde, repo kökünden:
 
 ```bash

@@ -27,12 +27,23 @@ def overlay_image(mask: np.ndarray) -> Image.Image:
     return Image.fromarray(rgba, mode='RGBA')
 
 
-def prepare(source: Path, output: Path) -> int:
+DEFAULT_CASES = ("UCSF-PDGM-0004", "UCSF-PDGM-0007")
+
+
+def selected_cases(source: Path, cases: list[str] | None, all_cases: bool) -> list[str]:
+    if cases and all_cases:
+        raise ValueError('Use either explicit cases or all cases, not both.')
+    if all_cases:
+        return sorted(path.name for path in source.iterdir() if path.is_dir())
+    return list(cases or DEFAULT_CASES)
+
+
+def prepare(source: Path, output: Path, cases: list[str] | None = None,
+            all_cases: bool = False) -> int:
     if output.exists():
         raise ValueError('Output already exists; choose a new directory.')
     records = []
-    # Only the two previously reviewed public demo cases are exported.
-    for case_id in ("UCSF-PDGM-0004", "UCSF-PDGM-0007"):
+    for case_id in selected_cases(source, cases, all_cases):
         source_file = source / case_id / "flair.npz"
         if not source_file.is_file():
             continue
@@ -136,5 +147,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, default=REPO / "models/imaging/results")
     parser.add_argument("--output", type=Path, default=REPO / ".local/demo-v3")
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--cases", nargs='+', metavar='CASE_ID',
+                           help="explicit reviewed cases to publish")
+    selection.add_argument("--all-cases", action='store_true',
+                           help="publish every prepared case under --source")
     args = parser.parse_args()
-    prepare(args.source, args.output)
+    prepare(args.source, args.output, args.cases, args.all_cases)
