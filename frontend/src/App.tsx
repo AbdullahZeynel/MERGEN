@@ -19,9 +19,11 @@ import {
   ScanLine,
   X,
 } from 'lucide-react';
+import { listGenomicsCases, type GenomicsCase } from './data/genomics';
 import { demoSource, liveSource } from './data/source';
-import { statusLabels, type SourceMode } from './data/contracts';
+import { statusLabels, type SourceMode, type CaseRecord } from './data/contracts';
 import { EmptyState } from './components/EmptyState';
+import { GenomicsWorkspace } from './components/GenomicsWorkspace';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 
@@ -42,6 +44,9 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
   const [view, setView] = useState<'imaging' | 'genomics'>('imaging');
+  // Modül, vaka listesinin kaynağını değiştirir. Görüntü ve genomik kayıtlar
+  // bağımsızdır; modül değişiminde seçim ve arama sıfırlanır.
+  const [module, setModule] = useState<'imaging' | 'genomics'>('imaging');
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [mobileCases, setMobileCases] = useState(false);
   const closeAssistant = useCallback(() => setAssistantOpen(false), []);
@@ -50,10 +55,17 @@ export default function App() {
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem('mergen-theme', theme);
   }, [theme]);
-  const query = useQuery({
+  const imagingQuery = useQuery({
     queryKey: ['cases', mode],
     queryFn: ({ signal }) => (mode === 'demo' ? demoSource : liveSource).listCases(signal),
+    enabled: module === 'imaging',
   });
+  const genomicsQuery = useQuery({
+    queryKey: ['genomics-cases', mode],
+    queryFn: ({ signal }) => listGenomicsCases(signal),
+    enabled: module === 'genomics' && mode === 'demo',
+  });
+  const query = module === 'imaging' ? imagingQuery : genomicsQuery;
   const cases = query.data ?? [];
   const record = cases.find((c) => c.id === selectedId) ?? cases[0] ?? null;
   const filtered = cases.filter(
@@ -61,12 +73,20 @@ export default function App() {
       c.id.toLowerCase().includes(search.toLowerCase().trim()) &&
       (filter === 'all' || c.status === filter),
   );
+  const genomicsRecord = module === 'genomics' ? (record as GenomicsCase | null) : null;
   const changeMode = (value: SourceMode) => {
     setMode(value);
     setSelectedId(null);
     setSearch('');
     setFilter('all');
     setView('imaging');
+  };
+  const changeModule = (value: 'imaging' | 'genomics') => {
+    setModule(value);
+    setSelectedId(null);
+    setSearch('');
+    setFilter('all');
+    setView(value === 'genomics' ? 'genomics' : 'imaging');
   };
 
   return (
@@ -157,6 +177,23 @@ export default function App() {
                 Canlı analiz
               </button>
             </div>
+            <div className="source-switch segmented" aria-label="Modül">
+              <button
+                className={module === 'imaging' ? 'selected' : ''}
+                aria-pressed={module === 'imaging'}
+                onClick={() => changeModule('imaging')}
+              >
+                Görüntü
+              </button>
+              <button
+                className={module === 'genomics' ? 'selected' : ''}
+                aria-pressed={module === 'genomics'}
+                onClick={() => changeModule('genomics')}
+                disabled={mode !== 'demo'}
+              >
+                Genomik
+              </button>
+            </div>
             <label className="search-box">
               <Search size={17} />
               <span className="sr-only">Vaka ara</span>
@@ -202,7 +239,11 @@ export default function App() {
                     </span>
                     <span className="case-item-text">
                       <strong>{c.id}</strong>
-                      <span>MR görüntüleme</span>
+                      <span>
+                        {module === 'genomics'
+                          ? `${(c as GenomicsCase).gene} ${(c as GenomicsCase).proteinChange}`
+                          : 'MR görüntüleme'}
+                      </span>
                       <span className="status-pill">
                         <span />
                         {statusLabels[c.status]}
@@ -276,20 +317,29 @@ export default function App() {
             <div className="content-with-assistant">
               <div className="analysis-content">
                 <div className="view-tabs" aria-label="Analiz görünümü">
-                  <button
-                    aria-pressed={view === 'imaging'}
-                    className={view === 'imaging' ? 'selected' : ''}
-                    onClick={() => setView('imaging')}
-                  >
-                    <ScanLine size={18} /> Görüntüleme
-                  </button>
-                  <button
-                    aria-pressed={view === 'genomics'}
-                    className={view === 'genomics' ? 'selected' : ''}
-                    onClick={() => setView('genomics')}
-                  >
-                    <Dna size={18} /> Genomik analiz
-                  </button>
+                  {module === 'imaging' && (
+                    <>
+                      <button
+                        aria-pressed={view === 'imaging'}
+                        className={view === 'imaging' ? 'selected' : ''}
+                        onClick={() => setView('imaging')}
+                      >
+                        <ScanLine size={18} /> Görüntüleme
+                      </button>
+                      <button
+                        aria-pressed={view === 'genomics'}
+                        className={view === 'genomics' ? 'selected' : ''}
+                        onClick={() => setView('genomics')}
+                      >
+                        <Dna size={18} /> Genomik analiz
+                      </button>
+                    </>
+                  )}
+                  {module === 'genomics' && (
+                    <span className="view-tabs-label">
+                      <Dna size={18} /> Varyant patojenite
+                    </span>
+                  )}
                   <button
                     className="refresh"
                     aria-label="Vaka verilerini yenile"
@@ -332,8 +382,16 @@ export default function App() {
                       Bu veri kaynağında görüntülenecek vaka bulunmuyor.
                     </EmptyState>
                   </div>
+                ) : genomicsRecord ? (
+                  <GenomicsWorkspace
+                    key={`${mode}:${genomicsRecord.id}`}
+                    record={genomicsRecord}
+                  />
                 ) : view === 'imaging' ? (
-                  <ImagingWorkspace key={`${mode}:${record.id}`} record={record} />
+                  <ImagingWorkspace
+                    key={`${mode}:${record.id}`}
+                    record={record as CaseRecord}
+                  />
                 ) : (
                   <section className="panel genomics-panel">
                     <div className="panel-heading">

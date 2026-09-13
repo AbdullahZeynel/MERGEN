@@ -3,7 +3,12 @@ import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
-import { makeCase } from './fixtures';
+import {
+  makeCase,
+  makeGenomicsCase,
+  makeGenomicsExplanation,
+  makeGenomicsResult,
+} from './fixtures';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -120,5 +125,76 @@ describe('case workspace', () => {
     await user.click(reference);
     expect(screen.queryByAltText('Ensemble tahmin maskesi')).not.toBeInTheDocument();
     expect(screen.getByAltText('Referans segmentasyon maskesi')).toBeVisible();
+  });
+});
+
+describe('genomik modülü', () => {
+  const cevap = (payload: unknown) => ({ ok: true, json: async () => payload });
+  const genomicsManifest = {
+    schemaVersion: 3,
+    module: 'genomics',
+    disease: 'glioma-variant-pathogenicity',
+    decisionThreshold: 0.5,
+    cases: [makeGenomicsCase()],
+  };
+
+  function mountBoth(overrides: Record<string, unknown> = {}) {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/modules/genomics/') && url.endsWith('/report/result'))
+        return cevap(overrides.result ?? makeGenomicsResult());
+      if (url.includes('/modules/genomics/') && url.endsWith('/report/explanation'))
+        return cevap(overrides.explanation ?? makeGenomicsExplanation());
+      if (url.includes('/modules/genomics/')) return cevap(genomicsManifest);
+      return cevap({ version: 2, cases });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+    render(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>,
+    );
+    return { user: userEvent.setup(), fetchMock };
+  }
+
+  it('modül değişince genomik vakayı ve sonucu gösterir', async () => {
+    const { user } = mountBoth();
+    await user.click(screen.getByRole('button', { name: 'Genomik' }));
+    expect((await screen.findAllByText('IDH1-R132H')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('%99.97')).toBeVisible();
+    expect(screen.getByText('Patojenik')).toBeVisible();
+    // Görüntü vakası artık listede değil: iki modül birbirine karışmaz.
+    expect(screen.queryByText('TEST-0001')).toBeNull();
+  });
+
+  it('SHAP katkılarını margin uzayı etiketiyle gösterir', async () => {
+    const { user } = mountBoth();
+    await user.click(screen.getByRole('button', { name: 'Genomik' }));
+    expect(await screen.findByText(/ham margin \(log-odds\)/)).toBeVisible();
+    expect(screen.getByText('cgga_missense_frekans')).toBeVisible();
+    expect(screen.getByText('+2.000')).toBeVisible();
+  });
+
+  it('adaptörün notlarını kullanıcıya taşır', async () => {
+    const { user } = mountBoth();
+    await user.click(screen.getByRole('button', { name: 'Genomik' }));
+    expect(await screen.findByText(/cosmic_frekans_log eğitimde sabit/)).toBeVisible();
+  });
+
+  it('bozuk sonucu göstermez, hata durumuna düşer', async () => {
+    const { user } = mountBoth({ result: { ...makeGenomicsResult(), mode: 'live' } });
+    await user.click(screen.getByRole('button', { name: 'Genomik' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Genomik sonuç okunamadı' }),
+    ).toBeVisible();
+  });
+
+  it('görüntü modülüne dönünce vaka listesi geri gelir', async () => {
+    const { user } = mountBoth();
+    await user.click(screen.getByRole('button', { name: 'Genomik' }));
+    expect((await screen.findAllByText('IDH1-R132H')).length).toBeGreaterThan(0);
+    await user.click(screen.getByRole('button', { name: 'Görüntü' }));
+    expect((await screen.findAllByText('TEST-0001')).length).toBeGreaterThan(0);
+    expect(screen.queryByText('IDH1-R132H')).toBeNull();
   });
 });
