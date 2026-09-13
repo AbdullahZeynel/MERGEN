@@ -80,7 +80,11 @@ export function GenomicsWorkspace({ record }: { record: GenomicsCase }) {
       <div className="genomics-shap">
         <div className="panel-heading">
           <span>En etkili özellikler</span>
-          <span className="small muted">ham margin (log-odds) · taban {explanation.baseValue.toFixed(3)}</span>
+          {/* Katkilarin hangi uzayda oldugu ve toplami tek satirda. */}
+          <span className="small muted">
+            log-odds · taban {explanation.baseValue.toFixed(3)} · margin{' '}
+            {explanation.rawMargin.toFixed(3)}
+          </span>
         </div>
         <ul>
           {explanation.topFeatures.map((f) => (
@@ -96,10 +100,6 @@ export function GenomicsWorkspace({ record }: { record: GenomicsCase }) {
             </li>
           ))}
         </ul>
-        <p className="small muted">
-          Katkılar olasılık değil, modelin ham margin çıktısı üzerindedir; toplamları taban
-          değerle birlikte margini verir ({explanation.rawMargin.toFixed(3)}).
-        </p>
       </div>
 
       {result.notes.length > 0 && (
@@ -115,8 +115,8 @@ export function GenomicsWorkspace({ record }: { record: GenomicsCase }) {
       <div className="notice">
         <Info size={16} />
         <span>
-          Kamuya açık referans varyant; hasta verisi değildir ve görüntü vakalarıyla
-          eşleşmez. Araştırma prototipi çıktısıdır, klinik karar için kullanılamaz.
+          Kamuya açık referans varyanttır; görüntü vakasıyla eşleştirilmemiştir ve
+          klinik karar için kullanılamaz.
         </span>
       </div>
     </section>

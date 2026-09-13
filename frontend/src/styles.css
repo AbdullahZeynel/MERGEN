@@ -563,9 +563,13 @@ svg {
   background: var(--red);
   position: absolute;
 }
-.view-tabs > button.refresh {
-  margin-left: auto;
-  padding: 12px;
+.context-bar > .refresh {
+  padding: 5px;
+  border-radius: 6px;
+  color: inherit;
+}
+.context-bar > .refresh:hover:not(:disabled) {
+  background: var(--hover);
 }
 .panel {
   background: var(--surface);
@@ -991,9 +995,6 @@ svg {
   }
   .topbar {
     padding: 0 24px;
-  }
-  .context-note {
-    display: none;
   }
   .volume-panel .empty-state {
     padding: 24px 18px;
@@ -1518,13 +1519,6 @@ svg {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-}
-.view-tabs-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 4px;
-  font-weight: 600;
 }
 @media (max-width: 620px) {
   .genomics-shap li {

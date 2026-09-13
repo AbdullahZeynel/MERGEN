@@ -276,13 +276,7 @@ export default function App() {
               <div>
                 <span className="eyebrow">VAKA İNCELEME</span>
                 <h2>{record?.id ?? 'Vaka çalışma alanı'}</h2>
-                <p>
-                  {record
-                    ? module === 'imaging'
-                      ? 'Görüntüler ve analiz sonuçları tek çalışma alanında.'
-                      : 'Varyant tahmini ve model açıklaması tek çalışma alanında.'
-                    : 'Vaka verileri hazır olduğunda burada görüntülenir.'}
-                </p>
+                {!record && <p>Vaka verileri hazır olduğunda burada görüntülenir.</p>}
               </div>
               {assistantEnabled && (
                 <button
@@ -298,11 +292,6 @@ export default function App() {
               <span className={`mode-badge ${mode}`}>
                 <Database size={14} />
                 {mode === 'demo' ? 'HAZIR DEMO' : 'CANLI ANALİZ'}
-              </span>
-              <span className="context-note">
-                {mode === 'demo'
-                  ? 'Önceden hazırlanmış vaka verisi'
-                  : 'Canlı veri bağlantısı bekleniyor'}
               </span>
               {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh/rapor
                   istekleri ayrica hata verebilir, o yuzden metin liste diyor. */}
@@ -321,12 +310,19 @@ export default function App() {
                   </>
                 )}
               </span>
+              <button
+                className="refresh"
+                aria-label="Vaka verilerini yenile"
+                disabled={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
+              </button>
             </div>
             <div className="content-with-assistant">
               <div className="analysis-content">
-                <div className="view-tabs" aria-label="Analiz görünümü">
-                  {module === 'imaging' && (
-                    <>
+                {module === 'imaging' && (
+                  <div className="view-tabs" aria-label="Analiz görünümü">
                       <button
                         aria-pressed={view === 'imaging'}
                         className={view === 'imaging' ? 'selected' : ''}
@@ -341,22 +337,8 @@ export default function App() {
                       >
                         <Dna size={18} /> Bu vakanın varyantı
                       </button>
-                    </>
-                  )}
-                  {module === 'genomics' && (
-                    <span className="view-tabs-label">
-                      <Dna size={18} /> Varyant patojenite
-                    </span>
-                  )}
-                  <button
-                    className="refresh"
-                    aria-label="Vaka verilerini yenile"
-                    disabled={query.isFetching}
-                    onClick={() => void query.refetch()}
-                  >
-                    <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
-                  </button>
-                </div>
+                  </div>
+                )}
                 {query.isPending ? (
                   <div className="panel loading-panel" role="status">
                     <RefreshCw className="spin" /> Vaka verileri yükleniyor…

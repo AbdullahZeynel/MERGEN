@@ -184,9 +184,6 @@ describe('genomik modülü', () => {
     expect(await screen.findByText('%99.97')).toBeVisible();
     expect(screen.getByText('Patojenik')).toBeVisible();
     expect(screen.getByText('Demo vaka listesi alındı')).toBeVisible();
-    expect(
-      screen.getByText('Varyant tahmini ve model açıklaması tek çalışma alanında.'),
-    ).toBeVisible();
     // Görüntü vakası artık listede değil: iki modül birbirine karışmaz.
     expect(screen.queryByText('TEST-0001')).toBeNull();
   });
@@ -194,7 +191,8 @@ describe('genomik modülü', () => {
   it('SHAP katkılarını margin uzayı etiketiyle gösterir', async () => {
     const { user } = mountBoth();
     await user.click(screen.getByRole('button', { name: 'Genomik' }));
-    expect(await screen.findByText(/ham margin \(log-odds\)/)).toBeVisible();
+    // Katkilarin uzayi, tabani ve toplam margin tek satirda.
+    expect(await screen.findByText(/log-odds · taban .+ · margin /)).toBeVisible();
     expect(screen.getByText('cgga_missense_frekans')).toBeVisible();
     expect(screen.getByText('+2.000')).toBeVisible();
   });
