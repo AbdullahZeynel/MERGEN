@@ -46,6 +46,18 @@ describe('genomik sözleşmesi', () => {
     expect(genomicsResultSchema.safeParse(bozuk).success).toBe(false);
   });
 
+  it('olasılık, eşik ve tahmin sınıfı tutarsızsa reddeder', () => {
+    const bozuk = makeGenomicsResult();
+    bozuk.prediction.class = 'benign';
+    expect(genomicsResultSchema.safeParse(bozuk).success).toBe(false);
+  });
+
+  it('özellik sırası sonuç özellikleriyle uyuşmuyorsa reddeder', () => {
+    const bozuk = makeGenomicsResult();
+    bozuk.featureOrder = ['esm_llr'];
+    expect(genomicsResultSchema.safeParse(bozuk).success).toBe(false);
+  });
+
   it('geçersiz protein değişimini reddeder', () => {
     const bozuk = { ...makeGenomicsCase(), proteinChange: 'R132H' };
     expect(genomicsCaseSchema.safeParse(bozuk).success).toBe(false);
@@ -63,5 +75,11 @@ describe('genomik sözleşmesi', () => {
 
   it('doğru açıklamayı kabul eder', () => {
     expect(genomicsExplanationSchema.safeParse(makeGenomicsExplanation()).success).toBe(true);
+  });
+
+  it('SHAP özetindeki katkı ana belgeyle uyuşmuyorsa reddeder', () => {
+    const bozuk = makeGenomicsExplanation();
+    bozuk.topFeatures[0].contribution = 3;
+    expect(genomicsExplanationSchema.safeParse(bozuk).success).toBe(false);
   });
 });

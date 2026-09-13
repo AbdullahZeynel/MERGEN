@@ -74,10 +74,8 @@ describe('case workspace', () => {
       'processing',
     );
     expect(screen.getByText('Eşleşen vaka bulunamadı.')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Bu vakanın varyantı' }));
-    expect(
-      screen.getByRole('heading', { name: 'Bu görüntü vakasının varyant kaydı yok' }),
-    ).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Henüz vaka yok' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'TEST-0001' })).not.toBeInTheDocument();
   });
   it('shows malformed and empty packages explicitly', async () => {
     mount({ version: 99, cases });
@@ -165,6 +163,10 @@ describe('genomik modülü', () => {
     expect((await screen.findAllByText('IDH1-R132H')).length).toBeGreaterThan(0);
     expect(await screen.findByText('%99.97')).toBeVisible();
     expect(screen.getByText('Patojenik')).toBeVisible();
+    expect(screen.getByText('VPS demo servisi hazır')).toBeVisible();
+    expect(
+      screen.getByText('Varyant tahmini ve model açıklaması tek çalışma alanında.'),
+    ).toBeVisible();
     // Görüntü vakası artık listede değil: iki modül birbirine karışmaz.
     expect(screen.queryByText('TEST-0001')).toBeNull();
   });
@@ -189,6 +191,17 @@ describe('genomik modülü', () => {
     expect(
       await screen.findByRole('heading', { name: 'Genomik sonuç okunamadı' }),
     ).toBeVisible();
+  });
+
+  it('başka varyanta ait sonucu seçilen vakanın altında göstermez', async () => {
+    const result = makeGenomicsResult();
+    result.variant = { gene: 'TP53', proteinChange: 'p.R175H' };
+    const { user } = mountBoth({ result });
+    await user.click(screen.getByRole('button', { name: 'Genomik' }));
+    expect(
+      await screen.findByRole('heading', { name: 'Genomik sonuç okunamadı' }),
+    ).toBeVisible();
+    expect(screen.getByText(/seçilen vaka kaydıyla eşleşmiyor/)).toBeVisible();
   });
 
   it('görüntü modülüne dönünce vaka listesi geri gelir', async () => {
