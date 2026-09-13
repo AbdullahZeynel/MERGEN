@@ -215,9 +215,40 @@ arasında ağırlık eksikken açık hata, özellik sırası bozulunca çıkarı
 reddi, ağ soketleri kapatılmışken fixture koşusu ve canlı çıkarımın eğitim
 modüllerini (`pandas`, `requests` dâhil) hiç yüklememesi de var.
 
+## Hazır demo vakaları
+
+`models/VeriOdakliCozum/demo_uret.py` dört kamuya açık referans varyantı
+adaptörden geçirip demo paketinin genomik koleksiyonunu üretir. Diziler
+UniProt kanonik kayıtlarıdır; hasta verisi yoktur. Provenans (erişim, dizi
+sürümü, checksum, vahşi tip doğrulaması) `fixtures/varyantlar.json` içindedir.
+
+| Vaka | Beklenti | Model olasılığı | Karar | ESM LLR |
+|---|---|---|---|---|
+| IDH1 p.R132H | patojenik | 0.99969 | patojenik | −0.204 |
+| TP53 p.R175H | patojenik | 0.99987 | patojenik | −5.225 |
+| TP53 p.P72R | **benign** | **0.98839** | **patojenik** | −3.199 |
+| H3F3A p.K28M | patojenik | 0.91222 | patojenik | −6.223 |
+
+"Beklenti" literatürdeki genel yorumdur; bu koşuda bir klinik veritabanından
+doğrulanmadı ve arayüzde gösterilmez. Arayüz yalnız modelin çıktısını gösterir.
+
+### Dördüncü bulgu: bilinen benign polimorfizm patojenik sayılıyor
+
+TP53 p.P72R (rs1042522) yaygın bir polimorfizmdir; model onu %98.8 ile
+patojenik sayıyor. Katkı dağılımı sebebi açıkça gösteriyor: margin'in tabandan
+3.38'lik sapmasının +3.856'sı `cgga_missense_frekans`'tan geliyor, yani
+"varyant TP53'te" bilgisinden. Aynı gendeki R175H ile P72R arasındaki tek
+ayırt edici sinyal ESM ve fizikokimyasal deltalar; bunlar gen frekansının
+ağırlığını dengeleyemiyor.
+
+Bu, üçüncü bulgunun (CGGA gen-kimliği vekili) somut sonucudur: model bilinen
+sürücü genlerde iyi, aynı genin zararsız varyantlarında yanılıyor. Vaka demo
+paketinde bilerek tutuldu — modelin sınırını gizlemek yerine göstermek için.
+Sunumda "benign varyantı ayırt edebiliyor mu?" sorusu gelirse cevap hayırdır.
+
 ## Kapsam dışı
 
 Bu denetim yeniden eğitim, eşik değiştirme, ön işleme değişikliği veya klinik
 doğrulama içermez. Adaptör eğitim modüllerini (`veri_indirme`, `model_egitim`,
-`degerlendirme`, `rapor`) import etmez. Genomik demo vakaları S3'ün kalan işidir; SHAP açıklaması
-artık çıkarım raporunun `explanation` alanında üretiliyor.
+`degerlendirme`, `rapor`) import etmez. SHAP açıklaması çıkarım raporunun `explanation` alanında üretilir ve
+hazır demo koleksiyonu arayüzde gösterilir. Canlı akışa bağlama S4/S6 işidir.
