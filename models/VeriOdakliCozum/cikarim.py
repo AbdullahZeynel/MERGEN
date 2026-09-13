@@ -75,12 +75,16 @@ class CikarimSonucu:
     aciklama: dict[str, Any] | None = None
     notlar: list[str] = field(default_factory=list)
 
-    def sozluk(self) -> dict[str, Any]:
+    def sozluk(self, mod: str = "live") -> dict[str, Any]:
+        """Rapor sözlüğü. `mod` yalnız 'live' veya 'demo' olabilir; hazır demo
+        paketindeki sonuç canlı sonuç gibi etiketlenmez."""
+        if mod not in ("live", "demo"):
+            raise ValueError(f"Geçersiz mod: {mod!r}")
         return {
             "schemaVersion": 1,
             "module": "genomics",
             "disease": "glioma-variant-pathogenicity",
-            "mode": "live",
+            "mode": mod,
             "modelId": self.model["modelId"],
             "modelVersion": self.model["modelVersion"],
             "hasPrediction": True,

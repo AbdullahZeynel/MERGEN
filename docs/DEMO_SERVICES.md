@@ -43,6 +43,31 @@ npm run dev
 
 `http://127.0.0.1:5173/` üzerinden açın. `.env` kendiliğinden yüklenmez; yukarıdaki atama MCP sürecine açıkça aktarır. Hazır paket `frontend/public` içinde tutulmaz; frontend paketi demo dosyası taşımaz.
 
+### Genomik koleksiyon
+
+Genomik vakalar ayrı bir ortamda üretilir: görüntü hazırlama ortamı torch ve
+ESM-2 içermez, genomik çıkarım ise onları gerektirir. İki ortam birleştirilmez.
+Görüntü paketi hazırlandıktan **sonra**, genomik gereksinimleri kurulu bir
+ortamla aynı paket kökünü hedefleyin:
+
+```bash
+cd models
+<genomik-ortam>/bin/python -m VeriOdakliCozum.demo_uret --cikti ../.local/demo-v3
+cd ..
+```
+
+Betik paket kökü `models/` altından çağrılır; `--cikti` yolu da oraya görelidir.
+Genomik ortam `models/VeriOdakliCozum/requirements.txt` ile kurulur ve görüntü
+hazırlama ortamından ayrıdır.
+
+Betik `genomics/glioma-variant-pathogenicity/` koleksiyonunu yazar ve kök
+`catalog.json`'a kendi satırını ekler; görüntü girdisine dokunmaz, tekrar
+çalıştırıldığında girdiyi çoğaltmaz. Vakalar `fixtures/varyantlar.json`
+içindeki kamuya açık referans varyantlardır ve sonuçlar gerçek model
+çıktısıdır. ESM-2 ağırlığı yerelden yüklenir; ağa çıkılmaz. Arayüzde kenar
+çubuğundaki **Görüntü / Genomik** anahtarı vaka listesini değiştirir; iki
+modülün kayıtları aynı hastaya aitmiş gibi birleştirilmez.
+
 ## Sözleşme ve sınırlar
 
 | HTTP GET | MCP aracı | Sonuç |
@@ -54,6 +79,7 @@ npm run dev
 | `/api/demo/cases/{id}/slices/{axis}/{index}` | `get_slice` | PNG, sıfır tabanlı indeks |
 | `/api/demo/cases/{id}/overlays/{layer}/{axis}/{index}` | `get_overlay` | Şeffaf tahmin veya referans PNG'si |
 | `/api/demo/cases/{id}/mesh` | `get_mesh` | JSON yüzeyler |
+| `/api/demo/modules/genomics/diseases/glioma-variant-pathogenicity/cases/{id}/report/{ad}` | `get_report` | `result`, `explanation` veya `input` JSON'u |
 | `/api/health` | `list_cases` | Demo MCP hazır; canlı AI bağlı değil |
 
 Kaydırıcı bir tabanlıdır; HTTP indeksi sıfır tabanlıdır. Her eksen son seçilen kesitini korur; vaka değişimi bağlamı sıfırlar. Yeni kesit yüklenirken eski kesit yeni numarayla gösterilmez. Anatomik yön/voxel aralığı doğrulanmadığı için mm ve R/L işaretleri yoktur.

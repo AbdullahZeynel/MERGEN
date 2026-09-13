@@ -47,6 +47,23 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
         v3_slice = collection / 'cases/V3-TEST/slices/axial'
         v3_slice.mkdir(parents=True)
         (v3_slice / '0.png').write_bytes(b'v3-transport-test')
+        genomics = self.root_v3 / 'genomics/glioma-variant-pathogenicity'
+        genomics.mkdir(parents=True)
+        (genomics / 'manifest.json').write_text(json.dumps({
+            'schemaVersion': 3, 'module': 'genomics',
+            'disease': 'glioma-variant-pathogenicity',
+            'cases': [{'id': 'GEN-TEST', 'reports': ['result', 'explanation']}],
+        }))
+        gen_case = genomics / 'cases/GEN-TEST'
+        gen_case.mkdir(parents=True)
+        (gen_case / 'result.json').write_bytes(b'{"transport":"test"}')
+        (gen_case / 'input.json').write_bytes(b'{"transport":"not-listed"}')
+        catalog = json.loads((self.root_v3 / 'catalog.json').read_text())
+        catalog['collections'].append({
+            'module': 'genomics', 'disease': 'glioma-variant-pathogenicity',
+            'manifest': 'genomics/glioma-variant-pathogenicity/manifest.json',
+        })
+        (self.root_v3 / 'catalog.json').write_text(json.dumps(catalog))
         self.store_v3 = module.DemoStore(self.root_v3)
 
     async def test_bounds_and_unknown_case(self):
@@ -61,7 +78,11 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
     async def test_v3_catalog_filters_and_isolates_assets(self):
         self.assertEqual(self.store_v3.catalog(), {
             'schemaVersion': 3,
-            'collections': [{'module': 'imaging', 'disease': 'glioma', 'caseCount': 1}],
+            'collections': [
+                {'module': 'genomics', 'disease': 'glioma-variant-pathogenicity',
+                 'caseCount': 1},
+                {'module': 'imaging', 'disease': 'glioma', 'caseCount': 1},
+            ],
         })
         manifest = self.store_v3.list_cases('imaging', 'glioma')
         self.assertEqual(manifest['cases'][0]['id'], 'V3-TEST')
@@ -131,6 +152,48 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
             with patch('backend.api.call_tool', AsyncMock(return_value=manifest)):
                 response = await client.get('/api/demo/cases')
         self.assertEqual(response.json(), {'version': 2, 'cases': manifest['cases']})
+
+    async def test_genomics_report_is_bounded(self):
+        gen = ('GEN-TEST', 'report')
+        ortak = {'module': 'genomics', 'disease': 'glioma-variant-pathogenicity'}
+        ok = self.store_v3.asset(*gen, layer='result', **ortak)
+        self.assertEqual(base64.b64decode(ok['base64']), b'{"transport":"test"}')
+        self.assertEqual(ok['mime'], 'application/json')
+        # manifest'te bildirilmeyen belge okunmaz, üretilmemiş belge de
+        self.assertEqual(self.store_v3.asset(*gen, layer='input', **ortak)['error'], 'invalid')
+        self.assertEqual(self.store_v3.asset(*gen, layer='explanation', **ortak)['error'], 'missing')
+        # beyaz liste dışı ad ve dizin dışına çıkma denemesi
+        for ad in ('gizli', '../catalog', 'result.json', ''):
+            self.assertEqual(self.store_v3.asset(*gen, layer=ad, **ortak)['error'], 'invalid')
+        # yanlış koleksiyon ya da bilinmeyen vaka
+        self.assertEqual(
+            self.store_v3.asset('GEN-TEST', 'report', layer='result',
+                                module='imaging', disease='glioma')['error'], 'missing')
+        self.assertEqual(self.store_v3.asset('YOK', 'report', layer='result', **ortak)['error'],
+                         'missing')
+
+    async def test_genomics_report_route_uses_mcp(self):
+        asset = self.store_v3.asset('GEN-TEST', 'report', layer='result',
+                                    module='genomics',
+                                    disease='glioma-variant-pathogenicity')
+        yol = ('/api/demo/modules/genomics/diseases/glioma-variant-pathogenicity'
+               '/cases/GEN-TEST/report/result')
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://test') as client:
+            with patch('backend.api.call_tool', AsyncMock(return_value=asset)) as call:
+                response = await client.get(yol)
+                self.assertEqual(response.content, b'{"transport":"test"}')
+                self.assertEqual(response.headers['X-Mergen-Source'], 'mcp')
+                call.assert_awaited_once_with('get_report', {
+                    'module': 'genomics', 'disease': 'glioma-variant-pathogenicity',
+                    'case_id': 'GEN-TEST', 'name': 'result',
+                })
+            with patch('backend.api.call_tool', AsyncMock(return_value={'error': 'missing'})):
+                self.assertEqual((await client.get(yol)).status_code, 404)
+            # beyaz liste dışı belge adı route'a bile ulaşmaz
+            with patch('backend.api.call_tool', AsyncMock()) as call:
+                response = await client.get(yol.replace('/result', '/gizli'))
+                self.assertEqual(response.status_code, 422)
+                call.assert_not_awaited()
 
     async def test_unknown_asset_is_404(self):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://test') as client:
