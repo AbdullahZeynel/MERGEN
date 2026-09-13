@@ -145,23 +145,15 @@ svg {
   gap: 16px;
 }
 .brand-mark {
-  position: relative;
-  text-decoration: none;
-  color: white;
-  font-size: 2rem;
-  font-weight: 850;
-  letter-spacing: -5px;
-  padding-right: 4px;
-  margin-bottom: 45px;
-  line-height: 1;
+  display: block;
+  width: 56px;
+  margin-bottom: 32px;
+  line-height: 0;
 }
-.brand-mark span {
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background: #ed3047;
-  right: -7px;
-  bottom: 2px;
+.brand-mark img {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 .rail-button {
   border-radius: 10px;
@@ -179,14 +171,6 @@ svg {
   color: white;
   background: #d9293b;
   box-shadow: 0 5px 18px #d9293b22;
-}
-.rail-bottom {
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-direction: column;
-  font-size: 0.75rem;
 }
 .app-body {
   flex: 1;
@@ -219,31 +203,6 @@ svg {
   align-items: center;
   gap: 32px;
 }
-.prototype {
-  font-size: 0.75rem;
-  color: var(--muted);
-  padding: 6px 10px;
-  border: 1px solid var(--line);
-  border-radius: 4px;
-}
-.team {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  font-weight: 750;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.team-avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  background: var(--surface-subtle);
-  border: 1px solid var(--line);
-  border-radius: 50%;
-  font-size: 0.875rem;
-}
 .theme-toggle {
   min-height: 36px;
   display: inline-flex;
@@ -264,6 +223,9 @@ svg {
 .app-content {
   display: flex;
   min-height: calc(100vh - 84px);
+}
+.case-sidebar.collapsed {
+  display: none;
 }
 .case-sidebar {
   width: 260px;
@@ -449,23 +411,6 @@ svg {
   line-height: 1.6;
   padding: 18px 0;
 }
-.sidebar-footer {
-  display: flex;
-  gap: 12px;
-  border-top: 1px solid var(--line);
-  padding-top: 20px;
-  margin-top: auto;
-  color: var(--muted);
-}
-.sidebar-footer strong {
-  font-size: 0.75rem;
-  color: var(--secondary-text);
-  font-weight: 650;
-}
-.sidebar-footer p {
-  font-size: 0.7rem;
-  margin-top: 4px;
-}
 .workspace {
   flex: 1;
   min-width: 0;
@@ -618,9 +563,13 @@ svg {
   background: var(--red);
   position: absolute;
 }
-.view-tabs > button.refresh {
-  margin-left: auto;
-  padding: 12px;
+.context-bar > .refresh {
+  padding: 5px;
+  border-radius: 6px;
+  color: inherit;
+}
+.context-bar > .refresh:hover:not(:disabled) {
+  background: var(--hover);
 }
 .panel {
   background: var(--surface);
@@ -1047,9 +996,6 @@ svg {
   .topbar {
     padding: 0 24px;
   }
-  .context-note {
-    display: none;
-  }
   .volume-panel .empty-state {
     padding: 24px 18px;
   }
@@ -1108,8 +1054,8 @@ svg {
     height: 40px;
   }
   .brand-mark {
-    font-size: 1.6rem;
-    margin-bottom: 28px;
+    width: 42px;
+    margin-bottom: 18px;
   }
   .topbar {
     height: 72px;
@@ -1117,13 +1063,6 @@ svg {
   }
   .topbar-right {
     gap: 8px;
-  }
-  .prototype {
-    display: none;
-  }
-  .team {
-    font-size: 0;
-    gap: 0;
   }
   .wordmark {
     font-size: 1.1rem;
@@ -1134,11 +1073,7 @@ svg {
   .app-content {
     min-height: calc(100vh - 72px);
   }
-  .case-sidebar {
-    display: none;
-  }
-  .case-sidebar.mobile-open {
-    display: flex;
+  .case-sidebar.open {
     position: fixed;
     left: 52px;
     top: 72px;
@@ -1147,9 +1082,6 @@ svg {
     z-index: 20;
     box-shadow: 18px 0 40px #111a2c30;
     overflow: auto;
-  }
-  .sidebar-footer {
-    margin-top: 32px;
   }
   .mobile-only {
     display: inline-grid;
@@ -1212,17 +1144,12 @@ svg {
 }
 /* Regular controls remain readable; compact metadata never drops below 12px. */
 .small,
-.prototype,
-.team,
-.rail-bottom,
 .sidebar-description,
 .search-box input,
 .source-switch button,
 .case-item-text > span,
 .case-item-text .status-pill,
 .list-label select,
-.sidebar-footer strong,
-.sidebar-footer p,
 .breadcrumb,
 .context-bar,
 .service-state,
@@ -1277,9 +1204,6 @@ svg {
 @media (max-width: 760px) {
   .wordmark > span {
     display: none;
-  }
-  .team {
-    font-size: 0;
   }
   .viewer-controls {
     align-items: stretch;
@@ -1595,13 +1519,6 @@ svg {
   display: flex;
   gap: 8px;
   align-items: flex-start;
-}
-.view-tabs-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 4px;
-  font-weight: 600;
 }
 @media (max-width: 620px) {
   .genomics-shap li {

@@ -53,6 +53,24 @@ describe('case workspace', () => {
     );
     expect(screen.queryByRole('complementary', { name: 'MERGEN Asistan' })).not.toBeInTheDocument();
   });
+  it('vaka listesini raydan açıp kapatır ve seçimde geniş ekranda açık bırakır', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const liste = () => screen.getByRole('complementary', { name: 'Vakalar' });
+    expect(liste()).toHaveClass('open');
+    const gizle = screen.getByRole('button', { name: 'Vaka listesini gizle' });
+    expect(gizle).toHaveAttribute('aria-expanded', 'true');
+    await user.click(gizle);
+    expect(liste()).toHaveClass('collapsed');
+    const goster = screen.getByRole('button', { name: 'Vaka listesini göster' });
+    expect(goster).toHaveAttribute('aria-expanded', 'false');
+    await user.click(goster);
+    expect(liste()).toHaveClass('open');
+    // Geniş ekranda liste çalışma alanının üstüne binmiyor; seçim onu kapatmamalı.
+    await user.click(screen.getByRole('button', { name: /TEST-0002/ }));
+    expect(liste()).toHaveClass('open');
+  });
+
   it('never silently substitutes demo records for a disconnected live source', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
@@ -80,6 +98,8 @@ describe('case workspace', () => {
   it('shows malformed and empty packages explicitly', async () => {
     mount({ version: 99, cases });
     expect(await screen.findByRole('alert')).toHaveTextContent('Demo paketi okunamadı');
+    // Durum satırı istek başarısızken hazır olduğunu iddia etmiyor.
+    expect(screen.getByText('Demo servisine ulaşılamadı')).toBeVisible();
   });
   it('shows a genuine empty archive', async () => {
     mount({ version: 2, cases: [] });
@@ -163,10 +183,7 @@ describe('genomik modülü', () => {
     expect((await screen.findAllByText('IDH1-R132H')).length).toBeGreaterThan(0);
     expect(await screen.findByText('%99.97')).toBeVisible();
     expect(screen.getByText('Patojenik')).toBeVisible();
-    expect(screen.getByText('VPS demo servisi hazır')).toBeVisible();
-    expect(
-      screen.getByText('Varyant tahmini ve model açıklaması tek çalışma alanında.'),
-    ).toBeVisible();
+    expect(screen.getByText('Demo vaka listesi alındı')).toBeVisible();
     // Görüntü vakası artık listede değil: iki modül birbirine karışmaz.
     expect(screen.queryByText('TEST-0001')).toBeNull();
   });
@@ -174,7 +191,8 @@ describe('genomik modülü', () => {
   it('SHAP katkılarını margin uzayı etiketiyle gösterir', async () => {
     const { user } = mountBoth();
     await user.click(screen.getByRole('button', { name: 'Genomik' }));
-    expect(await screen.findByText(/ham margin \(log-odds\)/)).toBeVisible();
+    // Katkilarin uzayi, tabani ve toplam margin tek satirda.
+    expect(await screen.findByText(/log-odds · taban .+ · margin /)).toBeVisible();
     expect(screen.getByText('cgga_missense_frekans')).toBeVisible();
     expect(screen.getByText('+2.000')).toBeVisible();
   });

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Activity,
   ArrowRight,
   ChevronRight,
   Database,
@@ -29,6 +28,8 @@ import { AssistantPanel } from './components/AssistantPanel';
 
 // Deferred until chatbot integration; keep the component for the next sprint.
 const assistantEnabled = false;
+// styles.css icindeki dar ekran kirilma noktasiyla ayni deger.
+const DAR_EKRAN = 760;
 type Theme = 'light' | 'dark';
 
 function initialTheme(): Theme {
@@ -48,7 +49,9 @@ export default function App() {
   // bağımsızdır; modül değişiminde seçim ve arama sıfırlanır.
   const [module, setModule] = useState<'imaging' | 'genomics'>('imaging');
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [mobileCases, setMobileCases] = useState(false);
+  // Vaka listesi genis ekranda acik, dar ekranda kapali baslar. Raydaki dugme
+  // her iki genislikte de ayni durumu cevirir.
+  const [casesOpen, setCasesOpen] = useState(() => window.innerWidth > DAR_EKRAN);
   const closeAssistant = useCallback(() => setAssistantOpen(false), []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -96,13 +99,14 @@ export default function App() {
       </a>
       <nav className="rail" aria-label="Ana gezinme">
         <a href="#workspace" className="brand-mark" aria-label="MERGEN çalışma alanı">
-          M<span />
+          <img src="/ergenekon-logo.png" alt="" width={192} height={88} />
         </a>
         <button
-          className="rail-button active"
-          aria-label="Vaka listesi"
-          aria-expanded={mobileCases}
-          onClick={() => setMobileCases(!mobileCases)}
+          className={`rail-button ${casesOpen ? 'active' : ''}`}
+          aria-label={casesOpen ? 'Vaka listesini gizle' : 'Vaka listesini göster'}
+          aria-expanded={casesOpen}
+          aria-controls="case-sidebar"
+          onClick={() => setCasesOpen(!casesOpen)}
         >
           <LayoutGrid size={21} />
         </button>
@@ -116,10 +120,6 @@ export default function App() {
             <MessageSquare size={21} />
           </button>
         )}
-        <div className="rail-bottom">
-          <Activity size={21} />
-          <span>3T</span>
-        </div>
       </nav>
       <div className="app-body">
         <header className="topbar">
@@ -127,7 +127,6 @@ export default function App() {
             MERGEN<span>ONKOLOJİ KARAR DESTEĞİ</span>
           </div>
           <div className="topbar-right">
-            <span className="prototype">Araştırma prototipi</span>
             <button
               className="theme-toggle"
               type="button"
@@ -138,14 +137,12 @@ export default function App() {
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
               <span>{theme === 'dark' ? 'Açık' : 'Koyu'}</span>
             </button>
-            <span className="team">
-              ERGENEKON <span className="team-avatar">E</span>
-            </span>
           </div>
         </header>
         <div className="app-content">
           <aside
-            className={`case-sidebar ${mobileCases ? 'mobile-open' : ''}`}
+            id="case-sidebar"
+            className={`case-sidebar ${casesOpen ? 'open' : 'collapsed'}`}
             aria-label="Vakalar"
           >
             <div className="sidebar-title">
@@ -155,7 +152,7 @@ export default function App() {
               <button
                 className="icon-button mobile-only"
                 aria-label="Vaka listesini kapat"
-                onClick={() => setMobileCases(false)}
+                onClick={() => setCasesOpen(false)}
               >
                 <X />
               </button>
@@ -231,7 +228,9 @@ export default function App() {
                     aria-pressed={record?.id === c.id}
                     onClick={() => {
                       setSelectedId(c.id);
-                      setMobileCases(false);
+                      // Dar ekranda liste calisma alaninin ustune biniyor;
+                      // secimden sonra kapaniyor. Genis ekranda acik kaliyor.
+                      if (window.innerWidth <= DAR_EKRAN) setCasesOpen(false);
                     }}
                   >
                     <span className="case-icon">
@@ -259,20 +258,13 @@ export default function App() {
                 </p>
               )}
             </div>
-            <div className="sidebar-footer">
-              <Database size={18} />
-              <div>
-                <strong>{mode === 'demo' ? 'Hazır vaka arşivi' : 'Canlı analiz'}</strong>
-                <p>{mode === 'demo' ? 'Önceden işlenmiş veriler' : 'Servis bağlantısı gerekli'}</p>
-              </div>
-            </div>
           </aside>
           <main id="workspace" className="workspace" tabIndex={-1}>
             <div className="breadcrumb">
               <button
                 className="icon-button mobile-only"
                 aria-label="Vakaları göster"
-                onClick={() => setMobileCases(true)}
+                onClick={() => setCasesOpen(true)}
               >
                 <Menu size={18} />
               </button>
@@ -284,13 +276,7 @@ export default function App() {
               <div>
                 <span className="eyebrow">VAKA İNCELEME</span>
                 <h2>{record?.id ?? 'Vaka çalışma alanı'}</h2>
-                <p>
-                  {record
-                    ? module === 'imaging'
-                      ? 'Görüntüler ve analiz sonuçları tek çalışma alanında.'
-                      : 'Varyant tahmini ve model açıklaması tek çalışma alanında.'
-                    : 'Vaka verileri hazır olduğunda burada görüntülenir.'}
-                </p>
+                {!record && <p>Vaka verileri hazır olduğunda burada görüntülenir.</p>}
               </div>
               {assistantEnabled && (
                 <button
@@ -307,24 +293,36 @@ export default function App() {
                 <Database size={14} />
                 {mode === 'demo' ? 'HAZIR DEMO' : 'CANLI ANALİZ'}
               </span>
-              <span className="context-note">
-                {mode === 'demo'
-                  ? 'Önceden hazırlanmış vaka verisi'
-                  : 'Canlı veri bağlantısı bekleniyor'}
-              </span>
-              <span className="service-state">
-                {mode === 'demo' ? (
-                  <><Database size={14} /> VPS demo servisi hazır</>
+              {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh/rapor
+                  istekleri ayrica hata verebilir, o yuzden metin liste diyor. */}
+              <span className="service-state" role="status">
+                {query.isPending ? (
+                  <><RefreshCw size={14} className="spin" /> Servis yanıtı bekleniyor</>
+                ) : query.isError ? (
+                  <>
+                    <Link2Off size={14} />{' '}
+                    {mode === 'demo' ? 'Demo servisine ulaşılamadı' : 'AI servisi bağlı değil'}
+                  </>
                 ) : (
-                  <><Link2Off size={14} /> AI servisi bağlı değil</>
+                  <>
+                    <Database size={14} />{' '}
+                    {mode === 'demo' ? 'Demo vaka listesi alındı' : 'Canlı vaka listesi alındı'}
+                  </>
                 )}
               </span>
+              <button
+                className="refresh"
+                aria-label="Vaka verilerini yenile"
+                disabled={query.isFetching}
+                onClick={() => void query.refetch()}
+              >
+                <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
+              </button>
             </div>
             <div className="content-with-assistant">
               <div className="analysis-content">
-                <div className="view-tabs" aria-label="Analiz görünümü">
-                  {module === 'imaging' && (
-                    <>
+                {module === 'imaging' && (
+                  <div className="view-tabs" aria-label="Analiz görünümü">
                       <button
                         aria-pressed={view === 'imaging'}
                         className={view === 'imaging' ? 'selected' : ''}
@@ -339,22 +337,8 @@ export default function App() {
                       >
                         <Dna size={18} /> Bu vakanın varyantı
                       </button>
-                    </>
-                  )}
-                  {module === 'genomics' && (
-                    <span className="view-tabs-label">
-                      <Dna size={18} /> Varyant patojenite
-                    </span>
-                  )}
-                  <button
-                    className="refresh"
-                    aria-label="Vaka verilerini yenile"
-                    disabled={query.isFetching}
-                    onClick={() => void query.refetch()}
-                  >
-                    <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
-                  </button>
-                </div>
+                  </div>
+                )}
                 {query.isPending ? (
                   <div className="panel loading-panel" role="status">
                     <RefreshCw className="spin" /> Vaka verileri yükleniyor…
