@@ -224,6 +224,9 @@ svg {
   display: flex;
   min-height: calc(100vh - 84px);
 }
+.case-sidebar.collapsed {
+  display: none;
+}
 .case-sidebar {
   width: 260px;
   flex-shrink: 0;
@@ -1069,11 +1072,7 @@ svg {
   .app-content {
     min-height: calc(100vh - 72px);
   }
-  .case-sidebar {
-    display: none;
-  }
-  .case-sidebar.mobile-open {
-    display: flex;
+  .case-sidebar.open {
     position: fixed;
     left: 52px;
     top: 72px;

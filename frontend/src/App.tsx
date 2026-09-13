@@ -28,6 +28,8 @@ import { AssistantPanel } from './components/AssistantPanel';
 
 // Deferred until chatbot integration; keep the component for the next sprint.
 const assistantEnabled = false;
+// styles.css icindeki dar ekran kirilma noktasiyla ayni deger.
+const DAR_EKRAN = 760;
 type Theme = 'light' | 'dark';
 
 function initialTheme(): Theme {
@@ -47,7 +49,9 @@ export default function App() {
   // bağımsızdır; modül değişiminde seçim ve arama sıfırlanır.
   const [module, setModule] = useState<'imaging' | 'genomics'>('imaging');
   const [assistantOpen, setAssistantOpen] = useState(false);
-  const [mobileCases, setMobileCases] = useState(false);
+  // Vaka listesi genis ekranda acik, dar ekranda kapali baslar. Raydaki dugme
+  // her iki genislikte de ayni durumu cevirir.
+  const [casesOpen, setCasesOpen] = useState(() => window.innerWidth > DAR_EKRAN);
   const closeAssistant = useCallback(() => setAssistantOpen(false), []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -98,10 +102,11 @@ export default function App() {
           <img src="/ergenekon-logo.png" alt="" width={192} height={88} />
         </a>
         <button
-          className="rail-button active"
-          aria-label="Vaka listesi"
-          aria-expanded={mobileCases}
-          onClick={() => setMobileCases(!mobileCases)}
+          className={`rail-button ${casesOpen ? 'active' : ''}`}
+          aria-label={casesOpen ? 'Vaka listesini gizle' : 'Vaka listesini göster'}
+          aria-expanded={casesOpen}
+          aria-controls="case-sidebar"
+          onClick={() => setCasesOpen(!casesOpen)}
         >
           <LayoutGrid size={21} />
         </button>
@@ -136,7 +141,8 @@ export default function App() {
         </header>
         <div className="app-content">
           <aside
-            className={`case-sidebar ${mobileCases ? 'mobile-open' : ''}`}
+            id="case-sidebar"
+            className={`case-sidebar ${casesOpen ? 'open' : 'collapsed'}`}
             aria-label="Vakalar"
           >
             <div className="sidebar-title">
@@ -146,7 +152,7 @@ export default function App() {
               <button
                 className="icon-button mobile-only"
                 aria-label="Vaka listesini kapat"
-                onClick={() => setMobileCases(false)}
+                onClick={() => setCasesOpen(false)}
               >
                 <X />
               </button>
@@ -222,7 +228,9 @@ export default function App() {
                     aria-pressed={record?.id === c.id}
                     onClick={() => {
                       setSelectedId(c.id);
-                      setMobileCases(false);
+                      // Dar ekranda liste calisma alaninin ustune biniyor;
+                      // secimden sonra kapaniyor. Genis ekranda acik kaliyor.
+                      if (window.innerWidth <= DAR_EKRAN) setCasesOpen(false);
                     }}
                   >
                     <span className="case-icon">
@@ -256,7 +264,7 @@ export default function App() {
               <button
                 className="icon-button mobile-only"
                 aria-label="Vakaları göster"
-                onClick={() => setMobileCases(true)}
+                onClick={() => setCasesOpen(true)}
               >
                 <Menu size={18} />
               </button>

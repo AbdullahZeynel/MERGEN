@@ -53,6 +53,24 @@ describe('case workspace', () => {
     );
     expect(screen.queryByRole('complementary', { name: 'MERGEN Asistan' })).not.toBeInTheDocument();
   });
+  it('vaka listesini raydan açıp kapatır ve seçimde geniş ekranda açık bırakır', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const liste = () => screen.getByRole('complementary', { name: 'Vakalar' });
+    expect(liste()).toHaveClass('open');
+    const gizle = screen.getByRole('button', { name: 'Vaka listesini gizle' });
+    expect(gizle).toHaveAttribute('aria-expanded', 'true');
+    await user.click(gizle);
+    expect(liste()).toHaveClass('collapsed');
+    const goster = screen.getByRole('button', { name: 'Vaka listesini göster' });
+    expect(goster).toHaveAttribute('aria-expanded', 'false');
+    await user.click(goster);
+    expect(liste()).toHaveClass('open');
+    // Geniş ekranda liste çalışma alanının üstüne binmiyor; seçim onu kapatmamalı.
+    await user.click(screen.getByRole('button', { name: /TEST-0002/ }));
+    expect(liste()).toHaveClass('open');
+  });
+
   it('never silently substitutes demo records for a disconnected live source', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
