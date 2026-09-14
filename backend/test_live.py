@@ -279,5 +279,61 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertIsNone(self.store.claim("gpu-standby", ["imaging", "genomics"]))
 
 
+class LiveSettingsEnvironmentTests(unittest.IsolatedAsyncioTestCase):
+    """systemd must never fall back to the checkout-relative runtime default."""
+
+    SYSTEMD = {"INVOCATION_ID": "0" * 32}
+
+    def test_systemd_refuses_the_checkout_default(self):
+        with patch.dict("os.environ", self.SYSTEMD, clear=True):
+            with self.assertRaisesRegex(ValueError, "MERGEN_RUNTIME_ROOT"):
+                LiveSettings.from_env()
+
+    def test_systemd_requires_an_explicit_database_inside_the_runtime(self):
+        cases = (
+            ({"MERGEN_RUNTIME_ROOT": "/srv/mergen/runtime"}, "MERGEN_DATABASE_PATH"),
+            ({"MERGEN_RUNTIME_ROOT": "relative/runtime",
+              "MERGEN_DATABASE_PATH": "/srv/mergen/runtime/control.sqlite3"}, "MERGEN_RUNTIME_ROOT"),
+            ({"MERGEN_RUNTIME_ROOT": "/srv/mergen/runtime",
+              "MERGEN_DATABASE_PATH": "/var/tmp/control.sqlite3"}, "inside"),
+        )
+        for env, message in cases:
+            with self.subTest(expected=message), patch.dict("os.environ", {**self.SYSTEMD, **env}, clear=True):
+                with self.assertRaisesRegex(ValueError, message):
+                    LiveSettings.from_env()
+
+    def test_systemd_uses_the_explicit_paths(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+            **self.SYSTEMD, "MERGEN_RUNTIME_ROOT": tmp,
+            "MERGEN_DATABASE_PATH": f"{tmp}/control.sqlite3",
+        }, clear=True):
+            settings = LiveSettings.from_env()
+        self.assertEqual(settings.runtime_root, Path(tmp).resolve())
+        self.assertEqual(settings.database_path, Path(tmp).resolve() / "control.sqlite3")
+
+    def test_local_development_keeps_the_checkout_default(self):
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertEqual(LiveSettings.from_env().runtime_root, Path(".local/runtime").resolve())
+
+    def test_invalid_number_is_named_without_its_value(self):
+        canary = "ten-canary-value"
+        with patch.dict("os.environ", {"MERGEN_MAX_ACTIVE_SESSIONS": canary}, clear=True):
+            with self.assertRaises(ValueError) as caught:
+                LiveSettings.from_env()
+        self.assertIn("MERGEN_MAX_ACTIVE_SESSIONS", str(caught.exception))
+        self.assertFalse(canary in str(caught.exception), "the error echoed a configured value")
+
+    async def test_misconfigured_live_layer_answers_503(self):
+        with patch("backend.live_api._store", None), \
+                patch.dict("os.environ", self.SYSTEMD, clear=True):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=public_app),
+                                         base_url="https://testserver") as client:
+                with self.assertLogs("mergen.live", level="ERROR"):
+                    response = await client.get("/api/live/session")
+                profiles = await client.get("/api/live/profiles")
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(profiles.status_code, 200)
+
+
 if __name__ == "__main__":
     unittest.main()

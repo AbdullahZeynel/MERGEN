@@ -3,4 +3,8 @@ from backend.live_store import LiveSettings, LiveStore
 
 
 if __name__ == "__main__":
-    print(LiveStore(LiveSettings.from_env()).cleanup())
+    try:
+        settings = LiveSettings.from_env()
+    except ValueError as exc:
+        raise SystemExit(f"Cleanup refused: {exc}") from None
+    print(LiveStore(settings).cleanup())

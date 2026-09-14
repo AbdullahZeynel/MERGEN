@@ -50,4 +50,13 @@ if [[ ! -e /etc/mergen/services.env ]]; then
     install -m 640 -o root -g mergen "$repo_dir/infra/vps/services.env.example" /etc/mergen/services.env
 fi
 systemctl daemon-reload
+# An existing services.env is never overwritten, so an upgrade from the
+# demo-only layout keeps a file without the live settings, and the backend
+# refuses to guess them under systemd. Say so now, not at the first start.
+# The checker names missing keys only; it never prints a value.
+if ! "$python_bin" "$repo_dir/infra/vps/check_services_env.py" /etc/mergen/services.env; then
+    echo 'Code and units are installed, but /etc/mergen/services.env is not ready.' >&2
+    echo 'Add the missing settings from infra/vps/services.env.example, then re-run this installer.' >&2
+    exit 1
+fi
 echo 'Installed. Configure /etc/mergen/services.env before enabling the services.'

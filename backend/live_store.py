@@ -20,6 +20,30 @@ def env_bool(name: str, default: str) -> bool:
     return value == "true"
 
 
+def env_int(name: str, default: int) -> int:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        # Name only: a configuration value never reaches a log line.
+        raise ValueError(f"{name} must be an integer") from None
+
+
+def running_under_systemd() -> bool:
+    # systemd sets INVOCATION_ID for every process it starts for a unit.
+    return bool(os.environ.get("INVOCATION_ID"))
+
+
+def explicit_path(name: str) -> Path:
+    raw = os.environ.get(name, "").strip()
+    path = Path(raw)
+    if not raw or not path.is_absolute() or ".." in path.parts:
+        raise ValueError(f"{name} must be an explicit absolute path when running under systemd")
+    return path
+
+
 @dataclass(frozen=True)
 class LiveSettings:
     runtime_root: Path
@@ -49,19 +73,30 @@ class LiveSettings:
 
     @classmethod
     def from_env(cls) -> "LiveSettings":
-        root = Path(os.environ.get("MERGEN_RUNTIME_ROOT", ".local/runtime")).resolve()
+        if running_under_systemd():
+            # A service never guesses where live uploads go. The checkout-
+            # relative default below is for local development only; under
+            # systemd a missing value is a configuration error, not a fallback.
+            root = explicit_path("MERGEN_RUNTIME_ROOT")
+            database = explicit_path("MERGEN_DATABASE_PATH")
+            if not database.is_relative_to(root):
+                raise ValueError("MERGEN_DATABASE_PATH must be inside MERGEN_RUNTIME_ROOT")
+            root, database = root.resolve(), database.resolve()
+        else:
+            root = Path(os.environ.get("MERGEN_RUNTIME_ROOT", ".local/runtime")).resolve()
+            database = Path(os.environ.get("MERGEN_DATABASE_PATH", root / "control.sqlite3")).resolve()
         return cls(
             runtime_root=root,
-            database_path=Path(os.environ.get("MERGEN_DATABASE_PATH", root / "control.sqlite3")).resolve(),
-            max_sessions=int(os.environ.get("MERGEN_MAX_ACTIVE_SESSIONS", "10")),
-            idle_seconds=int(os.environ.get("MERGEN_SESSION_IDLE_SECONDS", "180")),
-            absolute_seconds=int(os.environ.get("MERGEN_SESSION_MAX_SECONDS", "1800")),
-            lease_seconds=int(os.environ.get("MERGEN_WORKER_LEASE_SECONDS", "180")),
-            max_attempts=int(os.environ.get("MERGEN_JOB_MAX_ATTEMPTS", "3")),
-            max_claimed_jobs=int(os.environ.get("MERGEN_MAX_CLAIMED_JOBS", "1")),
-            max_upload_bytes=int(os.environ.get("MERGEN_MAX_UPLOAD_BYTES", str(2 * 1024**3))),
-            max_expanded_bytes=int(os.environ.get("MERGEN_MAX_EXPANDED_BYTES", str(8 * 1024**3))),
-            max_result_bytes=int(os.environ.get("MERGEN_MAX_RESULT_BYTES", str(2 * 1024**3))),
+            database_path=database,
+            max_sessions=env_int("MERGEN_MAX_ACTIVE_SESSIONS", 10),
+            idle_seconds=env_int("MERGEN_SESSION_IDLE_SECONDS", 180),
+            absolute_seconds=env_int("MERGEN_SESSION_MAX_SECONDS", 1800),
+            lease_seconds=env_int("MERGEN_WORKER_LEASE_SECONDS", 180),
+            max_attempts=env_int("MERGEN_JOB_MAX_ATTEMPTS", 3),
+            max_claimed_jobs=env_int("MERGEN_MAX_CLAIMED_JOBS", 1),
+            max_upload_bytes=env_int("MERGEN_MAX_UPLOAD_BYTES", 2 * 1024**3),
+            max_expanded_bytes=env_int("MERGEN_MAX_EXPANDED_BYTES", 8 * 1024**3),
+            max_result_bytes=env_int("MERGEN_MAX_RESULT_BYTES", 2 * 1024**3),
             cookie_secure=env_bool("MERGEN_COOKIE_SECURE", "true"),
         )
 
