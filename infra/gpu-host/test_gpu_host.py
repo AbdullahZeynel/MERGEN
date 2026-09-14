@@ -327,6 +327,17 @@ class DeclarativeConfiguration(unittest.TestCase):
                 self.assertEqual(os.stat(path).st_mode & 0o007, 0,
                                  "other users must not reach spool content")
 
+    def test_snapshot_check_accepts_the_runtime_mode_and_rejects_others_access(self):
+        snapshot = read(HERE / "check-snapshot-layout.sh")
+        self.assertIn('mode_too_wide "$mode" "$MERGEN_RUNTIME_MODE"', snapshot)
+        command = (
+            f'source "{HERE}/lib/common.sh"; '
+            '! mode_too_wide "$MERGEN_RUNTIME_MODE" "$MERGEN_RUNTIME_MODE"; '
+            'mode_too_wide 2777 "$MERGEN_RUNTIME_MODE"'
+        )
+        result = subprocess.run(["bash", "-c", command], capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
     def test_executor_cannot_read_the_dispatcher_secret(self):
         # Contract level: the installer seeds dispatcher.env to the dispatcher
         # group at 0640, and the executor unit never references that file.

@@ -138,8 +138,8 @@ section 'Backup exclusions'
 # A correct mount layout still loses if a file-level backup walks into it.
 if [[ -d "$runtime" ]]; then
     mode="$(path_mode "$runtime")"
-    if mode_too_wide "$mode" 750; then
-        fail "Runtime directory mode $mode is wider than 750; other desktop users could read job data"
+    if mode_too_wide "$mode" "$MERGEN_RUNTIME_MODE"; then
+        fail "Runtime directory mode $mode grants permissions outside the $MERGEN_RUNTIME_MODE contract"
     else
         pass "Runtime directory mode is $mode"
     fi
