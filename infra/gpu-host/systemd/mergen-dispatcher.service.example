@@ -1,9 +1,16 @@
-# EXAMPLE ONLY. The dispatcher itself is G2 work; nothing installs this yet.
-# Copy to /etc/systemd/system/mergen-dispatcher.service when G2 lands, then
-# re-check every path against the code that actually ships.
+# EXAMPLE ONLY. Review every path on the host; nothing installs or starts this.
+#
+# Matches the G2 package `mergen_dispatcher`, run from a versioned release:
+#
+#   /opt/mergen/releases/<version>/src/         backend/archive_io.py,
+#                                               backend/live_contracts.py,
+#                                               mergen_spool/, mergen_dispatcher/
+#   /opt/mergen/releases/<version>/dispatcher/  venv: mergen_dispatcher/requirements.txt
+#   /opt/mergen/current -> releases/<version>   one symlink, switched atomically
 #
 # The dispatcher is the only MERGEN unit that talks to the VPS. It holds the
-# worker token, claims jobs, downloads input and uploads results.
+# worker token, claims jobs, downloads input and uploads results. It runs no
+# model, starts no subprocess and opens no GPU device.
 
 [Unit]
 Description=MERGEN GPU job dispatcher
@@ -14,27 +21,45 @@ Wants=network-online.target
 Type=simple
 User=mergen-dispatcher
 Group=mergen-dispatcher
-# Read group for the model tree; it never writes there.
+# The spool's setgid group: job files reach the executor through it.
 SupplementaryGroups=mergen-svc
 WorkingDirectory=/var/lib/mergen/dispatcher
 EnvironmentFile=/etc/mergen/dispatcher.env
-ExecStart=/opt/mergen/current/dispatcher/bin/python -m mergen_dispatcher
+Environment=PYTHONPATH=/opt/mergen/current/src
+Environment=PYTHONDONTWRITEBYTECODE=1
+# -P: import nothing from the working directory, only from PYTHONPATH and the venv.
+ExecStart=/opt/mergen/current/dispatcher/bin/python -P -m mergen_dispatcher
 Restart=on-failure
 RestartSec=10
+# Exit 2 is a configuration or spool-layout refusal: an operator must fix it,
+# and a restart would only repeat the same refusal.
+RestartPreventExitStatus=2
 
 # Privilege containment
 NoNewPrivileges=true
+CapabilityBoundingSet=
 PrivateTmp=true
+# No /dev/nvidia*: the dispatcher never touches the GPU.
 PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
+ProtectKernelLogs=true
 ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictNamespaces=true
+RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
 MemoryDenyWriteExecute=false
 SystemCallArchitectures=native
+SystemCallFilter=@system-service
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+# The control API is reached over Tailscale only; the token cannot go anywhere else.
+IPAddressDeny=any
+IPAddressAllow=localhost 100.64.0.0/10 fd7a:115c:a1e0::/48
 # 0007, not 0077: the spool is a hand-off. Files land 0660 in the setgid
 # group mergen-svc so the other service can read them; others get nothing.
 UMask=0007
@@ -44,9 +69,8 @@ ReadWritePaths=/var/lib/mergen/dispatcher /var/lib/mergen/runtime
 Nice=10
 CPUWeight=40
 IOWeight=40
-MemoryMax=8G
-# MemoryMax is a hard cap; size it against the real job profile before trusting
-# it. Too low turns a long job into an OOM kill halfway through.
+# Transfers stream in 1 MiB chunks; no payload is held in memory.
+MemoryMax=1G
 
 [Install]
 WantedBy=multi-user.target
