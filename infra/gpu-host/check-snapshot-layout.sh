@@ -37,7 +37,11 @@ if ! safe_system_path "$runtime"; then
 fi
 if [[ ! -d "$runtime" ]]; then
     fail "Runtime directory does not exist yet: $runtime"
-    info 'Create the directory tree first (install-base.sh --apply), then re-run.'
+    # Deliberately not "run install-base.sh": accounts and directories must not
+    # be created before the data scope is settled. The mount comes first.
+    info 'Create an empty mount point, give the runtime its own logical volume,'
+    info 'partition or Btrfs subvolume, mount it there, then run this again.'
+    info 'install-base.sh comes after this check passes, not before.'
     summary 'Snapshot layout' || exit 1
 fi
 pass "Runtime directory: $runtime"
@@ -61,9 +65,36 @@ section 'Snapshot scope'
 separate_mount=0
 [[ -n "$runtime_mp" && "$runtime_mp" != '/' ]] && separate_mount=1
 
+# A loop device looks like a separate block device but its backing file may sit
+# on the root filesystem, in which case a root snapshot captures the whole
+# image. Do not call that layout safe.
+loop_backed=0
+if [[ "$runtime_src" == /dev/loop* ]]; then
+    loop_name="${runtime_src##*/}"
+    loop_name="${loop_name%%p[0-9]*}"
+    backing=''
+    [[ -r "/sys/block/$loop_name/loop/backing_file" ]] &&
+        backing="$(cat "/sys/block/$loop_name/loop/backing_file" 2>/dev/null || true)"
+    loop_backed=1
+    if [[ -z "$backing" ]]; then
+        fail 'Runtime is on a loop device whose backing file cannot be read'
+        info 'Decide by hand whether that image sits inside the root filesystem.'
+    else
+        backing_mp="$(mount_point_of "$backing")"
+        if [[ "$backing_mp" == '/' ]]; then
+            fail 'Runtime is on a loop device backed by a file inside the root filesystem'
+            info 'A root snapshot would capture the whole image, job data included.'
+        else
+            warn 'Runtime is on a loop device; the backing file is outside root but this needs a human decision'
+        fi
+    fi
+fi
+
 case "$root_fs" in
     btrfs)
-        if [[ "$runtime_fs" != 'btrfs' && "$separate_mount" -eq 1 ]]; then
+        if [[ "$loop_backed" -eq 1 ]]; then
+            info 'Loop-device layout already judged above; no automatic pass here.'
+        elif [[ "$runtime_fs" != 'btrfs' && "$separate_mount" -eq 1 ]]; then
             pass 'Runtime sits on a separate non-Btrfs mount; a root snapshot cannot capture it'
         elif ! have btrfs; then
             fail 'btrfs-progs is missing; subvolume membership cannot be proven'
@@ -86,7 +117,9 @@ case "$root_fs" in
         fi
         ;;
     ext4|xfs|'')
-        if [[ "$separate_mount" -eq 1 && "$runtime_src" != "$root_src" ]]; then
+        if [[ "$loop_backed" -eq 1 ]]; then
+            info 'Loop-device layout already judged above; no automatic pass here.'
+        elif [[ "$separate_mount" -eq 1 && "$runtime_src" != "$root_src" ]]; then
             pass 'Runtime is on a different block device than root; root snapshots exclude it'
         elif [[ "$separate_mount" -eq 1 ]]; then
             fail 'Runtime is a separate mount but shares the root block device; an LVM snapshot would capture it'
