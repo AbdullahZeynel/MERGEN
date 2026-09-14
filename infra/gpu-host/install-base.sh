@@ -108,8 +108,10 @@ else
     act 'Install /usr/lib/sysusers.d/mergen.conf (0644 root:root)' \
         install -D -m 644 -o root -g root "$here/sysusers.d/mergen.conf" /usr/lib/sysusers.d/mergen.conf
 fi
-act 'Apply systemd-sysusers (creates mergen-svc, mergen-dispatcher, mergen-executor)' \
-    systemd-sysusers
+# Name the file explicitly: a bare `systemd-sysusers` also applies every other
+# pending definition on the host, which is not ours to decide.
+act 'Apply systemd-sysusers for mergen.conf only' \
+    systemd-sysusers /usr/lib/sysusers.d/mergen.conf
 
 if [[ "$apply" -eq 1 ]]; then
     for account in "$MERGEN_DISPATCHER_USER" "$MERGEN_EXECUTOR_USER"; do
@@ -128,11 +130,29 @@ if [[ "$apply" -eq 1 ]]; then
 fi
 
 section 'Maintenance account'
-if [[ "$create_maintenance" -eq 0 ]]; then
-    skip 'Maintenance account creation disabled by --no-maintenance-account'
-elif user_exists "$MERGEN_MAINT_USER"; then
+# The model tree is owned by this account, so tmpfiles cannot run without it.
+if user_exists "$MERGEN_MAINT_USER"; then
     skip "Maintenance account already exists: $MERGEN_MAINT_USER"
     info 'Ownership and sudo scope are not changed for an existing account.'
+    maint_home="$(getent passwd "$MERGEN_MAINT_USER" | awk -F: '{print $6}')"
+    maint_shell="$(user_shell "$MERGEN_MAINT_USER")"
+    if [[ -n "$maint_home" && -d "$maint_home" ]]; then
+        pass "Maintenance home directory exists"
+    else
+        fail "$MERGEN_MAINT_USER has no usable home directory"
+        exit 1
+    fi
+    if is_nologin_shell "$maint_shell"; then
+        fail "$MERGEN_MAINT_USER has a nologin shell; it cannot be used for maintenance"
+        info 'Give it a login shell, or pick a different maintenance account.'
+        exit 1
+    fi
+    pass 'Maintenance account has a login shell'
+elif [[ "$create_maintenance" -eq 0 ]]; then
+    fail "--no-maintenance-account was given but $MERGEN_MAINT_USER does not exist"
+    info 'The model tree is owned by this account; tmpfiles would fail on an unknown owner.'
+    info 'Create it yourself, or drop --no-maintenance-account.'
+    exit 1
 else
     # A human account: real home, real shell, and a locked password so it can
     # only be reached with `sudo -u mergen -i` or an explicitly set credential.
@@ -144,6 +164,15 @@ info 'Sudo is NOT granted here. Review sudoers.d/mergen-maintenance.example and'
 info 'install it with visudo on the host if the narrowed command set is right.'
 
 section 'Directories'
+# systemd-tmpfiles fails on an unknown owner or group. Check the names the
+# configuration actually uses rather than assuming sysusers succeeded.
+if [[ "$apply" -eq 1 ]]; then
+    while read -r _ _ _ owner group _; do
+        [[ -n "$owner" && "$owner" != '-' ]] && { user_exists "$owner" || { fail "tmpfiles names an unknown owner: $owner"; exit 1; }; }
+        [[ -n "$group" && "$group" != '-' ]] && { group_exists "$group" || { fail "tmpfiles names an unknown group: $group"; exit 1; }; }
+    done < <(grep -E '^d ' "$here/tmpfiles.d/mergen.conf")
+    pass 'Every owner and group named by tmpfiles exists'
+fi
 if [[ -f /usr/lib/tmpfiles.d/mergen.conf ]] &&
     cmp -s "$here/tmpfiles.d/mergen.conf" /usr/lib/tmpfiles.d/mergen.conf; then
     skip 'tmpfiles.d/mergen.conf already installed and identical'
@@ -162,9 +191,18 @@ section 'Configuration files'
 # fails loudly instead of running with a guessed value.
 seed_env() {
     local example="$1" target="$2" group="$3"
+    if [[ -L "$target" ]]; then
+        fail "Refusing to write through a symlink: $target"
+        info 'Remove or replace it with a regular file before re-running.'
+        exit 1
+    fi
     if [[ -e "$target" ]]; then
-        skip "Already present, left untouched: $target"
-        return 0
+        if [[ -f "$target" ]]; then
+            skip "Already present, left untouched: $target"
+            return 0
+        fi
+        fail "$target exists but is not a regular file"
+        exit 1
     fi
     act "Seed $target from the example (0640 root:$group, all secrets blank)" \
         install -m 640 -o root -g "$group" "$example" "$target"
