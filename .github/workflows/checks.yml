@@ -53,6 +53,10 @@ jobs:
         run: python -m unittest backend.test_live
       - name: VPS dağıtım testleri
         run: python -m unittest discover -s infra/vps -p 'test_*.py'
+      - name: GPU spool sözleşmesi testleri
+        run: python -m unittest discover -s mergen_spool -t .
+      - name: GPU dispatcher testleri
+        run: python -m unittest discover -s mergen_dispatcher -t .
       - name: Kurulum betikleri sözdizimi
         run: |
           bash -n infra/vps/package-frontend.sh
