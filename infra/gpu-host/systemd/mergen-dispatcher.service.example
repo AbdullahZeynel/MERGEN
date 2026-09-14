@@ -35,7 +35,9 @@ RestrictSUIDSGID=true
 LockPersonality=true
 MemoryDenyWriteExecute=false
 SystemCallArchitectures=native
-UMask=0077
+# 0007, not 0077: the spool is a hand-off. Files land 0660 in the setgid
+# group mergen-svc so the other service can read them; others get nothing.
+UMask=0007
 ReadWritePaths=/var/lib/mergen/dispatcher /var/lib/mergen/runtime
 
 # Shared desktop manners: the owner's interactive work outranks batch work.

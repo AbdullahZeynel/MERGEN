@@ -214,12 +214,36 @@ audit_dir() {
         pass "$path ($owner, mode $mode)"
     fi
 }
-audit_dir "$MERGEN_APP_ROOT" "root:$MERGEN_MAINT_GROUP" 755
+audit_dir "$MERGEN_APP_ROOT" 'root:root' 755
 audit_dir "$MERGEN_MODEL_ROOT" "$MERGEN_MAINT_USER:$MERGEN_SERVICE_GROUP" 750
 audit_dir "$MERGEN_DISPATCHER_STATE" "$MERGEN_DISPATCHER_USER:$MERGEN_DISPATCHER_USER" 700
 audit_dir "$MERGEN_EXECUTOR_STATE" "$MERGEN_EXECUTOR_USER:$MERGEN_EXECUTOR_USER" 700
-audit_dir "$MERGEN_RUNTIME_ROOT" "$MERGEN_DISPATCHER_USER:$MERGEN_EXECUTOR_USER" 750
+# Setgid plus group rwx is the spool hand-off contract, not an accident.
+audit_dir "$MERGEN_RUNTIME_ROOT" "$MERGEN_DISPATCHER_USER:$MERGEN_SERVICE_GROUP" 2770
 audit_dir "$MERGEN_CONFIG_ROOT" 'root:root' 751
+
+# mode_too_wide only catches extra bits; a missing setgid bit is the opposite
+# failure and silently breaks the dispatcher/executor hand-off.
+if [[ -d "$MERGEN_RUNTIME_ROOT" ]]; then
+    if [[ -g "$MERGEN_RUNTIME_ROOT" ]]; then
+        pass 'Runtime directory carries the setgid bit'
+    else
+        fail 'Runtime directory is missing the setgid bit; job files would not be group-shared'
+    fi
+fi
+
+# The dispatcher environment file is the only place the worker token lives.
+if [[ -f "$MERGEN_CONFIG_ROOT/dispatcher.env" ]]; then
+    env_mode="$(path_mode "$MERGEN_CONFIG_ROOT/dispatcher.env")"
+    env_owner="$(path_owner "$MERGEN_CONFIG_ROOT/dispatcher.env")"
+    if mode_too_wide "$env_mode" 640; then
+        fail "dispatcher.env has mode $env_mode, wider than 640"
+    elif [[ "$env_owner" != "root:$MERGEN_DISPATCHER_USER" ]]; then
+        warn "dispatcher.env is owned by $env_owner, expected root:$MERGEN_DISPATCHER_USER"
+    else
+        pass "dispatcher.env ($env_owner, mode $env_mode)"
+    fi
+fi
 
 section 'Python'
 if have python3; then

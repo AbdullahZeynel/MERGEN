@@ -30,7 +30,9 @@ ProtectControlGroups=true
 RestrictSUIDSGID=true
 LockPersonality=true
 SystemCallArchitectures=native
-UMask=0077
+# 0007, not 0077: the spool is a hand-off. Files land 0660 in the setgid
+# group mergen-svc so the other service can read them; others get nothing.
+UMask=0007
 ReadWritePaths=/var/lib/mergen/executor /var/lib/mergen/runtime
 
 # No network leg at all. Verify on the host: some CUDA and telemetry paths
