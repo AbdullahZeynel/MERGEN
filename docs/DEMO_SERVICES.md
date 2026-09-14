@@ -20,7 +20,8 @@ tutan koleksiyon manifestine yönlendirir. MCP geçiş süresince eski v2 paketi
 okur. Kaynak `models/imaging/results/` içindeki iki gözden geçirilmiş vakadır.
 Kaynak hacimler, tahmin maskeleri ve tümör mesh'leri değiştirilmez. Her eksendeki
 tüm FLAIR kesitleri ile şeffaf ensemble tahmin/referans katmanları PNG'ye
-dönüştürülür; bu iki katman arayüzde ayrı açılır. Tahmin maskeleri daha önce
+dönüştürülür; 3D yüzeyler içerik özetli binary GLB olarak yazılır. Bu iki 2D
+katman arayüzde ayrı açılır. Tahmin maskeleri daha önce
 üretilmiş sonuçlardır; kaynak T1/T2 kanalları yeniden sağlanmadan çıkarım ve Dice
 skorları yeniden üretilemez. Beyin bağlamı aynı voxel koordinatlarında MR ön
 planının en büyük bağlantılı bölgesinden türetilir. Bu yaklaşık dış yüzeydir;
@@ -47,6 +48,20 @@ models/imaging/.venv/bin/python frontend/scripts/prepare_demo.py \
   --output .local/demo-v3-expanded \
   --all-cases
 ```
+
+Mevcut schema-v3 paketini kesitleri yeniden üretmeden GLB biçimine geçirmek için
+kaynak korunarak yeni bir çıktı dizini oluşturulur:
+
+```bash
+models/imaging/.venv/bin/python frontend/scripts/migrate_demo_meshes.py \
+  --source .local/demo-v3-expanded \
+  --output .local/demo-v3-expanded-glb
+```
+
+Manifestteki mesh URL'si GLB içeriğinin SHA-256 özetini taşır. API bu özeti tekrar
+doğrular ve yalnız bu URL'ye `public, max-age=31536000, immutable` verir. Paket
+değiştiğinde URL de değişir; eski JSON paketleri geçiş süresince okunmaya devam
+eder.
 
 Üç ayrı terminalde, repo kökünden:
 
@@ -99,7 +114,7 @@ modülün kayıtları aynı hastaya aitmiş gibi birleştirilmez.
 | `/api/demo/cases` | `list_cases` | Mevcut arayüz için v2 uyumluluk yanıtı |
 | `/api/demo/cases/{id}/slices/{axis}/{index}` | `get_slice` | PNG, sıfır tabanlı indeks |
 | `/api/demo/cases/{id}/overlays/{layer}/{axis}/{index}` | `get_overlay` | Şeffaf tahmin veya referans PNG'si |
-| `/api/demo/cases/{id}/mesh` | `get_mesh` | JSON yüzeyler |
+| `/api/demo/cases/{id}/mesh/{sha256}.glb` | `get_mesh` | İçerik özetli binary GLB yüzeyleri |
 | `/api/demo/modules/genomics/diseases/glioma-variant-pathogenicity/cases/{id}/report/{ad}` | `get_report` | `result`, `explanation` veya `input` JSON'u |
 | `/api/health` | `list_cases` | Demo MCP hazır; canlı AI bağlı değil |
 
@@ -119,4 +134,8 @@ backend/.venv/bin/python -m unittest backend.test_demo
 backend/.venv/bin/python infra/vps/smoke-demo.py
 ```
 
-Smoke testi çalışan yerel servislerde her vakanın üç eksenindeki ilk/orta/son kesitlerini, mesh ve checksum'larını 10 eşzamanlı HTTP isteğiyle kontrol eder. Bu bir kullanıcı kapasite testi değildir. VPS kurulumu: [dağıtım rehberi](../infra/vps/README.md).
+Smoke testi çalışan yerel servislerde her vakanın üç eksenindeki ilk/orta/son
+kesitlerini, GLB başlığını, değişmez cache kuralını ve checksum'larını 10 eşzamanlı
+HTTP isteğiyle kontrol eder. Bu bir kullanıcı kapasite testi değildir. VPS
+kurulumu: [dağıtım rehberi](../infra/vps/README.md).
+Boyut ve ayrıştırma karşılaştırması [3D mesh performans kaydındadır](3D_MESH_PERFORMANCE.md).

@@ -29,7 +29,7 @@ Testler vaka/sohbet bağlamı, demo–canlı sınırı, filtreler, hata durumlar
 - Chatbot ertelendi: panel ve açma düğmeleri şimdilik gizlidir; bileşen korunur. 2D ve 3D kartları eşit genişlikte, görüntü alanları eşit yüksekliktedir.
 
 - Üç eksenin bütün kesitleri kaydırıcı, düğmeler ve odaklı alanda ok tuşlarıyla gezilir. Gerçek ensemble mesh, 3D döndürme/yakınlaştırma, bölge görünürlüğü ve tümör opaklığı bağlandı. 2D/3D büyütme hem eni hem boyu kullanır; Escape ile kapanır.
-- `prepare_demo.py` sürüm 2 paketine yaklaşık MR dış yüzeyi ekler. Bu korteks segmentasyonu değildir. Eski hedef ezilmez; yeni çıktı dizini kullanın. WebGL hatası açıkça gösterilir; Three.js kaynakları temizlenir.
+- `prepare_demo.py` yaklaşık MR dış yüzeyini içerik özetli binary GLB olarak yazar. Bu korteks segmentasyonu değildir. `migrate_demo_meshes.py` eski schema-v3 JSON paketini kaynak dizine dokunmadan yeni GLB paketine taşır. Eski hedef ezilmez; yeni çıktı dizini kullanın. WebGL hatası açıkça gösterilir; Three.js kaynakları temizlenir.
 - Mevcut görüntü vakalarına eşlenmiş genomik sonuç yoktur; XGBoost puanı veya SHAP açıklaması üretilmez.
 - Asistan ve canlı API bağlı değildir. “AI servisi bağlı değil” entegrasyon durumudur; makinenin çevrimdışı olduğuna dair ölçüm değildir. Demo API/MCP sağlık ucu `/api/health` uygulanmıştır.
 - Eksen adları veri dizisinin eksenleridir. Anatomik yön ve voxel aralığı doğrulanmadan R/L işaretleri, mm ölçümleri veya 2D–3D çapraz konumlama gösterilmez.

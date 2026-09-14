@@ -127,7 +127,7 @@ catalog.json
 │   └── cases/UCSF-PDGM-0004/
 │       ├── slices/{axial,coronal,sagittal}/…   MR kesitleri
 │       ├── overlays/{prediction,ground_truth}/ segmentasyon katmanları
-│       └── mesh_ensemble.json                  3D tümör yüzeyleri
+│       └── mesh-<sha256>.glb                   3D tümör yüzeyleri
 └── genomics/glioma-variant-pathogenicity/manifest.json
     └── cases/IDH1-R132H/
         ├── input.json        varyant girdisi
