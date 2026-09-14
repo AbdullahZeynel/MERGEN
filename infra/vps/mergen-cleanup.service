@@ -7,7 +7,8 @@ User=mergen
 Group=mergen
 WorkingDirectory=/srv/mergen/services
 EnvironmentFile=/etc/mergen/services.env
-ExecStart=/srv/mergen/services/.venv/bin/python /srv/mergen/services/backend/cleanup.py
+# Module form: only -m puts WorkingDirectory on sys.path, where `backend` lives.
+ExecStart=/srv/mergen/services/.venv/bin/python -m backend.cleanup
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict

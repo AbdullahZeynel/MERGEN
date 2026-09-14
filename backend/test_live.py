@@ -170,10 +170,12 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.control.post(f"/internal/jobs/{job_id}/lease", headers=self.worker_headers)).status_code, 200
         )
+        result_bundle = imaging_result(job_id)
         completed = await self.control.post(
             f"/internal/jobs/{job_id}/result",
-            headers={**self.worker_headers, "Content-Type": "application/zip"},
-            content=imaging_result(job_id),
+            headers={**self.worker_headers, "Content-Type": "application/zip",
+                     "X-Mergen-Result-Sha256": hashlib.sha256(result_bundle).hexdigest()},
+            content=result_bundle,
         )
         self.assertEqual(completed.status_code, 200, completed.text)
 
@@ -237,10 +239,10 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.control.get("/internal/health", headers=self.worker_headers)).status_code, 200)
         heartbeat = await self.control.post(
             "/internal/workers/heartbeat", headers=self.worker_headers,
-            json={"capabilities": ["imaging", "genomics"]},
+            json={"capabilities": ["imaging"]},
         )
         self.assertEqual(heartbeat.status_code, 200)
-        self.assertEqual(self.store.available_capabilities(), ["genomics", "imaging"])
+        self.assertEqual(self.store.available_capabilities(), ["imaging"])
 
     async def test_live_access_code_is_required_only_for_new_session(self):
         self.assertEqual((await self.public.post("/api/live/session")).status_code, 401)
@@ -262,21 +264,100 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_documented_input_examples_match_contract(self):
         examples = Path(__file__).parents[1] / "docs/contracts"
-        for name in ("imaging-input.v1.example.json", "genomics-input.v1.example.json"):
+        for name in ("imaging-input.v1.example.json",):
             parsed = InputManifest.model_validate_json((examples / name).read_bytes())
             self.assertEqual(parsed.schemaVersion, 1)
         profiles = await self.public.get("/api/live/profiles")
         self.assertEqual(profiles.status_code, 200)
-        self.assertEqual({item["disease"] for item in profiles.json()["profiles"]},
-                         {"glioma", "glioma-variant-pathogenicity"})
+        self.assertEqual({item["disease"] for item in profiles.json()["profiles"]}, {"glioma"})
 
     async def test_only_one_job_can_be_claimed_globally(self):
         first = self.store.create_session()
         second = self.store.create_session()
         self.store.create_job(first["id"], "imaging", "glioma", "a" * 64)
-        self.store.create_job(second["id"], "genomics", "glioma-variant-pathogenicity", "b" * 64)
-        self.assertIsNotNone(self.store.claim("gpu-primary", ["imaging", "genomics"]))
-        self.assertIsNone(self.store.claim("gpu-standby", ["imaging", "genomics"]))
+        self.store.create_job(second["id"], "imaging", "glioma", "b" * 64)
+        self.assertIsNotNone(self.store.claim("gpu-primary", ["imaging"]))
+        self.assertIsNone(self.store.claim("gpu-standby", ["imaging"]))
+
+    async def test_the_vps_completes_only_the_declared_result_digest(self):
+        csrf = await self.create_session()
+        created = await self.public.post(
+            "/api/live/jobs", headers={**csrf, "Content-Type": "application/zip"},
+            content=imaging_input(),
+        )
+        job_id = created.json()["jobId"]
+        await self.control.post("/internal/jobs/claim", headers=self.worker_headers,
+                                json={"capabilities": ["imaging"]})
+        bundle = imaging_result(job_id)
+        upload = {**self.worker_headers, "Content-Type": "application/zip"}
+        path = f"/internal/jobs/{job_id}/result"
+        missing = await self.control.post(path, headers=upload, content=bundle)
+        wrong = await self.control.post(
+            path, headers={**upload, "X-Mergen-Result-Sha256": "0" * 64}, content=bundle)
+        self.assertEqual((missing.status_code, wrong.status_code), (422, 422))
+        session = self.store.get_session(self.public.cookies.get("mergen_session"))
+        self.assertEqual(self.store.job_for_session(job_id, session["id"])["status"], "claimed")
+        self.assertFalse((self.store.job_directory(session["id"], job_id) / "result.zip").exists())
+        right = await self.control.post(
+            path, headers={**upload, "X-Mergen-Result-Sha256": hashlib.sha256(bundle).hexdigest()},
+            content=bundle)
+        self.assertEqual(right.status_code, 200)
+
+
+class LiveSettingsEnvironmentTests(unittest.IsolatedAsyncioTestCase):
+    """systemd must never fall back to the checkout-relative runtime default."""
+
+    SYSTEMD = {"INVOCATION_ID": "0" * 32}
+
+    def test_systemd_refuses_the_checkout_default(self):
+        with patch.dict("os.environ", self.SYSTEMD, clear=True):
+            with self.assertRaisesRegex(ValueError, "MERGEN_RUNTIME_ROOT"):
+                LiveSettings.from_env()
+
+    def test_systemd_requires_an_explicit_database_inside_the_runtime(self):
+        cases = (
+            ({"MERGEN_RUNTIME_ROOT": "/srv/mergen/runtime"}, "MERGEN_DATABASE_PATH"),
+            ({"MERGEN_RUNTIME_ROOT": "relative/runtime",
+              "MERGEN_DATABASE_PATH": "/srv/mergen/runtime/control.sqlite3"}, "MERGEN_RUNTIME_ROOT"),
+            ({"MERGEN_RUNTIME_ROOT": "/srv/mergen/runtime",
+              "MERGEN_DATABASE_PATH": "/var/tmp/control.sqlite3"}, "inside"),
+        )
+        for env, message in cases:
+            with self.subTest(expected=message), patch.dict("os.environ", {**self.SYSTEMD, **env}, clear=True):
+                with self.assertRaisesRegex(ValueError, message):
+                    LiveSettings.from_env()
+
+    def test_systemd_uses_the_explicit_paths(self):
+        with tempfile.TemporaryDirectory() as tmp, patch.dict("os.environ", {
+            **self.SYSTEMD, "MERGEN_RUNTIME_ROOT": tmp,
+            "MERGEN_DATABASE_PATH": f"{tmp}/control.sqlite3",
+        }, clear=True):
+            settings = LiveSettings.from_env()
+        self.assertEqual(settings.runtime_root, Path(tmp).resolve())
+        self.assertEqual(settings.database_path, Path(tmp).resolve() / "control.sqlite3")
+
+    def test_local_development_keeps_the_checkout_default(self):
+        with patch.dict("os.environ", {}, clear=True):
+            self.assertEqual(LiveSettings.from_env().runtime_root, Path(".local/runtime").resolve())
+
+    def test_invalid_number_is_named_without_its_value(self):
+        canary = "ten-canary-value"
+        with patch.dict("os.environ", {"MERGEN_MAX_ACTIVE_SESSIONS": canary}, clear=True):
+            with self.assertRaises(ValueError) as caught:
+                LiveSettings.from_env()
+        self.assertIn("MERGEN_MAX_ACTIVE_SESSIONS", str(caught.exception))
+        self.assertFalse(canary in str(caught.exception), "the error echoed a configured value")
+
+    async def test_misconfigured_live_layer_answers_503(self):
+        with patch("backend.live_api._store", None), \
+                patch.dict("os.environ", self.SYSTEMD, clear=True):
+            async with httpx.AsyncClient(transport=httpx.ASGITransport(app=public_app),
+                                         base_url="https://testserver") as client:
+                with self.assertLogs("mergen.live", level="ERROR"):
+                    response = await client.get("/api/live/session")
+                profiles = await client.get("/api/live/profiles")
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(profiles.status_code, 200)
 
 
 if __name__ == "__main__":

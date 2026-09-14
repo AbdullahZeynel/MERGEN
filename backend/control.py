@@ -44,12 +44,12 @@ async def worker_header(worker_id: str | None = Header(None, alias="X-Mergen-Wor
 
 
 class ClaimRequest(BaseModel):
-    capabilities: list[str] = Field(min_length=1, max_length=2)
+    capabilities: list[str] = Field(min_length=1, max_length=1)
 
     def normalized(self):
         if len(set(self.capabilities)) != len(self.capabilities):
             raise HTTPException(422, "Duplicate capability")
-        if not set(self.capabilities) <= {"imaging", "genomics"}:
+        if set(self.capabilities) != {"imaging"}:
             raise HTTPException(422, "Unsupported capability")
         return self.capabilities
 
@@ -110,13 +110,23 @@ def _validate_result(path: Path, max_expanded: int, job: dict):
     return validate_result_archive(path, max_expanded, job), sha256_file(path)
 
 
+def _declared_digest(value: str | None) -> str:
+    # The worker states the SHA-256 of the ZIP it sends. A job is completed
+    # only if the bytes that arrived hash to exactly that value.
+    if not value or len(value) != 64 or any(c not in "0123456789abcdef" for c in value):
+        raise HTTPException(422, "X-Mergen-Result-Sha256 must carry the result's SHA-256")
+    return value
+
+
 @app.post("/internal/jobs/{job_id}/result", dependencies=[Depends(authenticate)])
 async def result(job_id: str, request: Request, worker_id: str = Depends(worker_header),
-                 store: LiveStore = Depends(get_store)):
+                 store: LiveStore = Depends(get_store),
+                 declared: str | None = Header(None, alias="X-Mergen-Result-Sha256")):
     if request.headers.get("content-type", "").split(";", 1)[0].strip() not in {
         "application/zip", "application/x-zip-compressed"
     }:
         raise HTTPException(415, "A ZIP result bundle is required")
+    expected = _declared_digest(declared)
     job = store.worker_job(job_id, worker_id)
     if not job or job["status"] not in {"claimed", "running"} or job["lease_until"] <= store.now():
         raise HTTPException(409, "Lease is no longer valid")
@@ -127,6 +137,8 @@ async def result(job_id: str, request: Request, worker_id: str = Depends(worker_
         manifest, checksum = await asyncio.to_thread(
             _validate_result, staging, store.settings.max_expanded_bytes, job
         )
+        if not secrets.compare_digest(checksum, expected):
+            raise HTTPException(422, "Result does not match the declared digest")
         staging.replace(destination)
         if not store.complete(job_id, worker_id, checksum, manifest.model_dump()):
             destination.unlink(missing_ok=True)

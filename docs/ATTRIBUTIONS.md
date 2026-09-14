@@ -44,21 +44,6 @@ atıflara bağlıdır; tam metin
 [`models/imaging/brats_mri_segmentation/docs/data_license.txt`](../models/imaging/brats_mri_segmentation/docs/data_license.txt)
 içindedir.
 
-### CGGA — genomik frekans tablosu
-
-`cgga_missense_frekans` özelliği CGGA WESeq_286 dosyasından türetilir. Ham
-veri ve türetilmiş tablo Git dışıdır. Kullanım şartları için:
-<http://www.cgga.org.cn/>
-
-### UniProtKB — referans protein dizileri
-
-Genomik demo vakalarının dizileri UniProt kanonik kayıtlarından alınmıştır;
-erişim numarası, sürüm, URL, erişim tarihi ve sha256 değerleri
-`models/VeriOdakliCozum/fixtures/varyantlar.json` içinde tutulur ve
-`python -m VeriOdakliCozum.fixtures_dogrula` ile kaynağa karşı
-doğrulanabilir. UniProt kendi kullanım şartlarını yayımlar:
-<https://www.uniprot.org/help/license>
-
 ## Depoya alınmış üçüncü taraf kaynak kodu
 
 Bu dosyalar kendi lisans bildirimleriyle birlikte dağıtılır; kök
@@ -77,9 +62,6 @@ Depoda kaynağı bulunmaz; kendi dağıtım kanallarından alınır.
 |---|---|
 | nnU-Net (MIC-DKFZ) | Apache-2.0 |
 | MONAI | Apache-2.0 |
-| XGBoost | Apache-2.0 |
-| ESM-2 — kaynak kod | MIT (Meta AI) |
-| ESM-2 — model ağırlıkları | Git deposunda yer almaz; indirme sırasında ilgili model kartının dağıtım şartları ayrıca doğrulanmalıdır |
 | React, Three.js, TanStack Query, Zod | MIT |
 | FastAPI, uvicorn, httpx | MIT / BSD-3-Clause |
 

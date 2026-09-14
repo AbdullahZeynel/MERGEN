@@ -4,9 +4,7 @@ import {
   ArrowRight,
   ChevronRight,
   Database,
-  Dna,
   FolderOpen,
-  Info,
   LayoutGrid,
   Link2Off,
   Menu,
@@ -15,14 +13,11 @@ import {
   RefreshCw,
   Search,
   Sun,
-  ScanLine,
   X,
 } from 'lucide-react';
-import { listGenomicsCases, type GenomicsCase } from './data/genomics';
 import { demoSource, liveSource } from './data/source';
 import { statusLabels, type SourceMode, type CaseRecord } from './data/contracts';
 import { EmptyState } from './components/EmptyState';
-import { GenomicsWorkspace } from './components/GenomicsWorkspace';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 
@@ -44,10 +39,6 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [view, setView] = useState<'imaging' | 'genomics'>('imaging');
-  // Modül, vaka listesinin kaynağını değiştirir. Görüntü ve genomik kayıtlar
-  // bağımsızdır; modül değişiminde seçim ve arama sıfırlanır.
-  const [module, setModule] = useState<'imaging' | 'genomics'>('imaging');
   const [assistantOpen, setAssistantOpen] = useState(false);
   // Vaka listesi genis ekranda acik, dar ekranda kapali baslar. Raydaki dugme
   // her iki genislikte de ayni durumu cevirir.
@@ -58,17 +49,10 @@ export default function App() {
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem('mergen-theme', theme);
   }, [theme]);
-  const imagingQuery = useQuery({
+  const query = useQuery({
     queryKey: ['cases', mode],
     queryFn: ({ signal }) => (mode === 'demo' ? demoSource : liveSource).listCases(signal),
-    enabled: module === 'imaging',
   });
-  const genomicsQuery = useQuery({
-    queryKey: ['genomics-cases', mode],
-    queryFn: ({ signal }) => listGenomicsCases(signal),
-    enabled: module === 'genomics' && mode === 'demo',
-  });
-  const query = module === 'imaging' ? imagingQuery : genomicsQuery;
   const cases = query.data ?? [];
   const filtered = cases.filter(
     (c) =>
@@ -76,27 +60,17 @@ export default function App() {
       (filter === 'all' || c.status === filter),
   );
   const record = filtered.find((c) => c.id === selectedId) ?? filtered[0] ?? null;
-  const genomicsRecord = module === 'genomics' ? (record as GenomicsCase | null) : null;
-  const imagingCases = imagingQuery.data ?? [];
-  const imagingIndex = module === 'imaging' && record
-    ? imagingCases.findIndex((candidate) => candidate.id === record.id)
+  const imagingIndex = record
+    ? cases.findIndex((candidate) => candidate.id === record.id)
     : -1;
   const nextMeshUrl = imagingIndex >= 0
-    ? imagingCases.slice(imagingIndex + 1).find((candidate) => candidate.mesh)?.mesh
+    ? cases.slice(imagingIndex + 1).find((candidate) => candidate.mesh)?.mesh
     : undefined;
   const changeMode = (value: SourceMode) => {
     setMode(value);
     setSelectedId(null);
     setSearch('');
     setFilter('all');
-    setView('imaging');
-  };
-  const changeModule = (value: 'imaging' | 'genomics') => {
-    setModule(value);
-    setSelectedId(null);
-    setSearch('');
-    setFilter('all');
-    setView(value === 'genomics' ? 'genomics' : 'imaging');
   };
 
   return (
@@ -181,23 +155,6 @@ export default function App() {
                 Canlı analiz
               </button>
             </div>
-            <div className="source-switch segmented" aria-label="Modül">
-              <button
-                className={module === 'imaging' ? 'selected' : ''}
-                aria-pressed={module === 'imaging'}
-                onClick={() => changeModule('imaging')}
-              >
-                Görüntü
-              </button>
-              <button
-                className={module === 'genomics' ? 'selected' : ''}
-                aria-pressed={module === 'genomics'}
-                onClick={() => changeModule('genomics')}
-                disabled={mode !== 'demo'}
-              >
-                Genomik
-              </button>
-            </div>
             <label className="search-box">
               <Search size={17} />
               <span className="sr-only">Vaka ara</span>
@@ -245,11 +202,7 @@ export default function App() {
                     </span>
                     <span className="case-item-text">
                       <strong>{c.id}</strong>
-                      <span>
-                        {module === 'genomics'
-                          ? `${(c as GenomicsCase).gene} ${(c as GenomicsCase).proteinChange}`
-                          : 'MR görüntüleme'}
-                      </span>
+                      <span>MR görüntüleme</span>
                       <span className="status-pill">
                         <span />
                         {statusLabels[c.status]}
@@ -300,7 +253,7 @@ export default function App() {
                 <Database size={14} />
                 {mode === 'demo' ? 'HAZIR DEMO' : 'CANLI ANALİZ'}
               </span>
-              {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh/rapor
+              {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh
                   istekleri ayrica hata verebilir, o yuzden metin liste diyor. */}
               <span className="service-state" role="status">
                 {query.isPending ? (
@@ -328,24 +281,6 @@ export default function App() {
             </div>
             <div className="content-with-assistant">
               <div className="analysis-content">
-                {module === 'imaging' && (
-                  <div className="view-tabs" aria-label="Analiz görünümü">
-                      <button
-                        aria-pressed={view === 'imaging'}
-                        className={view === 'imaging' ? 'selected' : ''}
-                        onClick={() => setView('imaging')}
-                      >
-                        <ScanLine size={18} /> Görüntüleme
-                      </button>
-                      <button
-                        aria-pressed={view === 'genomics'}
-                        className={view === 'genomics' ? 'selected' : ''}
-                        onClick={() => setView('genomics')}
-                      >
-                        <Dna size={18} /> Bu vakanın varyantı
-                      </button>
-                  </div>
-                )}
                 {query.isPending ? (
                   <div className="panel loading-panel" role="status">
                     <RefreshCw className="spin" /> Vaka verileri yükleniyor…
@@ -379,46 +314,12 @@ export default function App() {
                       Bu veri kaynağında görüntülenecek vaka bulunmuyor.
                     </EmptyState>
                   </div>
-                ) : genomicsRecord ? (
-                  <GenomicsWorkspace
-                    key={`${mode}:${genomicsRecord.id}`}
-                    record={genomicsRecord}
-                  />
-                ) : view === 'imaging' ? (
+                ) : (
                   <ImagingWorkspace
                     key={`${mode}:${record.id}`}
                     record={record as CaseRecord}
                     nextMeshUrl={nextMeshUrl}
                   />
-                ) : (
-                  <section className="panel genomics-panel">
-                    <div className="panel-heading">
-                      <span>
-                        <Dna size={18} /> Varyant patojenite tahmini
-                      </span>
-                      <span className="small muted">XGBoost</span>
-                    </div>
-                    <EmptyState
-                      icon={<Dna size={34} />}
-                      title="Bu görüntü vakasının varyant kaydı yok"
-                      action={
-                        <button className="ghost" onClick={() => changeModule('genomics')}>
-                          Genomik vakalara geç <ArrowRight size={16} />
-                        </button>
-                      }
-                    >
-                      Bu MR vakasıyla eşleştirilmiş bir varyant bulunmuyor. Hazır genomik
-                      vakalar kenar çubuğundaki <strong>Genomik</strong> modülünde; onlar ayrı
-                      kayıtlardır, bu hastaya ait değildir.
-                    </EmptyState>
-                    <div className="notice">
-                      <Info size={16} />
-                      <span>
-                        Görüntü ve genomik veriler yalnızca doğrulanmış vaka eşleşmesiyle birlikte
-                        gösterilir.
-                      </span>
-                    </div>
-                  </section>
                 )}
               </div>
               {assistantEnabled && assistantOpen && (

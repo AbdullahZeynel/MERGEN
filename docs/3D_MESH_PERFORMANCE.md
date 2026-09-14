@@ -49,7 +49,7 @@ node frontend/scripts/benchmark_meshes.mjs \
   URL değişir; kısa süreli legacy `/mesh` ucu değişmez cache almaz.
 - Frontend yalnız seçili vakanın mesh'ini yükler. Mevcut mesh başladıktan 2,5 saniye
   sonra tarayıcı boş kaldığında yalnız listedeki bir sonraki GLB düşük öncelikli
-  cache isteğine alınır. Genomik modül bütün mesh'leri indirmez.
+  cache isteğine alınır.
 
 ## Açık ölçüm
 

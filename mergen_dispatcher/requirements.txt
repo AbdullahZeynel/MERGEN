@@ -1,0 +1,4 @@
+# GPU host dispatcher venv. Shipped next to it in the same release:
+# backend/archive_io.py, backend/live_contracts.py and mergen_spool/.
+httpx==0.28.1
+pydantic==2.13.5

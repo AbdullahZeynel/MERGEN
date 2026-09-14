@@ -41,13 +41,6 @@ def get_overlay(case_id: str, layer: str, axis: str, index: int,
 
 
 @server.tool()
-def get_report(case_id: str, name: str, module: str = 'genomics',
-               disease: str = 'glioma-variant-pathogenicity') -> dict[str, Any]:
-    """Read one prepared genomics report document for a listed case."""
-    return store.asset(case_id, 'report', layer=name, module=module, disease=disease)
-
-
-@server.tool()
 def get_mesh(case_id: str, module: str = 'imaging', disease: str = 'glioma') -> dict[str, Any]:
     """Read tumor surfaces and approximate MR foreground envelope."""
     return store.asset(case_id, 'mesh', module=module, disease=disease)

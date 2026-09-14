@@ -13,7 +13,7 @@ sürümle değişebilir; menü adı tutmazsa komut çıktısını esas al.
 Tarayıcı → Cloudflare → VPS/Caddy → backend → Tailscale → Ubuntu/model servisleri
 ```
 
-Ağır modeller (nnU-Net, Swin UNETR, ESM-2/XGBoost) VPS'te değil, GPU'lu Ubuntu
+Ağır görüntü modelleri (nnU-Net ve Swin UNETR) VPS'te değil, GPU'lu Ubuntu
 makinesinde çalışacak. O makine ev/kampüs ağında, NAT arkasında ve muhtemelen
 değişken IP'li. Tailscale'in çözdüğü tek problem bu: **VPS ile GPU makinesi
 arasında, port yönlendirmesi ve halka açık IP olmadan, sabit adresli özel bir
@@ -100,7 +100,7 @@ değiştiriyor.
 - Politika şablonu: `policy.example.hujson` — yalnızca etiket kullanır, gerçek
   değer içermez.
 - Gerçek adresler: `infra/README.md`'de tarif edilen Git dışı yerel dosyalarda
-  (`backend.env`, `imaging.env`, `genomics.env`).
+  (`backend.env`, `imaging.env`).
 - Auth key'ler hiçbir dosyaya yazılmaz; doğrudan komut satırında kullanılıp
   konsolda tüketilmiş olarak bırakılır.
 

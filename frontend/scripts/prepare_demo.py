@@ -100,7 +100,6 @@ def prepare(source: Path, output: Path, cases: list[str] | None = None,
             "modality": "FLAIR",
             "previews": previews,
             "overlays": ["prediction", "ground_truth"],
-            "genomics": None,
         })
         mesh_file = source / case_id / "mesh_ensemble.json"
         if mesh_file.is_file():

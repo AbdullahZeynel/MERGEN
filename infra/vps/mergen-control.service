@@ -8,7 +8,8 @@ User=mergen
 Group=mergen
 WorkingDirectory=/srv/mergen/services
 EnvironmentFile=/etc/mergen/services.env
-ExecStart=/srv/mergen/services/.venv/bin/python /srv/mergen/services/backend/run_control.py
+# Module form: only -m puts WorkingDirectory on sys.path, where `backend` lives.
+ExecStart=/srv/mergen/services/.venv/bin/python -m backend.run_control
 Restart=on-failure
 RestartSec=3
 NoNewPrivileges=true

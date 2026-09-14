@@ -78,9 +78,6 @@ coverage/
 /models/imaging/SwinUNETR_BRATS21/outputs/
 /models/imaging/results/
 /models/imaging/results_eval/
-/models/VeriOdakliCozum/veri/
-/models/VeriOdakliCozum/modeller/
-/models/VeriOdakliCozum/sonuclar/
 
 # Future runtime data
 /data/

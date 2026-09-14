@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "mergen-spool-job",
+  "jobId": "0123456789abcdef0123456789abcdef",
+  "module": "imaging",
+  "disease": "glioma",
+  "input": {
+    "path": "input.zip",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "size": 512
+  },
+  "maxResultBytes": 2147483648,
+  "publishedAt": 1757800000
+}

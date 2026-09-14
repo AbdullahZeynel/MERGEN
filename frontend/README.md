@@ -1,6 +1,6 @@
 # MERGEN arayüzü
 
-React + TypeScript + Vite. Vaka listesi, filtre/arama, demo ve canlı ayrımı, tüm FLAIR kesitleri, etkileşimli 3D yüzeyler, genomik boş durum ve asistan paneli. Fontlar build'e dahildir; çalışma sırasında CDN gerekmez.
+React + TypeScript + Vite. Vaka listesi, filtre/arama, demo ve canlı ayrımı, tüm FLAIR kesitleri, etkileşimli 3D yüzeyler ve asistan paneli. Fontlar build'e dahildir; çalışma sırasında CDN gerekmez.
 
 ## Yerel çalıştırma
 
@@ -30,7 +30,6 @@ Testler vaka/sohbet bağlamı, demo–canlı sınırı, filtreler, hata durumlar
 
 - Üç eksenin bütün kesitleri kaydırıcı, düğmeler ve odaklı alanda ok tuşlarıyla gezilir. Gerçek ensemble mesh, 3D döndürme/yakınlaştırma, bölge görünürlüğü ve tümör opaklığı bağlandı. 2D/3D büyütme hem eni hem boyu kullanır; Escape ile kapanır.
 - `prepare_demo.py` yaklaşık MR dış yüzeyini içerik özetli binary GLB olarak yazar. Bu korteks segmentasyonu değildir. `migrate_demo_meshes.py` eski schema-v3 JSON paketini kaynak dizine dokunmadan yeni GLB paketine taşır. Eski hedef ezilmez; yeni çıktı dizini kullanın. WebGL hatası açıkça gösterilir; Three.js kaynakları temizlenir.
-- Mevcut görüntü vakalarına eşlenmiş genomik sonuç yoktur; XGBoost puanı veya SHAP açıklaması üretilmez.
 - Asistan ve canlı API bağlı değildir. “AI servisi bağlı değil” entegrasyon durumudur; makinenin çevrimdışı olduğuna dair ölçüm değildir. Demo API/MCP sağlık ucu `/api/health` uygulanmıştır.
 - Eksen adları veri dizisinin eksenleridir. Anatomik yön ve voxel aralığı doğrulanmadan R/L işaretleri, mm ölçümleri veya 2D–3D çapraz konumlama gösterilmez.
 - `data/contracts.ts` demo paketini çalışma anında doğrular. F4 canlı sözleşmesi ayrı doğrulanarak `DataSource` katmanına eklenecek; API hatası demo sonuçlarına dönüşmez.

@@ -4,6 +4,8 @@ import os
 
 import uvicorn
 
+from backend.live_store import LiveSettings
+
 
 def control_host() -> str:
     raw = os.environ.get("MERGEN_CONTROL_HOST", "")
@@ -20,5 +22,16 @@ def control_host() -> str:
     return str(address)
 
 
+def validate_live_settings() -> None:
+    # Fail at start, not on the first worker request: under systemd a missing
+    # runtime path is a configuration error (see LiveSettings.from_env).
+    try:
+        LiveSettings.from_env()
+    except ValueError as exc:
+        raise SystemExit(f"Live settings are invalid: {exc}") from None
+
+
 if __name__ == "__main__":
-    uvicorn.run("backend.control:app", host=control_host(), port=9100, access_log=False)
+    host = control_host()
+    validate_live_settings()
+    uvicorn.run("backend.control:app", host=host, port=9100, access_log=False)

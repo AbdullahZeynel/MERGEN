@@ -6,6 +6,7 @@ import json
 import stat
 import zipfile
 from pathlib import Path, PurePosixPath
+from typing import BinaryIO
 
 from pydantic import ValidationError
 
@@ -95,9 +96,11 @@ def validate_input_archive(path: Path, max_expanded: int) -> InputManifest:
         raise InvalidArchive("invalid input archive") from exc
 
 
-def validate_result_archive(path: Path, max_expanded: int, job: dict) -> ResultManifest:
+def validate_result_archive(source: Path | BinaryIO, max_expanded: int, job: dict) -> ResultManifest:
+    """`source` is a path or an open binary file. The GPU dispatcher passes the
+    descriptor it verified, so the bytes cannot change between its checks."""
     try:
-        with zipfile.ZipFile(path) as archive:
+        with zipfile.ZipFile(source) as archive:
             members = _safe_members(archive, max_expanded, 8192)
             names = {item.filename for item in members}
             if "manifest.json" not in names:

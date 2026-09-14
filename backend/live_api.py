@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import json
 import hashlib
+import logging
 import os
 import secrets
 import shutil
@@ -23,13 +24,20 @@ from backend.live_contracts import LIVE_PROFILES
 SESSION_COOKIE = "mergen_session"
 CSRF_COOKIE = "mergen_csrf"
 router = APIRouter(prefix="/api/live", tags=["live"])
+LOG = logging.getLogger("mergen.live")
 _store: LiveStore | None = None
 
 
 async def get_live_store() -> LiveStore:
     global _store
     if _store is None:
-        _store = LiveStore(LiveSettings.from_env())
+        try:
+            settings = LiveSettings.from_env()
+        except ValueError as exc:
+            # Only the live layer refuses; the demo routes do not depend on it.
+            LOG.error("live session layer disabled: %s", exc)
+            raise HTTPException(503, "Live sessions are not configured") from None
+        _store = LiveStore(settings)
     return _store
 
 
