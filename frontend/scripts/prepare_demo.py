@@ -11,6 +11,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage
 from skimage.measure import marching_cubes
+from mesh_glb import write_mesh_glb
 
 REPO = Path(__file__).resolve().parents[2]
 OVERLAY_COLORS = {
@@ -112,9 +113,9 @@ def prepare(source: Path, output: Path, cases: list[str] | None = None,
                 vertices, faces, _, _ = marching_cubes(np.pad(foreground, 1), level=0.5, step_size=3)
                 meshes['BRAIN'] = {'vertices': (vertices - 1).tolist(), 'faces': faces.tolist()}
                 records[-1]['brainContext'] = 'mr-foreground-envelope'
-            (case_dir / 'mesh_ensemble.json').write_text(json.dumps(meshes, separators=(',', ':')))
+            _, digest = write_mesh_glb(meshes, case_dir)
             records[-1]["mesh"] = (f"/api/demo/modules/imaging/diseases/glioma/"
-                                    f"cases/{case_id}/mesh")
+                                    f"cases/{case_id}/mesh/{digest}.glb")
         print(f'Prepared {case_id}', flush=True)
     output.mkdir(parents=True, exist_ok=True)
     if not records:

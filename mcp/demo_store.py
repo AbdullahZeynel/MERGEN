@@ -10,6 +10,7 @@ DEFAULT_MODULE = 'imaging'
 DEFAULT_DISEASE = 'glioma'
 COLLECTION_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 CASE_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$')
+MESH_DIGEST = re.compile(r'^[0-9a-f]{64}$')
 # Genomik vakada okunabilecek JSON belgeleri; serbest dosya adı kabul edilmez.
 REPORT_NAMES = ('result', 'explanation', 'input')
 
@@ -133,8 +134,22 @@ class DemoStore:
             relative = Path(case_id) / 'overlays' / layer / axis / f'{index}.png'
             mime = 'image/png'
         elif kind == 'mesh':
-            relative = Path(case_id) / 'mesh_ensemble.json'
-            mime = 'application/json'
+            mesh_ref = case.get('mesh')
+            digest = None
+            if isinstance(mesh_ref, str) and mesh_ref.endswith('.glb'):
+                digest = mesh_ref.rsplit('/mesh/', 1)[-1].removesuffix('.glb')
+                allowed_refs = {
+                    f'/api/demo/cases/{case_id}/mesh/{digest}.glb',
+                    (f'/api/demo/modules/{module}/diseases/{disease}/cases/'
+                     f'{case_id}/mesh/{digest}.glb'),
+                }
+                if not MESH_DIGEST.fullmatch(digest) or mesh_ref not in allowed_refs:
+                    return {'error': 'invalid'}
+                relative = Path(case_id) / f'mesh-{digest}.glb'
+                mime = 'model/gltf-binary'
+            else:
+                relative = Path(case_id) / 'mesh_ensemble.json'
+                mime = 'application/json'
         elif kind == 'report':
             if layer not in REPORT_NAMES or layer not in case.get('reports', []):
                 return {'error': 'invalid'}
@@ -149,5 +164,8 @@ class DemoStore:
         if path.stat().st_size > 8 * 1024 * 1024:
             return {'error': 'too_large'}
         payload = path.read_bytes()
-        return {'mime': mime, 'sha256': hashlib.sha256(payload).hexdigest(),
+        payload_digest = hashlib.sha256(payload).hexdigest()
+        if kind == 'mesh' and digest is not None and payload_digest != digest:
+            return {'error': 'invalid'}
+        return {'mime': mime, 'sha256': payload_digest,
                 'base64': base64.b64encode(payload).decode('ascii')}

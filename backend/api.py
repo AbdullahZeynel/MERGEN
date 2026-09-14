@@ -3,6 +3,7 @@ import asyncio
 import base64
 import hashlib
 import os
+import re
 from typing import Literal
 from urllib.parse import urlparse
 
@@ -18,6 +19,7 @@ parsed = urlparse(MCP_URL)
 if parsed.scheme != 'http' or parsed.hostname not in ('127.0.0.1', 'localhost') or parsed.username or parsed.password:
     raise ValueError('MCP URL must use private loopback HTTP')
 slots = asyncio.Semaphore(4)
+MESH_DIGEST = re.compile(r'^[0-9a-f]{64}$')
 
 
 async def call_tool(name: str, arguments: dict):
@@ -35,19 +37,23 @@ async def call_tool(name: str, arguments: dict):
         raise HTTPException(503, 'Demo MCP service unavailable') from None
 
 
-async def asset_response(tool, arguments, expected_mime):
+async def asset_response(tool, arguments, expected_mime, *, expected_digest=None,
+                         cache_control='private, max-age=60'):
     result = await call_tool(tool, arguments)
     if 'error' in result:
         raise HTTPException({'missing': 404, 'invalid': 400, 'too_large': 413}.get(result['error'], 502), 'Demo asset unavailable')
     try:
         payload = base64.b64decode(result['base64'], validate=True)
         digest = hashlib.sha256(payload).hexdigest()
-        if result['mime'] != expected_mime or digest != result['sha256'] or len(payload) > 8 * 1024 * 1024:
+        allowed_mimes = (expected_mime,) if isinstance(expected_mime, str) else expected_mime
+        if (result['mime'] not in allowed_mimes or digest != result['sha256']
+                or (expected_digest is not None and digest != expected_digest)
+                or len(payload) > 8 * 1024 * 1024):
             raise ValueError('Invalid asset')
     except (KeyError, ValueError, TypeError):
         raise HTTPException(502, 'Invalid demo asset') from None
-    return Response(payload, media_type=expected_mime, headers={
-        'Cache-Control': 'private, max-age=60', 'ETag': f'"{digest}"',
+    return Response(payload, media_type=result['mime'], headers={
+        'Cache-Control': cache_control, 'ETag': f'"{digest}"',
         'X-Content-Type-Options': 'nosniff', 'X-Mergen-Source': 'mcp'})
 
 
@@ -73,7 +79,9 @@ def legacy_manifest(result: dict) -> dict:
                 for preview in case['previews']
             ]
         if case.get('mesh'):
-            case['mesh'] = f'/api/demo/cases/{case_id}/mesh'
+            match = re.search(r'/mesh/([0-9a-f]{64})\.glb$', str(case['mesh']))
+            case['mesh'] = (f'/api/demo/cases/{case_id}/mesh/{match.group(1)}.glb'
+                            if match else f'/api/demo/cases/{case_id}/mesh')
         cases.append(case)
     return {'version': 2, 'cases': cases}
 
@@ -124,7 +132,17 @@ async def overlay_image(case_id: str, layer: Literal['prediction', 'ground_truth
 
 @app.get('/api/demo/cases/{case_id}/mesh')
 async def mesh(case_id: str):
-    return await asset_response('get_mesh', {'case_id': case_id}, 'application/json')
+    return await asset_response('get_mesh', {'case_id': case_id},
+                                ('application/json', 'model/gltf-binary'))
+
+
+@app.get('/api/demo/cases/{case_id}/mesh/{digest}.glb')
+async def immutable_mesh(case_id: str, digest: str):
+    if not MESH_DIGEST.fullmatch(digest):
+        raise HTTPException(404, 'Demo asset unavailable')
+    return await asset_response(
+        'get_mesh', {'case_id': case_id}, 'model/gltf-binary',
+        expected_digest=digest, cache_control='public, max-age=31536000, immutable')
 
 
 @app.get('/api/demo/modules/{module}/diseases/{disease}/cases/{case_id}/slices/{axis}/{index}')
@@ -158,4 +176,14 @@ async def collection_report(module: str, disease: str, case_id: str,
 async def collection_mesh(module: str, disease: str, case_id: str):
     return await asset_response('get_mesh', {
         'module': module, 'disease': disease, 'case_id': case_id,
-    }, 'application/json')
+    }, ('application/json', 'model/gltf-binary'))
+
+
+@app.get('/api/demo/modules/{module}/diseases/{disease}/cases/{case_id}/mesh/{digest}.glb')
+async def immutable_collection_mesh(module: str, disease: str, case_id: str, digest: str):
+    if not MESH_DIGEST.fullmatch(digest):
+        raise HTTPException(404, 'Demo asset unavailable')
+    return await asset_response(
+        'get_mesh', {'module': module, 'disease': disease, 'case_id': case_id},
+        'model/gltf-binary', expected_digest=digest,
+        cache_control='public, max-age=31536000, immutable')

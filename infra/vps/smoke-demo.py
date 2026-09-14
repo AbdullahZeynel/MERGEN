@@ -10,9 +10,12 @@ BASE = 'http://127.0.0.1:9000'
 def read(path):
     with urllib.request.urlopen(BASE + path, timeout=20) as response:
         payload = response.read()
-        if '/slices/' in path or path.endswith('/mesh'):
+        if '/slices/' in path or '/mesh/' in path or path.endswith('/mesh'):
             assert response.headers['X-Mergen-Source'] == 'mcp'
             assert response.headers['ETag'] == '"' + hashlib.sha256(payload).hexdigest() + '"'
+        if path.endswith('.glb'):
+            assert response.headers['Content-Type'].startswith('model/gltf-binary')
+            assert response.headers['Cache-Control'] == 'public, max-age=31536000, immutable'
         return payload
 
 
@@ -34,8 +37,12 @@ if __name__ == '__main__':
     assert [case['id'] for case in legacy['cases']] == [case['id'] for case in manifest['cases']]
     paths = []
     for case in manifest['cases']:
-        mesh = json.loads(read(case['mesh']))
-        assert 'BRAIN' in mesh and any(key in mesh for key in ('ET', 'ED', 'TC_NCR'))
+        mesh = read(case['mesh'])
+        if case['mesh'].endswith('.glb'):
+            assert mesh[:4] == b'glTF'
+        else:
+            legacy_mesh = json.loads(mesh)
+            assert 'BRAIN' in legacy_mesh and any(key in legacy_mesh for key in ('ET', 'ED', 'TC_NCR'))
         previews = {preview['axis']: preview['index'] for preview in case['previews']}
         for axis, dimension in [('axial', 2), ('coronal', 1), ('sagittal', 0)]:
             for index in (0, case['shape'][dimension] // 2, case['shape'][dimension] - 1):
