@@ -48,8 +48,8 @@ def genomics_input(gene: str = "TEST1") -> bytes:
     return zip_bytes({"input.json": json.dumps(manifest).encode()})
 
 
-def genomics_result(job_id: str = JOB_ID, module: str = "genomics") -> bytes:
-    report = b'{"status":"synthetic-transport"}'
+def genomics_result(job_id: str = JOB_ID, module: str = "genomics",
+                    report: bytes = b'{"status":"synthetic-transport"}') -> bytes:
     manifest = {"schemaVersion": 1, "jobId": job_id, "module": module, "disease": DISEASE,
                 "modelId": "mergen-genomics", "modelVersion": "test-1", "hasPrediction": True,
                 "hasGroundTruth": False,
@@ -133,6 +133,7 @@ class FakeControl:
         self.content_length: int | None = None
         self.lose_upload_response = False
         self.upload_attempts = 0
+        self.upload_hook = None
         self.completed_with: bytes | None = None
         self.failures: list[str] = []
 
@@ -200,11 +201,17 @@ class FakeControl:
         return httpx.Response(200, headers=headers, content=stream())
 
     def _result(self, request: httpx.Request) -> httpx.Response:
+        if self.upload_hook:
+            self.upload_hook()
+        # MockTransport has already read the whole body when this runs.
         body = request.read()
         with self.lock:
             self.upload_attempts += 1
             if self.lease_answer != 200 or self.completed_with is not None:
                 return httpx.Response(409, json={"detail": "Lease is no longer valid"})
+            # As on the VPS: complete only the bytes the worker declared.
+            if request.headers.get("x-mergen-result-sha256") != sha256(body):
+                return httpx.Response(422, json={"detail": "Result does not match the declared digest"})
             self.completed_with = body
             lose, self.lose_upload_response = self.lose_upload_response, False
         if lose:

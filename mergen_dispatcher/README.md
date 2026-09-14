@@ -12,11 +12,18 @@ claim → staging/<id>-<rastgele>/input.zip   akış, boyut sınırı, SHA-256
       → backend.archive_io ile manifest; modül/hastalık claim'le aynı
       → job.json, fsync (dosyalar + dizin) → rename → jobs/<id>/
 jobs/<id>/status.json:  (yok) → accepted → running → completed | failed
-completed → result.zip boyut + SHA-256 + sonuç sözleşmesi → yükleme → trash/
+completed → iş kilidi; result.zip bir kez açılır: boyut + SHA-256 + sonuç sözleşmesi
+          → aynı tanımlayıcıdan yükleme, özet yeniden hesaplanır → trash/
 failed    → /failure (executor'ın kodu)                           → trash/
 lease yok → cancel işareti; yükleme ve hata bildirimi yok          → trash/
 trash/<id>-<rastgele>/ → executor kilidi bırakınca silinir
 ```
+
+Yayım sırasında dispatcher iş dizininin kilidini ve doğruladığı tanımlayıcıyı
+yükleme bitene kadar tutar. `result.zip` yol üzerinden değiştirilirse gönderilen
+baytlar değişmez. Aynı dosya yerinde değiştirilirse yükleme sırasında hesaplanan
+özet tutmaz, son parça gönderilmez ve iş `internal-error` ile bildirilir. VPS de
+gövde `X-Mergen-Result-Sha256` başlığındaki özetle uyuşmadıkça işi tamamlamaz.
 
 Lease iş boyunca ayrı bir iş parçacığında yenilenir. 409 gelirse ya da son
 başarılı yenilemenin süresi dolarsa lease kayıp sayılır; o andan sonra hiçbir

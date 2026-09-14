@@ -7,6 +7,7 @@ import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import BinaryIO
 
 import httpx
 
@@ -40,6 +41,10 @@ class ResultRejected(Exception):
     def __init__(self, error_code: str):
         super().__init__(f"result rejected ({error_code})")
         self.error_code = error_code
+
+
+class ResultChanged(Exception):
+    """The result bytes differ from the verified ones; no complete body was sent."""
 
 
 @dataclass(frozen=True)
@@ -143,23 +148,41 @@ class ControlClient:
             raise ProtocolError("lease answer is out of range")
         return seconds
 
-    def upload(self, job_id: str, path: Path, size: int, digest: str,
+    def upload(self, job_id: str, handle: BinaryIO, size: int, digest: str,
                still_valid: Callable[[], bool]) -> None:
-        """Stream the result; stop sending the moment the lease is no longer valid."""
-        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
-        with os.fdopen(fd, "rb") as handle:
-            def body():
-                while chunk := handle.read(CHUNK):
-                    if not still_valid():
-                        raise LeaseLost("the lease ended during the upload")
-                    yield chunk
+        """Stream the verified result from the descriptor the caller holds.
 
-            try:
-                response = self._client.post(
-                    f"/internal/jobs/{job_id}/result", content=body(),
-                    headers={"Content-Type": "application/zip", "Content-Length": str(size)})
-            except httpx.TransportError:
-                raise ControlUnavailable("the result upload was interrupted") from None
+        The digest is computed again while sending and the final chunk is held
+        back until it matches, so bytes changed after verification never reach
+        the VPS as a complete body. The VPS itself completes the job only if the
+        body hashes to the declared X-Mergen-Result-Sha256.
+        """
+        handle.seek(0)
+
+        def body():
+            hasher, read, pending = hashlib.sha256(), 0, None
+            while chunk := handle.read(CHUNK):
+                if not still_valid():
+                    raise LeaseLost("the lease ended during the upload")
+                read += len(chunk)
+                if read > size:
+                    raise ResultChanged("the result grew after verification")
+                hasher.update(chunk)
+                if pending is not None:
+                    yield pending
+                pending = chunk
+            if read != size or hasher.hexdigest() != digest:
+                raise ResultChanged("the result changed after verification")
+            if pending is not None:
+                yield pending
+
+        try:
+            response = self._client.post(
+                f"/internal/jobs/{job_id}/result", content=body(),
+                headers={"Content-Type": "application/zip", "Content-Length": str(size),
+                         "X-Mergen-Result-Sha256": digest})
+        except httpx.TransportError:
+            raise ControlUnavailable("the result upload was interrupted") from None
         if response.status_code == 409:
             raise LeaseLost("the VPS refused the result for this lease")
         if response.status_code in (413, 422):

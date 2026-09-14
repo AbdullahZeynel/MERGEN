@@ -170,10 +170,12 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             (await self.control.post(f"/internal/jobs/{job_id}/lease", headers=self.worker_headers)).status_code, 200
         )
+        result_bundle = imaging_result(job_id)
         completed = await self.control.post(
             f"/internal/jobs/{job_id}/result",
-            headers={**self.worker_headers, "Content-Type": "application/zip"},
-            content=imaging_result(job_id),
+            headers={**self.worker_headers, "Content-Type": "application/zip",
+                     "X-Mergen-Result-Sha256": hashlib.sha256(result_bundle).hexdigest()},
+            content=result_bundle,
         )
         self.assertEqual(completed.status_code, 200, completed.text)
 
@@ -277,6 +279,30 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.store.create_job(second["id"], "genomics", "glioma-variant-pathogenicity", "b" * 64)
         self.assertIsNotNone(self.store.claim("gpu-primary", ["imaging", "genomics"]))
         self.assertIsNone(self.store.claim("gpu-standby", ["imaging", "genomics"]))
+
+    async def test_the_vps_completes_only_the_declared_result_digest(self):
+        csrf = await self.create_session()
+        created = await self.public.post(
+            "/api/live/jobs", headers={**csrf, "Content-Type": "application/zip"},
+            content=imaging_input(),
+        )
+        job_id = created.json()["jobId"]
+        await self.control.post("/internal/jobs/claim", headers=self.worker_headers,
+                                json={"capabilities": ["imaging"]})
+        bundle = imaging_result(job_id)
+        upload = {**self.worker_headers, "Content-Type": "application/zip"}
+        path = f"/internal/jobs/{job_id}/result"
+        missing = await self.control.post(path, headers=upload, content=bundle)
+        wrong = await self.control.post(
+            path, headers={**upload, "X-Mergen-Result-Sha256": "0" * 64}, content=bundle)
+        self.assertEqual((missing.status_code, wrong.status_code), (422, 422))
+        session = self.store.get_session(self.public.cookies.get("mergen_session"))
+        self.assertEqual(self.store.job_for_session(job_id, session["id"])["status"], "claimed")
+        self.assertFalse((self.store.job_directory(session["id"], job_id) / "result.zip").exists())
+        right = await self.control.post(
+            path, headers={**upload, "X-Mergen-Result-Sha256": hashlib.sha256(bundle).hexdigest()},
+            content=bundle)
+        self.assertEqual(right.status_code, 200)
 
 
 class LiveSettingsEnvironmentTests(unittest.IsolatedAsyncioTestCase):

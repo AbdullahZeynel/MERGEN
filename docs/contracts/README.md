@@ -9,7 +9,9 @@ ile akış halinde gönderilir ve boyut sınırı veri alınırken uygulanır.
 
 GPU worker sonucu `manifest.json` ve bildirilen tüm varlıkları içeren tek ZIP olarak
 özel worker API'sine yükler. Canlı sonuçta `hasGroundTruth` daima `false` olur.
-Worker sonuç ZIP'ini de doğrudan `application/zip` gövdesi olarak gönderir.
+Worker sonuç ZIP'ini de doğrudan `application/zip` gövdesi olarak gönderir ve ZIP'in
+SHA-256'sını `X-Mergen-Result-Sha256` başlığında bildirir; VPS gelen gövde bu özetle
+uyuşmadıkça işi tamamlamaz (422).
 Görüntü sonucu en az `report-json`, `prediction-nifti` ve `prediction-glb`; genomik
 sonuç en az `report-json` varlığı içerir. Her varlığın SHA-256 ve byte boyutu
 yüklemede doğrulanır.

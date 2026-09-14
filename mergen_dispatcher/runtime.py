@@ -3,17 +3,19 @@ from __future__ import annotations
 
 import errno
 import logging
+import os
 import threading
 import time
 from collections.abc import Callable
 from pathlib import Path
+from typing import BinaryIO
 
 import httpx
 
 from backend.archive_io import InvalidArchive, validate_input_archive, validate_result_archive
 from mergen_dispatcher.config import DispatcherConfig
 from mergen_dispatcher.control import (ClaimedJob, ControlClient, ControlUnavailable, InputRejected,
-                                       LeaseLost, ProtocolError, ResultRejected)
+                                       LeaseLost, ProtocolError, ResultChanged, ResultRejected)
 from mergen_dispatcher.lease import Backoff, LeaseKeeper
 from mergen_dispatcher.spool import Spool, SpoolViolation
 from mergen_spool import contract
@@ -219,26 +221,45 @@ class Dispatcher:
                  keeper: LeaseKeeper) -> str:
         if job.job_id in self._published:
             return PUBLISHED  # never upload one job twice
+        # Nothing in the job directory may change between verification and the
+        # end of the upload: hold its lock once the executor has released it.
+        lock = self.spool.lock_job(directory)
+        while lock is None:
+            if not keeper.valid():
+                return LEASE_LOST
+            if self._sleep(self.config.spool_poll_seconds):
+                raise _Stopped
+            lock = self.spool.lock_job(directory)
         try:
-            result = self.spool.verify_result(directory, status.result)
-            validate_result_archive(result, self.config.max_expanded_bytes,
-                                    {"id": job.job_id, "module": job.module, "disease": job.disease})
+            with self.spool.open_result(directory, status.result) as result:
+                validate_result_archive(result, self.config.max_expanded_bytes,
+                                        {"id": job.job_id, "module": job.module, "disease": job.disease})
+                return self._upload(job, result, status.result, keeper)
         except (SpoolViolation, InvalidArchive) as exc:
             LOG.error("job %s: executor result rejected (%s)", job.tag, exc)
             return self._report(job, keeper, "inference-failed")
+        finally:
+            os.close(lock)
+
+    def _upload(self, job: ClaimedJob, result: BinaryIO, ref: contract.ResultRef,
+                keeper: LeaseKeeper) -> str:
+        """Upload from the verified descriptor; retry only what cannot have completed."""
         backoff = self._new_backoff()
         for attempt in range(1, self.config.transfer_attempts + 1):
             # Never publish on a lease this worker cannot prove it still holds.
             if not keeper.valid():
                 return LEASE_LOST
             try:
-                self.client.upload(job.job_id, result, status.result.size, status.result.sha256,
-                                   keeper.valid)
+                self.client.upload(job.job_id, result, ref.size, ref.sha256, keeper.valid)
             except LeaseLost:
                 # Also the answer to a retry after a lost response: the first
                 # upload may have completed the job. Never report a failure here.
                 LOG.warning("job %s: the VPS refused the result for this lease", job.tag)
                 return LEASE_LOST
+            except ResultChanged as exc:
+                # The final chunk was withheld, so the VPS cannot have completed it.
+                LOG.error("job %s: %s; nothing complete was sent", job.tag, exc)
+                return self._report(job, keeper, "internal-error")
             except ResultRejected as exc:
                 return self._report(job, keeper, exc.error_code)
             except ProtocolError as exc:

@@ -9,11 +9,14 @@ import secrets
 import shutil
 import stat
 import time
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from pathlib import Path
+from typing import BinaryIO
 
 from mergen_spool import contract
-from mergen_spool.fs import create_marker, fsync_directory, read_json, remove_unlocked, write_json_atomic
+from mergen_spool.fs import (create_marker, fsync_directory, lock_directory, read_json, remove_unlocked,
+                             write_json_atomic)
 
 LOG = logging.getLogger("mergen.dispatcher")
 CHUNK = 1024 * 1024
@@ -105,24 +108,37 @@ class Spool:
             raise SpoolViolation("status.json names another job")
         return status
 
-    def verify_result(self, directory: Path, ref: contract.ResultRef) -> Path:
-        """The result the status names: a regular file with that size and digest."""
-        path = directory / contract.RESULT_FILE
+    def lock_job(self, directory: Path) -> int | None:
+        """The job directory's lock, once the executor has let go of it."""
+        return lock_directory(directory, blocking=False)
+
+    @contextmanager
+    def open_result(self, directory: Path, ref: contract.ResultRef) -> Iterator[BinaryIO]:
+        """Open the result the status names once, and keep that descriptor.
+
+        Size and digest are checked on it, and the archive check and the upload
+        read the same descriptor: replacing result.zip by path afterwards changes
+        nothing the dispatcher sends, and an in-place change fails the digest
+        that the upload computes again.
+        """
         try:
-            fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+            fd = os.open(directory / contract.RESULT_FILE, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
         except OSError:
             raise SpoolViolation("result.zip is missing or not a regular file") from None
-        digest = hashlib.sha256()
-        with os.fdopen(fd, "rb") as handle:
+        # Unbuffered: every read reaches the file, so a buffer can never stand in
+        # for changed bytes, and the upload digest sees any in-place change.
+        with os.fdopen(fd, "rb", buffering=0) as handle:
             info = os.fstat(handle.fileno())
             if (not stat.S_ISREG(info.st_mode) or info.st_size != ref.size
                     or info.st_size > self._max_result_bytes):
                 raise SpoolViolation("result.zip does not match its status")
+            digest = hashlib.sha256()
             for block in iter(lambda: handle.read(CHUNK), b""):
                 digest.update(block)
-        if digest.hexdigest() != ref.sha256:
-            raise SpoolViolation("result.zip checksum does not match its status")
-        return path
+            if digest.hexdigest() != ref.sha256:
+                raise SpoolViolation("result.zip checksum does not match its status")
+            handle.seek(0)
+            yield handle
 
     def cancel(self, directory: Path) -> None:
         """Tell the executor the lease is gone. Idempotent."""
