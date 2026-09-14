@@ -18,6 +18,32 @@ Bu dizindeki değerler yalnız sözleşme örneğidir; hasta kaydı, gerçek tah
 model metriği değildir. Asıl doğrulama `backend/live_contracts.py` içindeki Pydantic
 modelleriyle yapılır.
 
+## GPU spool sözleşmesi v1
+
+GPU hostunda dispatcher ile executor yalnız `MERGEN_RUNTIME_ROOT` altındaki ortak
+dizin üzerinden konuşur; soket, token veya VPS adresi paylaşmazlar. Her dosyanın
+tek yazarı vardır, bu yüzden iki süreç aynı dosyada yarışmaz:
+
+| Yol | Yazar | Anlamı |
+|---|---|---|
+| `executor.json` | executor | Yetenekler ve şu an iş kabul edip etmediği |
+| `staging/` | dispatcher | Hazırlanan işler; executor okumaz |
+| `jobs/<jobId>/job.json` | dispatcher | Bir kez, yayından önce yazılır |
+| `jobs/<jobId>/input.zip` | dispatcher | Checksum'ı doğrulanmış girdi |
+| `jobs/<jobId>/cancel` | dispatcher | Boş işaret: lease kaybedildi, sonuç yayımlanmayacak |
+| `jobs/<jobId>/status.json` | executor | `accepted → running → completed/failed`; atomik değiştirilir |
+| `jobs/<jobId>/result.zip` | executor | `completed` yazılmadan önce tamamlanır |
+| `trash/` | dispatcher | Kilit serbest kalınca silinir |
+
+İş `staging/` altında hazırlanır; dosyalar ve dizin fsync edilir, sonra tek
+`rename` ile `jobs/` altına taşınır, böylece executor yarım iş görmez. Executor bir
+iş dizininde çalışırken dizine `flock(LOCK_EX)` alır; dispatcher dizini yalnız bu
+kilidi kendisi alabildiğinde siler. Şemalar `mergen_spool/contract.py` içindedir;
+örnekler `gpu-spool-job.v1.example.json`, `gpu-spool-status.v1.example.json` ve
+`gpu-executor-ready.v1.example.json` dosyalarındadır.
+
+## Hazır demo paketleri
+
 Hazır demo paketleri canlı iş ZIP'lerinden ayrıdır. Kök katalog örneği
 `demo-catalog.v3.example.json`, görüntü koleksiyonu örneği
 `demo-imaging-manifest.v3.example.json` dosyasındadır. Katalog yalnız modül,

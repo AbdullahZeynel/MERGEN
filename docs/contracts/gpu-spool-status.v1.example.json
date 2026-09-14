@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "kind": "mergen-spool-status",
+  "jobId": "0123456789abcdef0123456789abcdef",
+  "state": "completed",
+  "updatedAt": 1757800060,
+  "result": {
+    "path": "result.zip",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+    "size": 2048
+  }
+}
