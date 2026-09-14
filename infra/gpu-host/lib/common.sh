@@ -18,12 +18,21 @@ MERGEN_FAIL_COUNT=0
 # Accounts and groups. The maintenance account is a human login; the two
 # service accounts never log in and never hold sudo.
 MERGEN_MAINT_USER='mergen'
-MERGEN_MAINT_GROUP='mergen'
 MERGEN_DISPATCHER_USER='mergen-dispatcher'
 MERGEN_EXECUTOR_USER='mergen-executor'
 MERGEN_SERVICE_GROUP='mergen-svc'
 
-# Directory contract. Keep in sync with docs/GPU_HOST_RUNBOOK.md.
+# Directory contract. Keep in sync with docs/GPU_HOST_RUNBOOK.md and
+# tmpfiles.d/mergen.conf.
+#
+# Spool contract: the runtime tree is setgid to the shared service group, so a
+# file the dispatcher writes is readable by the executor and a result the
+# executor writes is readable by the dispatcher. Both units run with
+# UMask=0007, which makes that group access real while leaving "others" with
+# nothing. Without both halves the hand-off cannot work.
+MERGEN_RUNTIME_MODE='2770'
+MERGEN_SERVICE_UMASK='0007'
+
 MERGEN_APP_ROOT='/opt/mergen'
 MERGEN_MODEL_ROOT='/srv/mergen-models'
 MERGEN_STATE_ROOT='/var/lib/mergen'
@@ -78,29 +87,40 @@ distro_family() {
     esac
 }
 
-# Reject a path that is not absolute, contains a traversal segment, or whose
-# parents cross a symlink. Callers use this before touching any system path.
+# Reject a path that is not absolute, contains a traversal segment, or crosses
+# a symlink at ANY component. Checking only the final component is not enough:
+# /tmp/link/not-created has no symlink at the leaf (it does not exist yet) but
+# still resolves through one, so the walk starts at / and stops at the first
+# component that does not exist.
+#
+# Empty segments are skipped, so "/", "//srv//x" and "/srv/x" behave the same.
 safe_system_path() {
-    local path="$1" part resolved
+    local path="$1" part current=''
+    local -a parts=()
     [[ "$path" == /* ]] || { fail "Path is not absolute: $path"; return 1; }
-    IFS='/' read -r -a _mergen_parts <<< "$path"
-    for part in "${_mergen_parts[@]}"; do
+    IFS='/' read -r -a parts <<< "$path"
+
+    # First pass: reject traversal anywhere in the path. This must cover the
+    # whole string, including segments below a component that does not exist
+    # yet, otherwise /opt/missing/../../etc would slip through.
+    for part in "${parts[@]}"; do
         if [[ "$part" == '.' || "$part" == '..' ]]; then
             fail "Path contains a traversal segment: $path"
             return 1
         fi
     done
-    if [[ -L "$path" ]]; then
-        fail "Path is a symlink and will not be used: $path"
-        return 1
-    fi
-    if [[ -e "$path" ]]; then
-        resolved="$(readlink -f -- "$path" 2>/dev/null || true)"
-        if [[ "$resolved" != "$path" ]]; then
-            fail "Path resolves elsewhere through a symlink: $path"
+
+    # Second pass: walk down from / and stop at the first component that does
+    # not exist; nothing below it can be a symlink yet.
+    for part in "${parts[@]}"; do
+        [[ -z "$part" ]] && continue
+        current="$current/$part"
+        if [[ -L "$current" ]]; then
+            fail "Path crosses a symlink at $current"
             return 1
         fi
-    fi
+        [[ -e "$current" ]] || return 0
+    done
     return 0
 }
 
