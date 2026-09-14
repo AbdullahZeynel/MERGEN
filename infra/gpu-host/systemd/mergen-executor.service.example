@@ -1,0 +1,58 @@
+# EXAMPLE ONLY. The executor itself is G3 work; nothing installs this yet.
+#
+# The executor runs models against one job directory the dispatcher prepared.
+# It holds no token, knows no VPS address, and has no reason to reach the
+# network. PrivateDevices is NOT set here: it needs /dev/nvidia*.
+
+[Unit]
+Description=MERGEN GPU model executor
+After=local-fs.target
+
+[Service]
+Type=simple
+User=mergen-executor
+Group=mergen-executor
+SupplementaryGroups=mergen-svc
+WorkingDirectory=/var/lib/mergen/executor
+EnvironmentFile=/etc/mergen/executor.env
+ExecStart=/opt/mergen/current/executor/bin/python -m mergen_executor
+Restart=on-failure
+RestartSec=10
+
+# Privilege containment
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+SystemCallArchitectures=native
+UMask=0077
+ReadWritePaths=/var/lib/mergen/executor /var/lib/mergen/runtime
+
+# No network leg at all. Verify on the host: some CUDA and telemetry paths
+# open sockets, and if one does, relax this to IPAddressDeny=any instead of
+# removing the isolation entirely.
+PrivateNetwork=true
+
+# GPU device access. DeviceAllow only grants what is listed.
+DeviceAllow=/dev/nvidiactl rw
+DeviceAllow=/dev/nvidia-uvm rw
+DeviceAllow=/dev/nvidia-uvm-tools rw
+DeviceAllow=/dev/nvidia0 rw
+# Add further /dev/nvidiaN lines only for devices this host really has.
+
+# Shared desktop manners. The GPU itself has no usable quota on a consumer
+# NVIDIA card: there is no reliable percentage share, so admission control is
+# all-or-nothing and lives in the executor (flock plus the VRAM and
+# utilisation thresholds in executor.env), not in systemd.
+Nice=15
+CPUWeight=30
+IOWeight=30
+MemoryMax=16G
+
+[Install]
+WantedBy=multi-user.target

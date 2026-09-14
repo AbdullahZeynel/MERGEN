@@ -1,0 +1,49 @@
+# EXAMPLE ONLY -- do not install unreviewed.
+#
+# Copy to /etc/sudoers.d/mergen-maintenance, review every line, then:
+#     sudo visudo -cf /etc/sudoers.d/mergen-maintenance
+#     sudo install -m 440 -o root -g root <file> /etc/sudoers.d/mergen-maintenance
+#
+# Grants the human maintenance account the few privileged commands needed to
+# operate the MERGEN services on a computer somebody else also uses daily.
+# Full sudo is not granted, and no rule is passwordless: the password prompt is
+# the last barrier if the account is ever misused.
+#
+# Excluded on purpose: package and driver installation, shutdown, reboot, user
+# management, arbitrary systemctl, editors, and any shell. Those stay with the
+# machine owner.
+#
+# Two rules this file follows, because breaking either turns a narrow grant
+# into a root shell:
+#
+#   1. No wildcard in a command. `journalctl -u unit *` lets the caller append
+#      any option, and a pager option is enough to escape to a shell.
+#   2. Every command that can invoke a pager is pinned to --no-pager.
+#
+# The service accounts mergen-dispatcher and mergen-executor appear nowhere in
+# this file and must never be given sudo.
+
+Cmnd_Alias MERGEN_UNITS = /usr/bin/systemctl start mergen-dispatcher.service, \
+                          /usr/bin/systemctl stop mergen-dispatcher.service, \
+                          /usr/bin/systemctl restart mergen-dispatcher.service, \
+                          /usr/bin/systemctl start mergen-executor.service, \
+                          /usr/bin/systemctl stop mergen-executor.service, \
+                          /usr/bin/systemctl restart mergen-executor.service
+
+Cmnd_Alias MERGEN_STATUS = /usr/bin/systemctl --no-pager status mergen-dispatcher.service, \
+                           /usr/bin/systemctl --no-pager status mergen-executor.service, \
+                           /usr/bin/systemctl --no-pager is-active mergen-dispatcher.service, \
+                           /usr/bin/systemctl --no-pager is-active mergen-executor.service
+
+Cmnd_Alias MERGEN_LOGS = /usr/bin/journalctl --no-pager -n 200 -u mergen-dispatcher.service, \
+                         /usr/bin/journalctl --no-pager -n 200 -u mergen-executor.service
+
+# Read-only diagnostics. No argument here can write to the host.
+Cmnd_Alias MERGEN_DIAG = /usr/bin/nvidia-smi, \
+                         /usr/bin/tailscale status
+
+mergen ALL=(root) MERGEN_UNITS, MERGEN_STATUS, MERGEN_LOGS, MERGEN_DIAG
+
+# Binary paths differ between distributions. Verify each with `command -v` on
+# the target host before installing: a path that does not exist grants nothing
+# silently, and a wrong one can grant more than intended.
