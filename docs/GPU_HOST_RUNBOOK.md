@@ -39,11 +39,11 @@ anlatır. Ayrıca VPS'teki `mergen` **sistem** hesabıdır (nologin); GPU hostun
 
 | Yol | Sahip:Grup | Mod | Amaç |
 |---|---|---|---|
-| `/opt/mergen` | `root:mergen` | 0755 | Sürümlü uygulama ve runtime kodu |
+| `/opt/mergen` | `root:root` | 0755 | Sürümlü uygulama ve runtime kodu |
 | `/srv/mergen-models` | `mergen:mergen-svc` | 0750 | Sürümlü, checksum'lı model ağırlıkları |
 | `/var/lib/mergen/dispatcher` | `mergen-dispatcher:mergen-dispatcher` | 0700 | Dispatcher durumu |
 | `/var/lib/mergen/executor` | `mergen-executor:mergen-executor` | 0700 | Executor durumu, kilit ve pause dosyası |
-| `/var/lib/mergen/runtime` | `mergen-dispatcher:mergen-executor` | 0750 | Geçici iş paketleri — **yedek dışı** |
+| `/var/lib/mergen/runtime` | `mergen-dispatcher:mergen-svc` | **2770** | Geçici iş paketleri — **yedek dışı** |
 | `/etc/mergen` | `root:root` | 0751 | Git dışı env dosyaları |
 | `/etc/mergen/dispatcher.env` | `root:mergen-dispatcher` | 0640 | VPS adresi ve worker token'ı |
 | `/etc/mergen/executor.env` | `root:mergen-executor` | 0640 | Model yolları ve GPU eşikleri; **token yok** |
@@ -55,9 +55,23 @@ anlatır. Ayrıca VPS'teki `mergen` **sistem** hesabıdır (nologin); GPU hostun
 | `mergen-executor` | Sistem hesabı | `nologin` | Yok |
 | `mergen-svc` | Grup | — | Model ağacını okumak için ortak grup |
 
-Runtime dizini 0750'dir: dispatcher iş dizinlerini oluşturur, executor grup
-üzerinden içeri girer, **makinedeki diğer insan kullanıcılar hiçbir şey
-göremez**. Executor üst düzeyde yeni iş dizini açamaz; bu kasıtlı.
+### Spool izin sözleşmesi
+
+Runtime dizini iki yönlü bir teslim alanıdır: dispatcher girdiyi yazar,
+executor okuyup sonucu yazar, dispatcher sonucu geri okur. Bunun izin
+düzeyinde gerçekten mümkün olması için üç parça birlikte çalışır:
+
+| Parça | Değer | Ne sağlar |
+|---|---|---|
+| Dizin modu | `2770` (setgid) | İçeride oluşan her dizin ve dosya `mergen-svc` grubunu devralır |
+| Ortak grup | `mergen-svc` | İki servis de üye; model ağacını da bu grupla okurlar |
+| Unit umask | `UMask=0007` | Dosyalar `0660`, dizinler `0770` doğar — grup okuyup yazabilir |
+
+Üçünden biri eksikse teslim çalışmaz: `UMask=0077` ile dosyalar `0600` doğar
+ve karşı taraf okuyamaz; setgid olmadan grup devralınmaz.
+
+`others` her düzeyde sıfırdır — bu makinede başka insan kullanıcılar var ve
+runtime'da hasta girdisi bulunur.
 
 `/etc/mergen/dispatcher.env` dosyasının 0640 olması systemd'ye karşı koruma
 değildir — systemd `EnvironmentFile`'ı yetki düşmeden önce root olarak okur.
@@ -67,98 +81,149 @@ Koruma **diğer hesaplara** karşıdır, `mergen-executor` dahil.
 
 ## Sıra
 
-Her adımın kabul ölçütü sağlanmadan sonrakine geçilmez.
+Her adımın kabul ölçütü sağlanmadan sonrakine geçilmez. Sıra gelişigüzel
+değil: **veri kapsamı kararı hesap açmaktan önce gelir.** Runtime dizini kök
+snapshot'ına giren bir düzende hesaplar kurulursa, ilk işle birlikte hasta
+girdisi sessizce yedeklere taşınır.
 
 ### 1. Kurulum öncesi salt okunur denetim
-
-Hiçbir şey değiştirmeden envanteri çıkar:
 
 ```bash
 bash infra/gpu-host/audit-host.sh
 ```
 
-Çıktı kimlik taşımaz (IP, token, tam hostname, e-posta, proses listesi, GPU
-UUID yok), doğrudan issue'ya yapıştırılabilir.
+Hiçbir şey değiştirmez. Çıktı kimlik taşımaz (IP, token, tam hostname,
+e-posta, proses listesi, GPU UUID yok), doğrudan issue'ya yapıştırılabilir.
 
-*Kabul:* dağıtım ve çekirdek okunabiliyor, systemd çalışıyor, NVIDIA cihaz
-düğümü ve sürücü görünüyor, `nvidia-smi` yanıt veriyor.
+*Kabul:* dağıtım ve çekirdek okunabiliyor, systemd çalışıyor. Sürücü henüz
+kurulu değilse NVIDIA bölümündeki FAIL normaldir; 10. adımdan sonra tekrar
+çalıştırılacak.
 
-Sürücü henüz kurulu değilse burada FAIL görmek normaldir; 8. adımdan sonra
-tekrar çalıştır.
+### 2. İlk geri dönüş noktası — henüz hasta verisi yokken
 
-### 2. Dosya sistemi ve snapshot kapsamı kararı
+Bu noktayı **şimdi** al: makinede henüz MERGEN'e ait hiçbir veri yok, yani
+snapshot'ın kapsamı tartışmasız temiz.
 
-Bu, geri kalan her şeyden önce gelir. Runtime dizini kök snapshot'una
-giriyorsa hasta girdisi ve sonuçlar farkında olmadan yedeklere taşınır.
+- Btrfs + snapper: `sudo snapper -c root create -d "MERGEN G1 öncesi"`
+- Btrfs elle: `sudo btrfs subvolume snapshot -r / /.snapshots/pre-mergen`
+- LVM: `sudo lvcreate -s -L 20G -n pre-mergen <vg>/<kök-lv>`
+- Hiçbiri yoksa: `/etc/passwd`, `/etc/group`, `/etc/shadow`, `/etc/sudoers.d/`,
+  `/etc/systemd/system/` ve `/usr/lib/{sysusers,tmpfiles}.d/` dizinlerini
+  tarihli bir arşive al.
+
+Geri yükleme adımını yaz ve **bir kez prova et**. Prova edilmemiş rollback,
+rollback değildir.
+
+*Kabul:* geri dönüş noktası mevcut, geri yükleme komutu yazılı, prova edildi.
+
+### 3. Runtime için ayrı LV / subvolume / mount oluştur
+
+Henüz hiçbir MERGEN hesabı veya dizini yok. Önce boş bir mount noktası aç,
+sonra runtime'a kendi depolamasını ver.
+
+**Btrfs:**
+
+```bash
+sudo mkdir -p /var/lib/mergen
+sudo btrfs subvolume create /var/lib/mergen/runtime
+# /etc/fstab, subvol adını kendi düzenine göre yaz:
+# UUID=<kök-uuid>  /var/lib/mergen/runtime  btrfs  subvol=@mergen-runtime,noatime  0 0
+sudo mount /var/lib/mergen/runtime
+```
+
+Yalnız iç içe (nested) subvolume bırakmak yeterli değildir: `btrfs subvolume
+snapshot` varsayılan olarak özyinelemeli değildir ama birçok yedekleme aracı
+ağacı kendisi gezer. Ayrıca mount et.
+
+**ext4 / LVM:**
+
+```bash
+sudo lvcreate -L 64G -n mergen-runtime <vg-adı>
+sudo mkfs.ext4 /dev/<vg-adı>/mergen-runtime
+sudo mkdir -p /var/lib/mergen/runtime
+# /etc/fstab:
+# /dev/<vg-adı>/mergen-runtime  /var/lib/mergen/runtime  ext4  defaults,noatime  0 2
+sudo mount /var/lib/mergen/runtime
+```
+
+Loop device ile "ayrı cihaz" görüntüsü yaratma: backing dosyası kök dosya
+sistemindeyse snapshot her şeyi yine alır. Script bunu yakalar ve FAIL verir.
+
+### 4. Snapshot kapsamını doğrula
 
 ```bash
 bash infra/gpu-host/check-snapshot-layout.sh
 ```
 
-Script şunu kanıtlamaya çalışır: `/var/lib/mergen/runtime` kök dosya
-sisteminin snapshot'ına **giremez**. Kanıtlayamazsa FAIL verir; sessizce
-başarılı olmaz.
+Script kanıtlamaya çalışır: `/var/lib/mergen/runtime` kök snapshot'ına
+**giremez**. Kanıtlayamazsa FAIL verir, sessizce başarılı olmaz.
 
-**Btrfs.** Runtime'ı ayrı bir subvolume yap ve `/etc/fstab` üzerinden ayrıca
-mount et:
+*Kabul:* PASS. WARN görüyorsan (örneğin mount edilmemiş nested subvolume)
+3. adıma dön.
+
+### 5. Yedekleme aracına açık dışlama ekle ve prova et
+
+Mount sınırı dosya düzeyinde çalışan araçları durdurmaz. Kullandığın araca
+runtime yolunu **açıkça** dışla:
+
+| Araç | Dışlama |
+|---|---|
+| restic | `--exclude /var/lib/mergen/runtime` (veya `--exclude-file`) |
+| borg | `--exclude /var/lib/mergen/runtime` |
+| timeshift | GUI'de "Exclude" listesine ekle |
+| snapper | Runtime ayrı subvolume ve snapper config'e dahil değil — doğrula |
+| rsync | `--exclude 'var/lib/mergen/runtime/***'` |
+
+**Provası:** runtime içine tanınabilir bir işaret dosyası koy, bir yedek al,
+yedeğin içeriğini listele ve işaretin **bulunmadığını** gör.
 
 ```bash
-sudo btrfs subvolume create /var/lib/mergen/runtime
-# fstab satırı, subvol adını kendi düzenine göre yaz:
-# UUID=<kök-uuid>  /var/lib/mergen/runtime  btrfs  subvol=@mergen-runtime,noatime  0 0
+sudo install -d -m 2770 /var/lib/mergen/runtime
+echo 'exclusion-drill' | sudo tee /var/lib/mergen/runtime/DRILL >/dev/null
+# ... yedeği al, sonra içeriği listele ...
+sudo rm /var/lib/mergen/runtime/DRILL
 ```
 
-Yalnız iç içe (nested) subvolume bırakmak yeterli değildir: `btrfs subvolume
-snapshot` varsayılan olarak özyinelemeli değildir ama birçok yedekleme aracı
-ağacı kendisi gezer. Script bu durumda WARN verir; kullandığın aracı
-gerçekten ölç.
+*Kabul:* yedeğin dosya listesinde runtime yolu geçmiyor.
 
-**ext4 / LVM.** Runtime kök ile aynı logical volume'daysa güvenli değildir.
-Ayrı bir LV veya bölüm ver:
+### 6. Hesap, grup ve dizin tabanı
 
-```bash
-sudo lvcreate -L 64G -n mergen-runtime <vg-adı>
-sudo mkfs.ext4 /dev/<vg-adı>/mergen-runtime
-# fstab: /dev/<vg-adı>/mergen-runtime  /var/lib/mergen/runtime  ext4  defaults,noatime  0 2
-```
-
-**Her düzende:** mount sınırı dosya düzeyinde çalışan yedekleme araçlarını
-durdurmaz. Kullandığın araca (`restic`, `borg`, `timeshift`, `snapper`,
-`rsync`) runtime yolunu **açıkça dışla**. Script bunu hatırlatır ama senin
-yerine yapamaz.
-
-*Kabul:* `check-snapshot-layout.sh` PASS veriyor **ve** yedekleme aracının
-dışlama listesine runtime yolu yazıldı.
-
-### 3. İlk geri dönüş noktası
-
-Hiçbir hesap veya dizin oluşturmadan önce geri dönülebilir bir nokta al.
-Komutu dağıtımına göre seç; bu script otomatik snapshot **almaz**, çünkü
-kapsamı doğrulanmamış bir snapshot yanlış güven verir.
-
-- Btrfs + snapper: `sudo snapper -c root create -d "MERGEN G1 öncesi"`
-- Btrfs elle: `sudo btrfs subvolume snapshot -r / /.snapshots/pre-mergen`
-- LVM: `sudo lvcreate -s -L 20G -n pre-mergen <vg>/<kök-lv>`
-- Hiçbiri yoksa: `/etc/passwd`, `/etc/group`, `/etc/shadow`, `/etc/sudoers.d/`
-  ve `/etc/systemd/system/` dizinlerini tarihli bir arşive al.
-
-Geri yükleme adımını **şimdi** yaz ve bir kez prova et. Prova edilmemiş
-rollback, rollback değildir.
-
-*Kabul:* geri dönüş noktası mevcut, geri yükleme komutu yazılı, prova edildi.
-
-### 4. `mergen` bakım hesabı
+Artık veri kapsamı kararlı; hesapları kurabiliriz.
 
 ```bash
 bash infra/gpu-host/install-base.sh            # önce plan; hiçbir şey değişmez
 sudo bash infra/gpu-host/install-base.sh --apply
 ```
 
-Hesap `--create-home --shell /bin/bash` ile açılır ve parolası **kilitlenir**:
-kimse onunla doğrudan giriş yapamaz, sen `sudo -u mergen -i` ile geçersin.
+Ne yapar: `mergen-svc` grubu ile `mergen-dispatcher` ve `mergen-executor`
+hesaplarını `systemd-sysusers` ile (yalnız kendi conf dosyasını uygulayarak),
+`mergen` bakım hesabını `useradd --create-home --shell /bin/bash` ile açar ve
+**parolasını kilitler**, dizinleri `systemd-tmpfiles` ile oluşturur, iki env
+dosyasını boş örneklerden tohumlar.
 
-Sudo bu adımda verilmez. [`sudoers.d/mergen-maintenance.example`](../infra/gpu-host/sudoers.d/mergen-maintenance.example)
-dosyasını oku, yolları `command -v` ile doğrula, sonra:
+Ne yapmaz: sürücü, CUDA, PyTorch, model ağırlığı indirmez; Tailscale'e giriş
+yapmaz; sır üretmez; servis başlatmaz; hiçbir şey silmez.
+
+> Runtime ayrı mount ise 3. adımda zaten mount edildi. Edilmediyse tmpfiles
+> mount altında kalacak boş bir dizin oluşturur.
+
+Mevcut bir `mergen` hesabı varsa script onu değiştirmez ama home dizinini ve
+login shell'ini doğrular; kullanılamaz durumdaysa açık hatayla durur.
+
+*Kabul:* ikinci çalıştırma hata vermiyor ve hiçbir şeyi değiştirmiyor.
+
+### 7. İkinci denetim
+
+```bash
+bash infra/gpu-host/audit-host.sh
+```
+
+*Kabul:* hesap ve dizin bölümlerinde FAIL yok; runtime dizini setgid raporlanıyor.
+
+### 8. Bakım hesabı için dar sudo
+
+[`sudoers.d/mergen-maintenance.example`](../infra/gpu-host/sudoers.d/mergen-maintenance.example)
+dosyasını oku, ikili yolları `command -v` ile doğrula, sonra:
 
 ```bash
 sudo visudo -cf infra/gpu-host/sudoers.d/mergen-maintenance.example
@@ -167,37 +232,40 @@ sudo install -m 440 -o root -g root \
     /etc/sudoers.d/mergen-maintenance
 ```
 
-Örnekte iki kural var, ikisi de güvenlik açığı kapatıyor: komutlarda joker
-(`*`) yok ve sayfalayıcı çalıştırabilen her komut `--no-pager` ile sabitlendi.
-`journalctl -u unit *` yazarsan çağıran kişi bir sayfalayıcı seçeneği ekleyip
-root shell'e çıkabilir.
+**Neden NOPASSWD?** `mergen` hesabının parolası kilitli — kimse onunla
+doğrudan giriş yapamaz, sen `sudo -u mergen -i` ile geçersin. Kilitli parola
+sudo'nun kendi sorusunu **karşılayamaz**; parola isteyen bir kural hiç
+çalışmazdı. Bu yüzden bariyer parola değil, komut listesidir: her satır sabit
+argümanlı sabit bir komut, listede shell, editör, paket yöneticisi veya serbest
+`systemctl` yok.
 
-*Kabul:* `sudo -l -U mergen` yalnız listelenen komutları gösteriyor; parola
-soruluyor.
+İki kural açık bırakılırsa dar yetki root shell'e dönüşür, ikisi de dosyada
+uygulanıyor: komutlarda joker (`*`) yok, ve sayfalayıcı çalıştırabilen her
+komut `--no-pager` ile sabitlenmiş.
 
-### 5. Yetkisiz dispatcher ve executor hesapları
-
-Aynı `install-base.sh --apply` çağrısı bunları `systemd-sysusers` ile
-oluşturur. İkinci çalıştırma hiçbir şeyi bozmaz.
+`mergen` hesabına gerçek parola vermeyi tercih edersen NOPASSWD'yi kaldır ve
+doğrudan giriş yüzeyini (SSH, display manager) ayrıca kapat — ve bunu test et.
 
 *Kabul:*
 
 ```bash
-getent passwd mergen-dispatcher mergen-executor   # shell nologin olmalı
-sudo -l -U mergen-dispatcher                      # "not allowed" demeli
+sudo -l -U mergen                 # yalnız dört alias, hepsi NOPASSWD
+sudo -u mergen -i -- sudo -n systemctl --no-pager is-active mergen-executor.service
 ```
 
-### 6. Dizin ve izin tabanı
+İkinci komut parola sormadan çalışmalı (servis henüz yoksa "inactive" der; önemli
+olan yetkinin işlemesi).
 
-`systemd-tmpfiles` dizinleri yukarıdaki tabloya göre oluşturur ve modları
-düzeltir. Hiçbir satır silme yapmaz.
+### 9. Yetkisiz servis hesaplarının doğrulaması
 
-> Runtime ayrı mount/subvolume ise **önce mount et**, sonra tmpfiles uygula.
-> Aksi halde oluşturulan dizin sonraki mount tarafından gizlenir.
+```bash
+getent passwd mergen-dispatcher mergen-executor   # shell nologin olmalı
+sudo -l -U mergen-dispatcher                      # "not allowed" demeli
+sudo -l -U mergen-executor                        # "not allowed" demeli
+id mergen-dispatcher; id mergen-executor          # ikisi de mergen-svc üyesi
+```
 
-*Kabul:* `bash infra/gpu-host/audit-host.sh` dizin bölümünde FAIL yok.
-
-### 7. Tailscale kaydı
+### 10. Tailscale kaydı
 
 Bu adımı **sen** yaparsın; script Tailscale hesabına giriş yapmaz.
 Ayrıntı ve politika: [`infra/tailscale/README.md`](../infra/tailscale/README.md).
@@ -214,7 +282,7 @@ bilinçli; backend MagicDNS adı değil 100.x adresi kullanır.
 *Kabul:* `tailscale status` node'u `tag:mergen-gpu` ile gösteriyor; konsolda
 key expiry kapalı. Adresi hiçbir repo dosyasına yazma.
 
-### 8. NVIDIA sürücüsü
+### 11. NVIDIA sürücüsü
 
 Dağıtımın **resmi** yöntemini kullan. Sürücü sürümü hızlı değişiyor; bu belge
 sabit sürüm yazmaz, çünkü yazsa birkaç ay içinde yanlış olur.
@@ -224,18 +292,14 @@ sabit sürüm yazmaz, çünkü yazsa birkaç ay içinde yanlış olur.
 - CachyOS / Arch: depodaki `nvidia-open-dkms` veya `nvidia-dkms` paketini
   çekirdeğine uygun başlıklarla kur. AUR'dan elle sürücü derleme.
 
-Kurulumdan sonra **yeniden başlat**, sonra:
-
-```bash
-nvidia-smi
-```
+Kurulumdan sonra **yeniden başlat**, sonra `nvidia-smi`.
 
 *Kabul:* `nvidia-smi` GPU adını ve sürücü sürümünü yazıyor.
 
 > Bu adım kullanıcının masaüstü oturumunu etkiler. Sahibi makinede
 > çalışırken yapma.
 
-### 9. İki ayrı model venv'i
+### 12. İki ayrı model venv'i
 
 Görüntü ve genomik bağımlılıkları çakışır (farklı `torch`, `monai`,
 `transformers` sürümleri). Tek venv'de birleştirme.
@@ -248,7 +312,7 @@ sudo -u mergen python3 -m venv /srv/mergen-models/venv/genomics
 Yolları `/etc/mergen/executor.env` içindeki `MERGEN_IMAGING_VENV` ve
 `MERGEN_GENOMICS_VENV` alanlarına yaz.
 
-### 10. CUDA uyumlu PyTorch
+### 13. CUDA uyumlu PyTorch
 
 Önce **PyTorch wheel'ının içindeki CUDA runtime'ıyla** dene. Tam CUDA Toolkit
 (`nvcc`) kurma; bir modelin gerçekten kaynak derlemesi gerektiği kanıtlanana
@@ -266,7 +330,7 @@ derliyorsa. Belirtisi açıktır: `pip install` sırasında `nvcc: command not
 found` veya `CUDA_HOME` hatası. O zaman toolkit'i kur ve **neden gerektiğini
 bu belgeye yaz**.
 
-### 11. GPU doğrulaması
+### 14. GPU doğrulaması
 
 Her venv için ayrı ayrı:
 
@@ -282,7 +346,7 @@ yazdırmaz.
 
 *Kabul:* iki venv'de de FAIL yok.
 
-### 12. Modellerin yerleşimi
+### 15. Modellerin yerleşimi
 
 Ağırlıklar Git'te değildir ve olmayacaktır
 ([`LOCAL_ASSETS.md`](LOCAL_ASSETS.md)). `/srv/mergen-models` altına sürümlü
@@ -301,14 +365,14 @@ Dizin `mergen:mergen-svc` 0750'dir: servisler okur, yalnız bakım hesabı yazar
 Executor bir ağırlığı kullanmadan önce checksum'ı doğrulamalıdır (G4 işi);
 manifest'i şimdi üret ki o doğrulamanın karşılaştıracağı bir referans olsun.
 
-### 13. Hangi servisler henüz başlatılmaz
+### 16. Hangi servisler henüz başlatılmaz
 
 `infra/gpu-host/systemd/` altındaki iki unit **`.example`** uzantılıdır ve
 `install-base.sh` onları kurmaz. Dispatcher (G2) ve executor (G3) kodu
 yazılmadan `mergen-dispatcher.service` veya `mergen-executor.service`
 `enable` edilmez. Şu an başlatılması gereken tek servis `tailscaled`.
 
-### 14. Pause, bakım ve rollback
+### 17. Pause, bakım ve rollback
 
 **Pause.** Executor yeni iş almasın ama servis ayakta kalsın:
 
@@ -316,19 +380,14 @@ yazılmadan `mergen-dispatcher.service` veya `mergen-executor.service`
 sudo -u mergen-executor touch /var/lib/mergen/executor/pause
 ```
 
-Dosya varken çalışan iş bitirilir, yenisi başlatılmaz. Devam:
-
-```bash
-sudo rm /var/lib/mergen/executor/pause
-```
-
-Alternatif olarak `sudo systemctl stop mergen-executor.service`; fark şu ki
-pause dosyası devam eden işi yarıda kesmez.
+Dosya varken çalışan iş bitirilir, yenisi başlatılmaz. Devam için dosyayı sil.
+Alternatif `sudo systemctl stop mergen-executor.service`; fark şu ki pause
+dosyası devam eden işi yarıda kesmez.
 
 **Bakım.** Sürücü güncellemesi, çekirdek güncellemesi veya ağır oyun
-oturumundan önce pause koy. Güncelleme sonrası 11. adımı tekrar çalıştır.
+oturumundan önce pause koy. Güncelleme sonrası 14. adımı tekrar çalıştır.
 
-**Rollback.** 3. adımdaki noktaya dön. Hesap ve dizin tabanını geri almak
+**Rollback.** 2. adımdaki noktaya dön. Hesap ve dizin tabanını geri almak
 için minimum sıra:
 
 ```bash
@@ -342,20 +401,19 @@ sudo groupdel mergen-svc
 Dizinleri **silmeden önce** içeriğe bak: `/srv/mergen-models` altında saatler
 süren indirmeler olabilir. Runtime dizinini boşaltmak ise istenen davranıştır.
 
-### 15. Snapshot periyodu ve veri kapsamı
+### 18. Snapshot periyodu ve veri kapsamı
 
-- Snapshot **kök** için alınır; runtime asla kapsama girmez (2. adım).
+- Snapshot **kök** için alınır; runtime asla kapsama girmez (3.–5. adımlar).
 - Sürücü/çekirdek güncellemesinden önce bir snapshot al.
 - Model ağırlıkları büyüktür ve yeniden indirilebilir; snapshot yerine
-  `MANIFEST.sha256` + indirme kaynağı yeterlidir. İstersen ayrı, seyrek
-  yedekle.
+  `MANIFEST.sha256` + indirme kaynağı yeterlidir.
 - `/etc/mergen/*.env` içinde token vardır. Yedeklenecekse şifrelenmiş bir
   kasaya; düz yedeğe **hayır**.
 - Saklama süresi kısa tut. Silinen dosyanın SSD'de fiziksel olarak
   kurtarılamaz hale geldiği garanti değildir; disk şifreleme, kısa saklama ve
   runtime'ı yedek dışında tutmak birlikte çalışır.
 
-### 16. Host günlük kullanımdayken GPU işi kuralları
+### 19. Host günlük kullanımdayken GPU işi kuralları
 
 Makine sahibinin işi önceliklidir. Uygulanacak davranış:
 
@@ -367,7 +425,7 @@ Makine sahibinin işi önceliklidir. Uygulanacak davranış:
 | Yeniden deneme aralığı | `MERGEN_GPU_WAIT_SECONDS` |
 | Dispatcher davranışı | GPU meşgulken yeni ağır iş claim edilmez; claim edilmişse lease yenilenerek ertelenir |
 | CPU ve RAM sınırı | systemd `Nice`, `CPUWeight`, `IOWeight`, `MemoryMax` (unit örneklerinde) |
-| Pause | 14. adımdaki pause dosyası |
+| Pause | 17. adımdaki pause dosyası |
 
 Eşikler `executor.env` içinde **boş** gelir. Bu kasıtlı: doğru değer GPU'nun
 VRAM'ine ve sahibinin kullanım alışkanlığına bağlıdır, tahmin edilmiş bir

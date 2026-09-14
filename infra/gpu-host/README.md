@@ -27,6 +27,10 @@ bash infra/gpu-host/install-base.sh          # plan; hiçbir şey yapmaz
 sudo bash infra/gpu-host/install-base.sh --apply
 ```
 
+Sıra önemli: `check-snapshot-layout.sh` PASS vermeden `--apply` çalıştırma.
+Runtime'ın kendi mount'u hesaplardan **önce** kurulur; aksi halde ilk işle
+birlikte hasta girdisi kök snapshot'ına girer. Tam sıra runbook'ta.
+
 Testler:
 
 ```bash
