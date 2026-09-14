@@ -1,0 +1,52 @@
+# EXAMPLE ONLY. The dispatcher itself is G2 work; nothing installs this yet.
+# Copy to /etc/systemd/system/mergen-dispatcher.service when G2 lands, then
+# re-check every path against the code that actually ships.
+#
+# The dispatcher is the only MERGEN unit that talks to the VPS. It holds the
+# worker token, claims jobs, downloads input and uploads results.
+
+[Unit]
+Description=MERGEN GPU job dispatcher
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mergen-dispatcher
+Group=mergen-dispatcher
+# Read group for the model tree; it never writes there.
+SupplementaryGroups=mergen-svc
+WorkingDirectory=/var/lib/mergen/dispatcher
+EnvironmentFile=/etc/mergen/dispatcher.env
+ExecStart=/opt/mergen/current/dispatcher/bin/python -m mergen_dispatcher
+Restart=on-failure
+RestartSec=10
+
+# Privilege containment
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=false
+SystemCallArchitectures=native
+# 0007, not 0077: the spool is a hand-off. Files land 0660 in the setgid
+# group mergen-svc so the other service can read them; others get nothing.
+UMask=0007
+ReadWritePaths=/var/lib/mergen/dispatcher /var/lib/mergen/runtime
+
+# Shared desktop manners: the owner's interactive work outranks batch work.
+Nice=10
+CPUWeight=40
+IOWeight=40
+MemoryMax=8G
+# MemoryMax is a hard cap; size it against the real job profile before trusting
+# it. Too low turns a long job into an OOM kill halfway through.
+
+[Install]
+WantedBy=multi-user.target
