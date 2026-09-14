@@ -12,10 +12,21 @@ Tarayıcı
    │ HTTPS
    ▼
 Caddy ──► VPS API ──► oturum + kuyruk + geçici dosya alanı
-              │                    ▲
-              │ Tailscale          │ sonuç yükleme
-              ▼                    │
-       GPU worker (primary / standby)
+              │                                  ▲
+              │ Tailscale                        │ sonuç yükleme
+              ▼                                  │
+       Yerel GPU iş istasyonu                    │
+       ┌─────────────────────┐                   │
+       │ dispatcher          │───────────────────┘
+       │ claim/lease/transfer│
+       └──────────┬──────────┘
+                  │ Unix socket / yerel spool
+       ┌──────────▼──────────┐
+       │ executor            │
+       │ doğrulama + GPU lock│
+       └──────────┬──────────┘
+                  ├── görüntü adaptörü + venv
+                  └── genomik adaptörü + venv
 
 VPS API ──► salt okunur demo MCP ──► hazırlanmış demo paketleri
 ```
@@ -23,8 +34,18 @@ VPS API ──► salt okunur demo MCP ──► hazırlanmış demo paketleri
 - MCP yalnızca yayımlanabilir, önceden hazırlanmış demo dosyalarını okur. Yükleme,
   oturum, kuyruk ve model çalıştırma API/worker katmanındadır. GPU makinesinde MCP
   gerekli değildir; ileride LLM araç çağrıları için ayrıca değerlendirilebilir.
-- GPU worker işi VPS kuyruğundan **pull** eder. Böylece ev ağında model portu
-  açılmaz, birincil veya yedek worker aynı işi atomik olarak sahiplenebilir.
+- GPU hostundaki dispatcher işi VPS kuyruğundan **pull** eder. Böylece ev ağında
+  model portu açılmaz. VPS, hosta bağlantı başlatmaz; claim, indirme ve sonuç
+  yükleme Tailscale üzerinden dispatcher tarafından yapılır.
+- Dispatcher ağ kimliği, lease ve dosya aktarımını; executor ise giriş doğrulama,
+  adaptör seçimi ve GPU çalıştırmayı yönetir. Aralarındaki sürümlü yerel sözleşme
+  Unix socket veya sınırlandırılmış spool dizini üzerinden kurulur.
+- Home dizini ve sınırlı bakım sudo'su bulunan `mergen` insan/operatör hesabıdır.
+  Uzun süre çalışan dispatcher ve executor, login ve sudo yetkisi bulunmayan ayrı
+  servis hesaplarıyla çalışır.
+- Host günlük kullanım ile inference işlerini paylaşır. Worker kullanıcıya ait GPU
+  süreçlerini sonlandırmaz; tek iş kilidi, yapılandırılabilir VRAM/kullanım eşiği ve
+  bakım duraklatmasıyla GPU meşgulse claim'i erteler.
 - Tarayıcı model servisine, MCP'ye veya Tailscale adresine doğrudan bağlanmaz.
 - Demo ve canlı sonuç birbirine dönüşmez. Canlı GPU erişilemiyorsa açık hata veya
   kuyruk durumu gösterilir.
@@ -93,14 +114,15 @@ Canlı veri yalnızca şu dizinde tutulur:
 - İş `queued`, `claimed`, `running`, `completed`, `failed`, `expired` durumlarından
   geçer. Worker lease kullanır; süresi dolan iş başka worker tarafından alınabilir.
   Aynı iş iki kez sonuç yayımlayamaz.
-- GPU worker girdiyi işe özel geçici dizine indirir, sonucu VPS'ye yükledikten sonra
-  kendi kopyasını `finally` temizliğiyle kaldırır. Başlangıçta kalmış dizinleri
-  süpüren ayrı bir temizlik görevi bulunur.
+- Dispatcher girdiyi işe özel geçici dizine indirir; executor yalnız bu iş dizinini
+  görür. Dispatcher sonucu VPS'ye yükledikten sonra yerel kopyayı `finally`
+  temizliğiyle kaldırır. Başlangıçta kalmış dizinleri süpüren ayrı bir temizlik
+  görevi bulunur.
 - VPS temizleyicisi her dakika sona eren oturumları, ilişkili dosyaları ve iş
   satırlarını kaldırır. Uygulama logları dosya adı, payload, genomik değişken veya
   oturum kimliğinin tamamını içermez; yalnızca toplu süre/hata kodu tutulur.
 - SSD'de dosya silmek fiziksel blokların anında geri döndürülemez silindiğini garanti
-  etmez. Disk/VM image şifrelemesi, kısa saklama süresi ve yedeklere runtime dizinini
+  etmez. Host disk şifrelemesi, kısa saklama süresi ve yedeklere runtime dizinini
   almamak tasarımın parçasıdır. Bu teknik tasarım tek başına KVKK uygunluk beyanı
   değildir; aydınlatma, açık rıza/hukuki dayanak, erişim ve olay süreçleri ayrıca
   ele alınmalıdır.
@@ -139,32 +161,36 @@ sentetik COSMIC değeriyle başarılı canlı sonuç üretilmez.
 | S1 — `feat/demo-catalog-v3` | Demo dosyalarını modül ve hastalık bazında üret; MCP'ye filtreli katalog/asset araçları ekle; mevcut iki glioma demosunu taşı | v2 geri dönüş veya kontrollü tek seferlik geçiş çalışır; bilinmeyen modül/hastalık/vaka reddedilir; mevcut site kesintisiz açılır |
 | S2 — `feat/imaging-overlays-export` | Prediction ve ground-truth 2D overlay üretimi, ayrı 3D katmanlar, NIfTI+GLB export; frontend katman düğmeleri | Demo vakada iki katman bağımsız açılır; canlı sözleşme fixture'ında GT görünmez; eksen/indeks/affine tutarlılık testi geçer |
 | S3 — `feat/genomics-inference-service` | Mevcut genomik pipeline'ı denetle; eğitim kodundan tek-varyant inference adaptörünü ayır; model/feature şemasını sürümle; genomik demo vakaları oluştur | Sabit fixture aynı sonucu verir; model ve kolon sırası doğrulanır; eksik dizi/özellik açık hata verir; eğitim tetiklenmez |
-| S4 — `feat/gpu-worker-runtime` | Ubuntu Server VM kurulumu, NVIDIA/CUDA doğrulaması, görüntü ve genomik için ayrı venv/container; pull-worker, lease, health/capabilities | Worker gerçek checkpoint/modeli yükler; tek fixture uçtan uca tamamlanır; yeniden başlatmada yarım iş temizlenir; primary/standby aynı işi çift çalıştırmaz |
-| S5 — `feat/live-session-api` | VPS oturum cookie'si, yükleme doğrulaması, SQLite kuyruk, 3 dk idle timeout, logout/cleanup, 5–10 aktif oturum sınırı | Çıkışta ve timeout'ta VPS+GPU dosyaları/DB satırları silinir; 11. oturum 429 alır; dosya boyutu/türü ve sahiplik testleri geçer |
-| S6 — `feat/live-ui-downloads` | Arayüzde modül seçimi, modüle özel vaka listesi/yükleme, iş ilerlemesi, canlı sonuç ve ZIP indirme | Modül değişiminde eski vaka temizlenir; kullanıcı yalnız kendi işini görür/indirir; bağlantı kopunca demo sonucuymuş gibi gösterilmez |
-| S7 — `chore/resilience-privacy-drill` | Yedek worker, Tailscale ACL, servis boot, disk sınırı, log denetimi, veri yaşam döngüsü ve sunum provası | GPU kapalıyken demo çalışır; standby elle devreye alınır; 10 oturum/1 ağır iş provası ve temizlik kanıtı kaydedilir |
+| G0 — `docs/native-gpu-host-audit` | Paylaşımlı host envanteri, dosya sistemi/şifreleme, mevcut NVIDIA kullanımı, snapshot/rollback ve runtime'ın yedek dışı bırakılması | Kurulum öncesi geri dönüş noktası ve geri yükleme adımı doğrulanır; hasta verisi/sırlar snapshot kapsamına girmez |
+| G1 — `chore/native-gpu-host-bootstrap` | `mergen` bakım hesabı, ayrı yetkisiz servis hesapları, dizin/izin standardı, Tailscale ACL, sürücü ve CUDA'lı PyTorch doğrulaması | Servisler sudo/login olmadan çalışır; sırlar ayrılır; yeniden başlatma sonrası Tailscale ve GPU smoke testi geçer |
+| G2 — `feat/gpu-dispatcher` | Eski pull-worker çekirdeğini dispatcher'a uyarla; claim, lease, checksum, indirme, sonuç yükleme, yeniden deneme ve temizlik | Sahte executor ile uçtan uca iş tamamlanır; ağ kesintisi/yeniden başlatmada iş kaybolmaz veya iki kez yayımlanmaz |
+| G3 — `feat/gpu-executor` | Yerel iş sözleşmesi, manifest doğrulama, adaptör registry, `flock`, GPU boşluk eşiği, pause/resume ve systemd sınırları | Meşgul GPU'da iş ertelenir ve kullanıcı süreci öldürülmez; tek inference sınırı ile sahte adaptör testi geçer |
+| G4 — `feat/gpu-model-adapters` | Görüntü ve genomik için ayrı venv, sürümlü model dizini, gerçek adaptörler ve başlangıç preflight'ı | Bir görüntü ve bir genom fixture'ı gerçek modelle çalışır; eksik ağırlık/şema capability olarak ilan edilmez |
+| G5 — `feat/live-end-to-end` | Mevcut VPS oturum/kuyruk katmanını dispatcher'a bağla; canlı UI, ilerleme, sonuç varlıkları ve ZIP indirme | Kullanıcı yalnız kendi işini görür/indirir; 3 dk idle/logout GPU+VPS kopyalarını siler; bağlantı kopması demo sonucu gibi görünmez |
+| G6 — `chore/resilience-privacy-drill` | Yedek host, servis boot, disk sınırı, log denetimi, veri yaşam döngüsü ve sunum provası | GPU kapalıyken demo çalışır; yedek elle devreye alınır; 10 oturum/1 GPU işi ve temizlik kanıtı kaydedilir |
 
-S0 önce tamamlanır. S1 ile S3, sözleşmeler birleştikten sonra paralel yürüyebilir.
-S2, S1 katalog biçimine; S4, S3 inference adaptörüne bağlıdır. S5 ve S4 birleşmeden
-S6 başlanmaz. S7 bütün zincirin yayın kapısıdır.
+S0–S3 demo ve sözleşme temeli `main` üzerinde bulunur. Yeni canlı yol G0 ile başlar;
+G1, G0'ın geri dönüş ve veri kapsamı kararı olmadan uygulanmaz. G2 ile G3 yerel iş
+sözleşmesi birleştikten sonra paralel ilerleyebilir. G4 ikisine, G5 gerçek G4
+çıktısına bağlıdır. G6 bütün zincirin yayın kapısıdır. Frontend chunk ayrıştırması
+ve demo mesh optimizasyonu bu zincirden bağımsız kısa performans sprintleridir.
 
 ### S1 güncel durum
 
-`feat/demo-catalog-v3` dalı kök katalog ile `module/disease/cases` ayrımını,
-filtreli MCP/API uçlarını ve iki görüntü vakası için v3 paket üretimini içerir.
+`main`, kök katalog ile `module/disease/cases` ayrımını, filtreli MCP/API uçlarını,
+22 görüntü vakasını ve dört genomik demo vakasını içerir.
 MCP eski v2 paketini okumaya, `/api/demo/cases` ise mevcut arayüzün beklediği v2
 yanıtını vermeye devam eder. Böylece kod ve veri paketi VPS'ye ayrı adımlarda
 alınabilir. Bilinmeyen koleksiyonlar 404 alır; varlık yolları seçilen koleksiyon
-kökü dışına çıkamaz. Genomik koleksiyon ve vakalar S3 çıktısı olarak aynı kataloğa
-sonradan eklenecektir.
+kökü dışına çıkamaz.
 
 ### Güncel dal durumu
 
-`feat/vps-control-plane` dalında S0 sözleşmeleri ile S5'in VPS temeli birlikte
-hazırlanmıştır: erişim kodlu ve CSRF korumalı oturum, 10 aktif oturum sınırı, ZIP
+`main` üzerinde canlı VPS temeli hazırdır: erişim kodlu ve CSRF korumalı oturum,
+10 aktif oturum sınırı, ZIP
 doğrulama, SQLite iş/lease kuyruğu, tek eşzamanlı claim, Tailscale'e bağlı worker
 API'si, sonuç/varlık indirme ve 3 dakika temizlik timer'ı. Gerçek VPS kurulumu ve
-GPU worker ile uçtan uca prova yapılmadan S5 tamamlanmış sayılmaz.
+dispatcher/executor ile uçtan uca prova yapılmadan G5 tamamlanmış sayılmaz.
 
 ## Genomik model için mevcut durum ve çıkış koşulu
 
@@ -177,7 +203,7 @@ raporu tek çalıştırmada yapar; canlı tahmin komutu değildir.
 S3 başlamadan şu denetim kayda geçirilir:
 
 1. XGBoost dosyasının açılması, beklenen özellik adları/sırası ve kütüphane sürümü.
-2. ESM-2 tokenizer/ağırlıklarının GPU VM'de çevrimdışı yüklenebilmesi ve checksum'u.
+2. ESM-2 tokenizer/ağırlıklarının GPU hostunda çevrimdışı yüklenebilmesi ve checksum'u.
 3. Eğitim matrisindeki ESM kolonlarının gerçekten ESM açıkken üretildiğinin kanıtı.
 4. Bir varyant için gerekli minimum giriş: gen, protein değişimi, kanonik protein
    dizisi/erişim kimliği ve modelin beklediği diğer özelliklerin kaynağı.
@@ -191,17 +217,16 @@ Denetimin ölçülmüş sonucu, ne çalıştırıldığı ve özelliklerle ilgil
 
 ### S3 güncel durum
 
-`feat/genomics-inference-service` dalında tek-varyant çıkarım adaptörü
+Tek-varyant çıkarım adaptörü
 (`models/VeriOdakliCozum/cikarim.py`), sürümlenmiş özellik şeması
 (`semalar/ozellik_semasi.v1.json`, 15 özellik + karar eşiği + sağlama
 toplamları) ve üretici betik (`semayi_uret.py`) hazırlandı. Adaptör eğitim
 modüllerini import etmez; sentetik `X` kontekst, eksik dizilim, vahşi tip
 uyuşmazlığı, ESM'in sessiz sıfırı ve eksik CGGA tablosu açık hata verir.
-16 test geçti; AAindex/CGGA/pozisyon özellikleri eğitim matrisine karşı
-yeniden üretildi. Denetimin 1., 2. ve 6. maddeleri (xgboost ile özellik adı
-doğrulaması, ESM çevrimdışı yükleme, olasılık/SHAP fixture'ı) gerçek ortam
-gerektirdiği için açık; SHAP çıktısı ve genomik demo vakaları da S3'ün kalan
-işidir.
+Runtime doğrulaması, SHAP çıktısı ve genomik demo vakaları `main` üzerinde yer
+alır. `TP53 p.P72R` bulgusu gerçek model çıktısı olarak korunur; bunun gen düzeyi
+kestirme öğrenme ve kalibrasyon denetimi tamamlanmadan canlı genom yeteneği hazır
+ilan edilmez. Bu bilimsel yayın kapısı issue #15 altında izlenir.
 
 ## Git ve ekip çalışma düzeni
 

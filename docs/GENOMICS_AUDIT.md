@@ -251,4 +251,4 @@ Sunumda "benign varyantı ayırt edebiliyor mu?" sorusu gelirse cevap hayırdır
 Bu denetim yeniden eğitim, eşik değiştirme, ön işleme değişikliği veya klinik
 doğrulama içermez. Adaptör eğitim modüllerini (`veri_indirme`, `model_egitim`,
 `degerlendirme`, `rapor`) import etmez. SHAP açıklaması çıkarım raporunun `explanation` alanında üretilir ve
-hazır demo koleksiyonu arayüzde gösterilir. Canlı akışa bağlama S4/S6 işidir.
+hazır demo koleksiyonu arayüzde gösterilir. Canlı akışa bağlama G4/G5 işidir.

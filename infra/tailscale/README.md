@@ -109,13 +109,13 @@ değiştiriyor.
 İlk plandaki VPS → GPU push yaklaşımı uygulanmayacak. Bu yaklaşım GPU makinesinde
 dinleyen bir model portu, ev ağı yönünde erişim ve primary/standby seçimi gerektirir.
 
-**GPU → VPS (pull).** GPU makinesi kuyruktan iş çeker. Makine uyanınca kaldığı
+**GPU → VPS (pull).** GPU hostundaki dispatcher kuyruktan iş çeker. Makine uyanınca kaldığı
 yerden devam eder, VPS'in GPU'ya erişmesi hiç gerekmez, ACL tek yönlü ve daha
 dar olur. Dezavantajı: yoklama (polling) mantığı ve iş sahipliği/kilitleme
 yazmak gerekir.
 
 **Seçilen düzen pull'dur.** VPS'teki `mergen-control` yalnız kendi Tailscale
-adresinde TCP 9100 dinler. GPU worker bu uçta heartbeat gönderir, işi atomik
+adresinde TCP 9100 dinler. Dispatcher bu uçta heartbeat gönderir, işi atomik
 olarak claim eder, girdiyi indirir, lease yeniler ve sonucu geri yükler. GPU
 makinesinde dinleyen model portu bulunmaz. Worker token'ı ikinci korumadır;
 Tailscale ACL'nin yerine geçmez.
@@ -163,14 +163,14 @@ GPU üzerinde bir model portuna erişilemiyor.
 **T7 — Kalıcılık provası.** Her iki makine yeniden başlatılır.
 *Kabul:* elle müdahale olmadan ikisi de ağa dönüyor, adresler değişmiyor.
 
-**T8 — Worker'ı bağlama.** VPS Tailscale adresi, worker token'ı ve worker kimliği
-GPU makinesindeki Git dışı ortama yazılır. Worker heartbeat ve claim çağrıları
+**T8 — Dispatcher'ı bağlama.** VPS Tailscale adresi, worker token'ı ve worker kimliği
+GPU hostundaki Git dışı dispatcher ortamına yazılır. Dispatcher heartbeat ve claim çağrıları
 başlatılır.
-*Kabul:* VPS sağlık ucu worker'ın bildirdiği yetenekleri gösteriyor; Caddy
+*Kabul:* VPS sağlık ucu dispatcher'ın bildirdiği yetenekleri gösteriyor; Caddy
 `/internal/*` yolunu yayınlamıyor.
 
 **T9 — Arıza provası.** GPU makinesi kapatılır ve aynı istek tekrarlanır.
-*Kabul:* iş kuyrukta ve worker ulaşılamıyor olarak kalıyor; `AGENTS.md` 6. kural
+*Kabul:* iş kuyrukta ve dispatcher ulaşılamıyor olarak kalıyor; `AGENTS.md` 6. kural
 gereği sessizce demo sonucuna düşmüyor.
 
 ## 7. Bilinen tuzaklar
