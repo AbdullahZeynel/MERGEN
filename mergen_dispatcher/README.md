@@ -1,0 +1,43 @@
+# GPU dispatcher (G2)
+
+GPU hostunda VPS worker kontrol API'sinden iş çeken süreç. Worker token'ını bilen
+tek MERGEN bileşenidir; model, alt süreç veya GPU cihazı çalıştırmaz. Executor ile
+yalnız [`mergen_spool`](../mergen_spool/contract.py) sözleşmesi üzerinden konuşur.
+
+## Bir işin yolu
+
+```
+executor.json taze ve acceptingJobs → heartbeat → claim
+claim → staging/<id>-<rastgele>/input.zip   akış, boyut sınırı, SHA-256
+      → backend.archive_io ile manifest; modül/hastalık claim'le aynı
+      → job.json, fsync (dosyalar + dizin) → rename → jobs/<id>/
+jobs/<id>/status.json:  (yok) → accepted → running → completed | failed
+completed → result.zip boyut + SHA-256 + sonuç sözleşmesi → yükleme → trash/
+failed    → /failure (executor'ın kodu)                           → trash/
+lease yok → cancel işareti; yükleme ve hata bildirimi yok          → trash/
+trash/<id>-<rastgele>/ → executor kilidi bırakınca silinir
+```
+
+Lease iş boyunca ayrı bir iş parçacığında yenilenir. 409 gelirse ya da son
+başarılı yenilemenin süresi dolarsa lease kayıp sayılır; o andan sonra hiçbir
+sonuç yüklenmez. Yanıtı kaybolan bir yüklemenin yeniden denemesine VPS 409 döner;
+dispatcher bunu yayımlanmış olabilecek bir iş sayar ve hata bildirmez.
+
+Yeniden başlatmada `staging/` silinir, `trash/` süpürülür, `jobs/` altındaki her
+iş için lease yenilenir: yanıt 200 ise iş devralınır, 409 ise `cancel` bırakılıp
+atılır. Çözülmemiş yerel iş varken yeni iş alınmaz.
+
+## Çalıştırma ve test
+
+Yapılandırma yalnız ortamdan okunur:
+[`dispatcher.env.example`](../infra/gpu-host/dispatcher.env.example). Eksik ya
+da güvensiz değer 2 çıkış koduyla durdurur; mesaj değişkenin adını verir,
+değerini yazmaz. Loglar token, adres, URL, girdi içeriği veya tam iş kimliği
+taşımaz.
+
+```bash
+python -m unittest discover -s mergen_dispatcher -t .
+python -m unittest discover -s mergen_spool -t .
+```
+
+Unit örneği ve sürüm düzeni: [GPU host runbook](../docs/GPU_HOST_RUNBOOK.md), 16. adım.

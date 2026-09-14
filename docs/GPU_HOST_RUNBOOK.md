@@ -368,9 +368,20 @@ manifest'i şimdi üret ki o doğrulamanın karşılaştıracağı bir referans 
 ### 16. Hangi servisler henüz başlatılmaz
 
 `infra/gpu-host/systemd/` altındaki iki unit **`.example`** uzantılıdır ve
-`install-base.sh` onları kurmaz. Dispatcher (G2) ve executor (G3) kodu
-yazılmadan `mergen-dispatcher.service` veya `mergen-executor.service`
-`enable` edilmez. Şu an başlatılması gereken tek servis `tailscaled`.
+`install-base.sh` onları kurmaz. Dispatcher kodu (`mergen_dispatcher`, G2) repoda
+hazırdır; unit örneği şu sürüm düzenini bekler:
+
+```
+/opt/mergen/releases/<sürüm>/src/         backend/archive_io.py, backend/live_contracts.py,
+                                          mergen_spool/, mergen_dispatcher/
+/opt/mergen/releases/<sürüm>/dispatcher/  mergen_dispatcher/requirements.txt ile venv
+/opt/mergen/current -> releases/<sürüm>
+```
+
+Executor (G3) gelmeden dispatcher de `enable` edilmez: geçerli ve taze bir
+`executor.json` olmadan VPS'e hiçbir yetenek bildirmez ve iş almaz.
+`mergen-executor.service` G3'e kadar kurulmaz. Şu an başlatılması gereken tek
+servis `tailscaled`.
 
 ### 17. Pause, bakım ve rollback
 

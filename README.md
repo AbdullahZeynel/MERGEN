@@ -65,8 +65,8 @@ notu buna örnektir. Denetim kaydı: [`docs/GENOMICS_AUDIT.md`](docs/GENOMICS_AU
 Hazır demo yolu uçtan uca çalışır: tarayıcı yalnızca genel API ile konuşur,
 API disk yollarını hiç görmez, demo dosyalarını yalnız loopback'e bağlı
 salt-okunur bir MCP servisi üzerinden okur. Canlı analiz yolunun VPS tarafı
-(oturum, kuyruk, worker kontrol API'si, temizlik) hazırdır; GPU worker ve model
-adaptörleri henüz bağlanmamıştır.
+(oturum, kuyruk, worker kontrol API'si, temizlik) hazırdır. GPU tarafında
+dispatcher yazıldı; executor ve model adaptörleri henüz bağlanmamıştır.
 
 ```mermaid
 flowchart LR
@@ -82,8 +82,9 @@ flowchart LR
         STATE[("Oturum durumu<br/>SQLite kuyruğu · geçici dosyalar")]
     end
 
-    subgraph GPU["GPU sunucusu · planlanan"]
-        W["Pull worker"]
+    subgraph GPU["GPU sunucusu · kurulmadı"]
+        W["Dispatcher<br/>iş çek · lease · aktarım"]
+        X["Executor"]
         IMG["Görüntü çıkarımı<br/>nnU-Net + Swin UNETR + UWCSE"]
         GEN["Genomik çıkarım<br/>ESM-2 + XGBoost"]
     end
@@ -96,14 +97,16 @@ flowchart LR
     API --> STATE
     CTRL --> STATE
     CTRL <-. "Tailscale · iş çek, sonuç yükle" .-> W
-    W -.-> IMG
-    W -.-> GEN
+    W -. "yerel spool" .-> X
+    X -.-> IMG
+    X -.-> GEN
 
     classDef planlanan stroke-dasharray:5 4,color:#7c8ba1
-    class GPU,W,IMG,GEN planlanan
+    class GPU,W,X,IMG,GEN planlanan
 ```
 
-Kesikli çizgiler henüz uygulanmamış parçaları gösterir. Geçici oturum
+Kesikli çizgiler henüz çalışır durumda olmayan parçaları gösterir: dispatcher
+yazıldı ama bir hostta çalışmıyor, executor ve model adaptörleri yok. Geçici oturum
 dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 
 | Bileşen | Durum |
@@ -113,7 +116,8 @@ dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 | Demo MCP (salt okunur, loopback) | Çalışıyor |
 | Genomik çıkarım adaptörü (tek varyant, çevrimdışı ESM) | Çalışıyor |
 | Oturum, iş kuyruğu, worker kontrol API'si, temizlik | Yazıldı, worker'sız |
-| GPU worker ve canlı model adaptörleri | Planlanan |
+| GPU dispatcher ve yerel spool sözleşmesi | Yazıldı; executor'sız, gerçek hostta denenmedi |
+| GPU executor ve canlı model adaptörleri | Planlanan |
 | Sohbet asistanı | Ertelendi |
 
 ### Hazır demo paketi
@@ -182,6 +186,8 @@ listelenmiştir. `main.py` genomik modeli **eğitir**, görüntü betikleri
 | `frontend/` | React vaka arayüzü; `frontend/legacy/` eski Three.js dashboard |
 | `backend/` | Genel API, canlı oturum, worker kontrol API'si, temizlik |
 | `mcp/` | Salt okunur demo araçları; disk yollarını dışarı vermez |
+| `mergen_dispatcher/` | GPU hostunda VPS'ten iş çeken dispatcher; model çalıştırmaz |
+| `mergen_spool/` | Dispatcher ile executor arasındaki yerel spool sözleşmesi |
 | `models/imaging/` | Görüntü algoritmaları, çıkarım ve değerlendirme betikleri |
 | `models/VeriOdakliCozum/` | Genomik paket; eğitim, çıkarım adaptörü, fixture'lar |
 | `infra/` | VPS, Caddy, Tailscale ve CI koruması |

@@ -192,6 +192,19 @@ doğrulama, SQLite iş/lease kuyruğu, tek eşzamanlı claim, Tailscale'e bağl�
 API'si, sonuç/varlık indirme ve 3 dakika temizlik timer'ı. Gerçek VPS kurulumu ve
 dispatcher/executor ile uçtan uca prova yapılmadan G5 tamamlanmış sayılmaz.
 
+### G2 güncel durum
+
+`mergen_dispatcher` VPS'ten iş çeker, girdiyi boyut sınırı ve SHA-256 ile akış
+halinde indirir, `backend.archive_io` sözleşmesiyle doğrular ve işi `staging/`
+altında hazırlayıp fsync'ten sonra tek `rename` ile executor'a açar. Executor ile
+yalnız sürümlü yerel spool sözleşmesi (`mergen_spool`, bkz.
+[`contracts/README.md`](contracts/README.md)) üzerinden konuşur; model veya alt
+süreç çalıştırmaz, GPU cihazı açmaz. Lease arka planda yenilenir; 409 veya son
+bilinen süre dolarsa `cancel` işareti bırakır, sonucu yüklemez ve hata bildirmez.
+Başlangıçta `staging/` silinir, yayımlanmış işler lease yenilemesiyle devralınır ya
+da atılır. Sahte kontrol API'si ve sahte executor ile test edildi; gerçek hostta,
+Tailscale üzerinden ve G3 executor'la uçtan uca denenmedi.
+
 ## Genomik model için mevcut durum ve çıkış koşulu
 
 Yerel çalışma klasöründe, Git dışında tutulan `mergen_xgb.joblib`,
