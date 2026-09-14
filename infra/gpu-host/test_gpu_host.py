@@ -148,6 +148,23 @@ class SafePathHelper(unittest.TestCase):
             link.symlink_to(target)
             self.assertNotEqual(self._check(str(link)), 0)
 
+    def test_symlinked_parent_of_a_missing_target_is_rejected(self):
+        # Regression: checking only the final component passed this, because
+        # the leaf does not exist and so is not itself a symlink.
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "real").mkdir()
+            (Path(tmp) / "link").symlink_to(Path(tmp) / "real")
+            self.assertNotEqual(self._check(f"{tmp}/link/not-created"), 0)
+
+    def test_missing_target_under_a_plain_parent_is_accepted(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self._check(f"{tmp}/not-created"), 0)
+
+    def test_root_and_repeated_slashes_are_accepted(self):
+        self.assertEqual(self._check("/"), 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self._check(f"{tmp}//sub//leaf"), 0)
+
 
 class InstallPlanIsInert(unittest.TestCase):
     """Plan mode must describe actions without performing any of them."""
@@ -254,13 +271,73 @@ class DeclarativeConfiguration(unittest.TestCase):
                                  f"{path} is readable by other users (mode {mode})")
         self.assertEqual(seen, closed, "a protected directory is missing from tmpfiles")
 
-    def test_runtime_is_owned_by_dispatcher_and_readable_by_executor(self):
+    def test_runtime_spool_is_setgid_to_the_shared_service_group(self):
+        # The hand-off contract: dispatcher owns the spool, both services share
+        # a group through setgid, and other users get nothing.
         line = next(l for l in read(HERE / "tmpfiles.d" / "mergen.conf").splitlines()
                     if l.startswith("d /var/lib/mergen/runtime"))
-        # Dispatcher creates job dirs; the executor only traverses by group.
         parts = line.split()
+        mode = int(parts[2], 8)
         self.assertEqual(parts[3], "mergen-dispatcher")
-        self.assertEqual(parts[4], "mergen-executor")
+        self.assertEqual(parts[4], "mergen-svc")
+        self.assertTrue(mode & 0o2000, "the spool must be setgid")
+        self.assertEqual(mode & 0o070, 0o070, "the shared group needs rwx")
+        self.assertEqual(mode & 0o007, 0, "other users must get nothing")
+
+    def test_both_services_belong_to_the_shared_group(self):
+        text = read(HERE / "sysusers.d" / "mergen.conf")
+        for account in ("mergen-dispatcher", "mergen-executor"):
+            with self.subTest(account=account):
+                self.assertIn(f"m {account}", text.replace("   ", " ").replace("  ", " "))
+        for name in ("mergen-dispatcher", "mergen-executor"):
+            unit = read(HERE / "systemd" / f"{name}.service.example")
+            self.assertIn("SupplementaryGroups=mergen-svc", unit)
+
+    def test_units_use_a_umask_that_allows_the_hand_off(self):
+        for name in ("mergen-dispatcher", "mergen-executor"):
+            unit = read(HERE / "systemd" / f"{name}.service.example")
+            with self.subTest(unit=name):
+                self.assertIn("UMask=0007", unit)
+                self.assertNotIn("UMask=0077", unit)
+
+    def test_spool_mode_arithmetic_actually_produces_a_shared_file(self):
+        """Exercise the real setgid + umask behaviour, not just the numbers.
+
+        This cannot prove cross-account access without three real users, so it
+        proves the half that is mechanical: a file created under a setgid
+        directory with UMask=0007 is group-readable, group-writable, and
+        closed to others, and inherits the directory's group.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            spool = Path(tmp) / "runtime"
+            spool.mkdir()
+            os.chmod(spool, 0o2770)
+            self.assertTrue(os.stat(spool).st_mode & stat.S_ISGID,
+                            "the filesystem did not keep the setgid bit")
+            script = (f'umask 0007; mkdir "{spool}/job-1"; : > "{spool}/job-1/input.bin"')
+            subprocess.run(["bash", "-c", script], check=True)
+            job = spool / "job-1"
+            job_file = job / "input.bin"
+            self.assertEqual(os.stat(job).st_mode & 0o777, 0o770)
+            self.assertEqual(os.stat(job_file).st_mode & 0o777, 0o660)
+            self.assertEqual(os.stat(job).st_gid, os.stat(spool).st_gid,
+                             "setgid did not propagate the group to the job directory")
+            self.assertEqual(os.stat(job_file).st_gid, os.stat(spool).st_gid)
+            for path in (job, job_file):
+                self.assertEqual(os.stat(path).st_mode & 0o007, 0,
+                                 "other users must not reach spool content")
+
+    def test_executor_cannot_read_the_dispatcher_secret(self):
+        # Contract level: the installer seeds dispatcher.env to the dispatcher
+        # group at 0640, and the executor unit never references that file.
+        installer = read(HERE / "install-base.sh")
+        self.assertIn('seed_env "$here/dispatcher.env.example" '
+                      '"$MERGEN_CONFIG_ROOT/dispatcher.env" "$MERGEN_DISPATCHER_USER"',
+                      installer)
+        self.assertIn('install -m 640 -o root -g "$group"', installer)
+        executor_unit = read(HERE / "systemd" / "mergen-executor.service.example")
+        self.assertNotIn("dispatcher.env", executor_unit)
+        self.assertNotIn("MERGEN_WORKER_TOKEN", read(HERE / "executor.env.example"))
 
     def test_tmpfiles_never_deletes(self):
         for line in read(HERE / "tmpfiles.d" / "mergen.conf").splitlines():
@@ -277,7 +354,6 @@ class DeclarativeConfiguration(unittest.TestCase):
 
     def test_sudoers_example_is_narrow(self):
         rules = "\n".join(self._sudoers_rules())
-        self.assertNotIn("NOPASSWD", rules)
         self.assertNotIn("ALL=(ALL) ALL", rules)
         self.assertNotIn("ALL=(ALL:ALL)", rules)
         self.assertNotRegex(rules, r"(?m)^\s*mergen\s+ALL=\(ALL\)\s+ALL\s*$")
@@ -303,12 +379,66 @@ class DeclarativeConfiguration(unittest.TestCase):
                 self.assertIn("--no-pager", line,
                               "systemctl status without --no-pager can escape to a shell")
 
+    def test_nopasswd_is_scoped_to_the_named_aliases_only(self):
+        # The maintenance password is locked, so a password-requiring rule
+        # could never run. NOPASSWD is therefore allowed, but only for the
+        # fixed alias list -- never for ALL.
+        rule = [line for line in self._sudoers_rules()
+                if line.split() and line.split()[0] == "mergen"]
+        self.assertEqual(len(rule), 1, "exactly one subject rule expected")
+        text = rule[0]
+        self.assertIn("NOPASSWD:", text)
+        granted = text.split("NOPASSWD:", 1)[1]
+        self.assertEqual(
+            sorted(item.strip() for item in granted.split(",")),
+            ["MERGEN_DIAG", "MERGEN_LOGS", "MERGEN_STATUS", "MERGEN_UNITS"])
+        self.assertNotIn("ALL", granted)
+
+    def test_every_granted_alias_is_defined(self):
+        text = "\n".join(self._sudoers_rules())
+        for alias in ("MERGEN_UNITS", "MERGEN_STATUS", "MERGEN_LOGS", "MERGEN_DIAG"):
+            with self.subTest(alias=alias):
+                self.assertIn(f"Cmnd_Alias {alias} =", text)
+
     def test_sudoers_grants_no_package_or_account_management(self):
         rules = "\n".join(self._sudoers_rules()).lower()
         for forbidden in ("apt", "pacman", "dnf", "useradd", "usermod", "visudo",
                           "bash", "sh ", "vi ", "vim", "nano", "reboot", "shutdown"):
             with self.subTest(command=forbidden):
                 self.assertNotIn(forbidden, rules)
+
+
+class InstallerScope(unittest.TestCase):
+    def setUp(self):
+        self.installer = read(HERE / "install-base.sh")
+
+    def test_sysusers_is_applied_to_our_file_only(self):
+        # A bare `systemd-sysusers` also applies every other pending definition
+        # on the host, which is not this installer's decision to make.
+        self.assertIn("systemd-sysusers /usr/lib/sysusers.d/mergen.conf", self.installer)
+        self.assertNotRegex(self.installer, r"(?m)^\s*systemd-sysusers\s*$")
+
+    def test_missing_maintenance_account_is_a_precondition_failure(self):
+        self.assertIn("--no-maintenance-account was given but", self.installer)
+
+    def test_existing_maintenance_account_is_validated(self):
+        for expectation in ("has no usable home directory",
+                            "has a nologin shell; it cannot be used for maintenance"):
+            with self.subTest(check=expectation):
+                self.assertIn(expectation, self.installer)
+
+    def test_tmpfiles_owners_are_verified_before_apply(self):
+        self.assertIn("tmpfiles names an unknown owner", self.installer)
+        self.assertIn("tmpfiles names an unknown group", self.installer)
+
+    def test_symlinked_config_target_is_refused(self):
+        self.assertIn("Refusing to write through a symlink", self.installer)
+
+    def test_app_root_has_no_private_group_assumption(self):
+        line = next(l for l in read(HERE / "tmpfiles.d" / "mergen.conf").splitlines()
+                    if l.startswith("d /opt/mergen"))
+        parts = line.split()
+        self.assertEqual((parts[3], parts[4]), ("root", "root"))
 
 
 class EnvExamples(unittest.TestCase):
@@ -372,7 +502,7 @@ class SystemdExamples(unittest.TestCase):
             text = read(HERE / "systemd" / f"{name}.service.example")
             with self.subTest(unit=name):
                 for directive in ("NoNewPrivileges=true", "ProtectSystem=strict",
-                                  "ProtectHome=true", "UMask=0077",
+                                  "ProtectHome=true", "UMask=",
                                   "Nice=", "CPUWeight=", "IOWeight=", "MemoryMax="):
                     self.assertIn(directive, text)
                 self.assertNotIn("User=root", text)

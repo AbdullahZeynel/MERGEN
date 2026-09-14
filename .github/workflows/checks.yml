@@ -28,6 +28,12 @@ jobs:
         run: python infra/ci/repo_guard.py
       - name: Guard kuralları testi
         run: python -m unittest discover -s infra/ci -p 'test_*.py'
+      # GPU host katmanı: bağımlılık gerektirmez, geçici dizinde çalışır ve
+      # hiçbir sistem aracını çağırmaz. Bu yüzden guard job'una eklendi.
+      - name: GPU host sözleşme testleri
+        run: python -m unittest discover -s infra/gpu-host -p 'test_*.py'
+      - name: GPU host betikleri sözdizimi
+        run: bash -n infra/gpu-host/*.sh infra/gpu-host/lib/*.sh
 
   backend:
     name: Backend ve MCP
