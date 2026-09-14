@@ -239,10 +239,10 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual((await self.control.get("/internal/health", headers=self.worker_headers)).status_code, 200)
         heartbeat = await self.control.post(
             "/internal/workers/heartbeat", headers=self.worker_headers,
-            json={"capabilities": ["imaging", "genomics"]},
+            json={"capabilities": ["imaging"]},
         )
         self.assertEqual(heartbeat.status_code, 200)
-        self.assertEqual(self.store.available_capabilities(), ["genomics", "imaging"])
+        self.assertEqual(self.store.available_capabilities(), ["imaging"])
 
     async def test_live_access_code_is_required_only_for_new_session(self):
         self.assertEqual((await self.public.post("/api/live/session")).status_code, 401)
@@ -264,21 +264,20 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_documented_input_examples_match_contract(self):
         examples = Path(__file__).parents[1] / "docs/contracts"
-        for name in ("imaging-input.v1.example.json", "genomics-input.v1.example.json"):
+        for name in ("imaging-input.v1.example.json",):
             parsed = InputManifest.model_validate_json((examples / name).read_bytes())
             self.assertEqual(parsed.schemaVersion, 1)
         profiles = await self.public.get("/api/live/profiles")
         self.assertEqual(profiles.status_code, 200)
-        self.assertEqual({item["disease"] for item in profiles.json()["profiles"]},
-                         {"glioma", "glioma-variant-pathogenicity"})
+        self.assertEqual({item["disease"] for item in profiles.json()["profiles"]}, {"glioma"})
 
     async def test_only_one_job_can_be_claimed_globally(self):
         first = self.store.create_session()
         second = self.store.create_session()
         self.store.create_job(first["id"], "imaging", "glioma", "a" * 64)
-        self.store.create_job(second["id"], "genomics", "glioma-variant-pathogenicity", "b" * 64)
-        self.assertIsNotNone(self.store.claim("gpu-primary", ["imaging", "genomics"]))
-        self.assertIsNone(self.store.claim("gpu-standby", ["imaging", "genomics"]))
+        self.store.create_job(second["id"], "imaging", "glioma", "b" * 64)
+        self.assertIsNotNone(self.store.claim("gpu-primary", ["imaging"]))
+        self.assertIsNone(self.store.claim("gpu-standby", ["imaging"]))
 
     async def test_the_vps_completes_only_the_declared_result_digest(self):
         csrf = await self.create_session()

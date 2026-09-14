@@ -147,7 +147,7 @@ class LiveStore:
                 CREATE TABLE IF NOT EXISTS jobs (
                     id TEXT PRIMARY KEY,
                     session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
-                    module TEXT NOT NULL CHECK(module IN ('imaging','genomics')),
+                    module TEXT NOT NULL CHECK(module = 'imaging'),
                     disease TEXT NOT NULL,
                     status TEXT NOT NULL CHECK(status IN ('queued','claimed','running','completed','failed','cancelled')),
                     created_at INTEGER NOT NULL,
@@ -233,6 +233,8 @@ class LiveStore:
 
     def create_job(self, session_id: str, module: str, disease: str, input_sha256: str,
                    job_id: str | None = None):
+        if module != "imaging" or disease != "glioma":
+            raise ValueError("unsupported live analysis profile")
         job_id, now = job_id or secrets.token_hex(16), self.now()
         with self.connect() as db:
             try:
@@ -251,7 +253,7 @@ class LiveStore:
         return dict(row) if row else None
 
     def claim(self, worker_id: str, capabilities: list[str]):
-        if not capabilities:
+        if capabilities != ["imaging"]:
             return None
         now = self.now()
         placeholders = ",".join("?" for _ in capabilities)

@@ -5,7 +5,7 @@
 #
 # Installs nothing: no driver, no CUDA toolkit, no Python package. It only
 # reads the driver through nvidia-smi and runs a tiny tensor round trip in the
-# venv you name. Run it once per model venv (imaging and genomics).
+# venv you name. Run it once for the imaging model environment.
 #
 # Output carries no GPU UUID, serial number, or process list, so it is safe to
 # paste into an issue.

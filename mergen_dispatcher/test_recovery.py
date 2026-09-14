@@ -9,7 +9,7 @@ from pathlib import Path
 from mergen_dispatcher.control import ControlUnavailable, LeaseLost
 from mergen_dispatcher.lease import Backoff, LeaseKeeper
 from mergen_dispatcher.spool import Spool, SpoolLayoutError
-from mergen_dispatcher.test_support import (JOB_ID, DispatcherCase, genomics_result, publish_job,
+from mergen_dispatcher.test_support import (JOB_ID, DispatcherCase, imaging_result, publish_job,
                                             wait_until, write_ready, write_status)
 
 
@@ -139,7 +139,7 @@ class Restart(DispatcherCase):
 
     def test_a_published_job_without_a_lease_is_discarded_unpublished(self):
         directory = publish_job(self.root)
-        write_status(directory, "completed", result=genomics_result())
+        write_status(directory, "completed", result=imaging_result())
         self.fake.lease_answer = 409
         self.run_until_idle(self.dispatcher)
         self.assertEqual(self.fake.calls, [f"POST /internal/jobs/{JOB_ID}/lease"])
@@ -148,7 +148,7 @@ class Restart(DispatcherCase):
 
     def test_a_published_job_with_a_live_lease_is_resumed_and_published_once(self):
         directory = publish_job(self.root)
-        result = genomics_result()
+        result = imaging_result()
         write_status(directory, "completed", result=result)
         self.run_until_idle(self.dispatcher)
         self.assertEqual(self.fake.completed_with, result)
@@ -183,7 +183,6 @@ class Layout(unittest.TestCase):
                     Spool(path, 1024).prepare()
             Spool(real, 1024).prepare()
             self.assertEqual(sorted(entry.name for entry in real.iterdir()), ["jobs", "staging", "trash"])
-
 
 if __name__ == "__main__":
     unittest.main()

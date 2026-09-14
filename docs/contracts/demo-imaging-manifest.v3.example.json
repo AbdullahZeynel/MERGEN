@@ -26,8 +26,7 @@
         }
       ],
       "overlays": ["prediction", "ground_truth"],
-      "mesh": "/api/demo/modules/imaging/diseases/glioma/cases/DEMO-CASE-001/mesh",
-      "genomics": null
+      "mesh": "/api/demo/modules/imaging/diseases/glioma/cases/DEMO-CASE-001/mesh"
     }
   ]
 }

@@ -25,7 +25,7 @@ from mergen_spool.fs import lock_directory, read_json, write_json_atomic
 TOKEN = "fake-" + "k" * 40
 WORKER_ID = "gpu-test"
 CONTROL_URL = "http://control.test"
-DISEASE = "glioma-variant-pathogenicity"
+DISEASE = "glioma"
 JOB_ID = "c" * 32
 
 
@@ -41,21 +41,40 @@ def zip_bytes(files: dict[str, bytes]) -> bytes:
     return output.getvalue()
 
 
-def genomics_input(gene: str = "TEST1") -> bytes:
-    manifest = {"schemaVersion": 1, "module": "genomics", "disease": DISEASE, "files": [],
-                "variant": {"gene": gene, "proteinChange": "p.A1C",
-                            "proteinSequence": "ACDEFGHIKLMNPQRSTVWY"}}
-    return zip_bytes({"input.json": json.dumps(manifest).encode()})
+def imaging_input(marker: bytes = b"volume") -> bytes:
+    volumes = {
+        "volumes/t1.nii.gz": marker + b"-t1",
+        "volumes/t1ce.nii.gz": marker + b"-t1ce",
+        "volumes/t2.nii.gz": marker + b"-t2",
+        "volumes/flair.nii.gz": marker + b"-flair",
+    }
+    manifest = {
+        "schemaVersion": 1, "module": "imaging", "disease": DISEASE,
+        "files": [
+            {"path": path, "role": "volume", "modality": modality}
+            for path, modality in zip(volumes, ("T1", "T1CE", "T2", "FLAIR"))
+        ],
+    }
+    return zip_bytes({"input.json": json.dumps(manifest).encode(), **volumes})
 
 
-def genomics_result(job_id: str = JOB_ID, module: str = "genomics",
-                    report: bytes = b'{"status":"synthetic-transport"}') -> bytes:
-    manifest = {"schemaVersion": 1, "jobId": job_id, "module": module, "disease": DISEASE,
-                "modelId": "mergen-genomics", "modelVersion": "test-1", "hasPrediction": True,
-                "hasGroundTruth": False,
-                "assets": [{"path": "report.json", "kind": "report-json",
-                            "sha256": sha256(report), "size": len(report)}]}
-    return zip_bytes({"manifest.json": json.dumps(manifest).encode(), "report.json": report})
+def imaging_result(job_id: str = JOB_ID, module: str = "imaging",
+                   report: bytes = b'{"status":"synthetic-transport"}') -> bytes:
+    files = {
+        "report.json": report,
+        "prediction.nii.gz": b"synthetic-prediction",
+        "prediction.glb": b"synthetic-mesh",
+    }
+    kinds = {"report.json": "report-json", "prediction.nii.gz": "prediction-nifti",
+             "prediction.glb": "prediction-glb"}
+    manifest = {
+        "schemaVersion": 1, "jobId": job_id, "module": module, "disease": DISEASE,
+        "modelId": "mergen-imaging", "modelVersion": "test-1", "hasPrediction": True,
+        "hasGroundTruth": False,
+        "assets": [{"path": path, "kind": kinds[path], "sha256": sha256(payload),
+                    "size": len(payload)} for path, payload in files.items()],
+    }
+    return zip_bytes({"manifest.json": json.dumps(manifest).encode(), **files})
 
 
 def make_runtime(base: Path) -> Path:
@@ -76,7 +95,7 @@ def make_config(root: Path, **overrides) -> DispatcherConfig:
     return DispatcherConfig(**values)
 
 
-def write_ready(root: Path, capabilities=("genomics",), accepting: bool = True,
+def write_ready(root: Path, capabilities=("imaging",), accepting: bool = True,
                 updated: float | None = None) -> None:
     write_json_atomic(root / contract.READY_FILE, {
         "schemaVersion": 1, "kind": "mergen-executor-ready", "capabilities": list(capabilities),
@@ -85,12 +104,12 @@ def write_ready(root: Path, capabilities=("genomics",), accepting: bool = True,
 
 def publish_job(root: Path, job_id: str = JOB_ID, input_bytes: bytes | None = None) -> Path:
     """A job directory as a dispatcher left it before a restart."""
-    payload = genomics_input() if input_bytes is None else input_bytes
+    payload = imaging_input() if input_bytes is None else input_bytes
     directory = root / contract.JOBS_DIR / job_id
     directory.mkdir(parents=True)
     (directory / contract.INPUT_FILE).write_bytes(payload)
     write_json_atomic(directory / contract.JOB_FILE, {
-        "schemaVersion": 1, "kind": "mergen-spool-job", "jobId": job_id, "module": "genomics",
+        "schemaVersion": 1, "kind": "mergen-spool-job", "jobId": job_id, "module": "imaging",
         "disease": DISEASE, "input": {"path": "input.zip", "sha256": sha256(payload), "size": len(payload)},
         "maxResultBytes": 1024 * 1024, "publishedAt": 1})
     return directory
@@ -115,8 +134,8 @@ class FakeControl:
 
     def __init__(self, input_bytes: bytes | None = None, *, lease_seconds: int = 60):
         self.lock = threading.Lock()
-        self.input_bytes = genomics_input() if input_bytes is None else input_bytes
-        self.job = {"jobId": JOB_ID, "module": "genomics", "disease": DISEASE,
+        self.input_bytes = imaging_input() if input_bytes is None else input_bytes
+        self.job = {"jobId": JOB_ID, "module": "imaging", "disease": DISEASE,
                     "inputUrl": f"/internal/jobs/{JOB_ID}/input",
                     "inputSha256": sha256(self.input_bytes), "leaseSeconds": lease_seconds}
         self.claimable = True
@@ -232,7 +251,7 @@ class FakeExecutor(threading.Thread):
                  on_running=None):
         super().__init__(daemon=True)
         self.root, self.verdict, self.error_code = root, verdict, error_code
-        self.result = genomics_result() if result is None else result
+        self.result = imaging_result() if result is None else result
         self.work_seconds, self.on_running = work_seconds, on_running
         self.job: contract.SpoolJob | None = None
         self.saw_cancel = threading.Event()

@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "kind": "mergen-spool-job",
   "jobId": "0123456789abcdef0123456789abcdef",
-  "module": "genomics",
-  "disease": "glioma-variant-pathogenicity",
+  "module": "imaging",
+  "disease": "glioma",
   "input": {
     "path": "input.zip",
     "sha256": "0000000000000000000000000000000000000000000000000000000000000000",

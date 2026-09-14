@@ -34,6 +34,10 @@ Yeniden başlatmada `staging/` silinir, `trash/` süpürülür, `jobs/` altında
 iş için lease yenilenir: yanıt 200 ise iş devralınır, 409 ise `cancel` bırakılıp
 atılır. Çözülmemiş yerel iş varken yeni iş alınmaz.
 
+Başlarken kök dizinin (2770, setgid) yanında `staging/` (2700), `jobs/` (2750)
+ve `trash/` (2700) dizinlerinin modunu, sahibini ve grubunu doğrular. Sözleşme
+dışı bir durum onarılmaz; servis 2 koduyla durur.
+
 ## Çalıştırma ve test
 
 Yapılandırma yalnız ortamdan okunur:

@@ -36,10 +36,19 @@ CANCEL_FILE = "cancel"
 STATUS_FILE = "status.json"
 RESULT_FILE = "result.zip"
 
+# Directory modes. The runtime root is 2770 from tmpfiles. staging/ and trash/
+# are the dispatcher's alone; jobs/ lets the service group list and enter
+# published jobs but not add, rename or remove one; a job directory is where
+# the executor writes status.json and result.zip.
+STAGING_MODE = 0o2700
+JOBS_MODE = 0o2750
+TRASH_MODE = 0o2700
+JOB_DIRECTORY_MODE = 0o2770
+
 JobId = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{32}$")]
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{64}$")]
 Slug = Annotated[str, StringConstraints(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=64)]
-Module = Literal["imaging", "genomics"]
+Module = Literal["imaging"]
 State = Literal["accepted", "running", "completed", "failed"]
 # The failure vocabulary of the VPS control API (backend/control.py).
 ErrorCode = Literal["input-invalid", "model-unavailable", "inference-failed",
@@ -106,7 +115,7 @@ class ExecutorReady(_Document):
 
     schemaVersion: Literal[1]
     kind: Literal["mergen-executor-ready"]
-    capabilities: list[Module] = Field(max_length=2)
+    capabilities: list[Module] = Field(max_length=1)
     acceptingJobs: bool
     updatedAt: int = Field(ge=0)
 

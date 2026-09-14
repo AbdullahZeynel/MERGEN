@@ -299,18 +299,15 @@ Kurulumdan sonra **yeniden başlat**, sonra `nvidia-smi`.
 > Bu adım kullanıcının masaüstü oturumunu etkiler. Sahibi makinede
 > çalışırken yapma.
 
-### 12. İki ayrı model venv'i
+### 12. Görüntü model ortamı
 
-Görüntü ve genomik bağımlılıkları çakışır (farklı `torch`, `monai`,
-`transformers` sürümleri). Tek venv'de birleştirme.
+Görüntü bağımlılıklarını ayrı ve kilitli bir venv'de tut.
 
 ```bash
 sudo -u mergen python3 -m venv /srv/mergen-models/venv/imaging
-sudo -u mergen python3 -m venv /srv/mergen-models/venv/genomics
 ```
 
-Yolları `/etc/mergen/executor.env` içindeki `MERGEN_IMAGING_VENV` ve
-`MERGEN_GENOMICS_VENV` alanlarına yaz.
+Yolu `/etc/mergen/executor.env` içindeki `MERGEN_IMAGING_VENV` alanına yaz.
 
 ### 13. CUDA uyumlu PyTorch
 
@@ -332,11 +329,10 @@ bu belgeye yaz**.
 
 ### 14. GPU doğrulaması
 
-Her venv için ayrı ayrı:
+Görüntü ortamı için:
 
 ```bash
 bash infra/gpu-host/verify-gpu-runtime.sh /srv/mergen-models/venv/imaging
-bash infra/gpu-host/verify-gpu-runtime.sh /srv/mergen-models/venv/genomics
 ```
 
 Script ayrı ayrı doğrular: `nvidia-smi` yanıtı, venv Python'u, `torch` importu,
@@ -344,7 +340,7 @@ wheel'ın CUDA runtime'ı, `torch.cuda.is_available()`, cihaz sayısı, toplam
 VRAM ve CPU → GPU → matmul → CPU turu. Hiçbir paket kurmaz, GPU UUID
 yazdırmaz.
 
-*Kabul:* iki venv'de de FAIL yok.
+*Kabul:* görüntü venv'inde FAIL yok.
 
 ### 15. Modellerin yerleşimi
 
@@ -356,8 +352,6 @@ yerleştir ve checksum kaydet:
 /srv/mergen-models/
   imaging/nnunet/<sürüm>/...
   imaging/swinunetr/<sürüm>/...
-  genomics/xgboost/<sürüm>/...
-  genomics/esm2/<revision>/...
   MANIFEST.sha256
 ```
 

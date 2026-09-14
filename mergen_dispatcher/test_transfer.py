@@ -9,8 +9,8 @@ from unittest.mock import patch
 
 from mergen_dispatcher.control import ControlUnavailable
 from mergen_dispatcher.logs import quiet_third_party
-from mergen_dispatcher.test_support import (JOB_ID, TOKEN, DispatcherCase, genomics_input,
-                                            genomics_result, sha256, write_ready)
+from mergen_dispatcher.test_support import (JOB_ID, TOKEN, DispatcherCase, imaging_input,
+                                            imaging_result, sha256, write_ready)
 
 INPUT = f"GET /internal/jobs/{JOB_ID}/input"
 
@@ -25,11 +25,11 @@ class HeartbeatAndClaim(DispatcherCase):
         self.assertEqual(self.fake.calls, [])
 
     def test_heartbeat_then_claim_with_the_executor_capabilities(self):
-        write_ready(self.root, capabilities=("genomics",))
+        write_ready(self.root, capabilities=("imaging",))
         self.fake.claimable = False
         self.assertEqual(self.dispatcher.run_once(), "idle")
         self.assertEqual(self.fake.calls, ["POST /internal/workers/heartbeat", "POST /internal/jobs/claim"])
-        self.assertEqual(self.fake.bodies, [{"capabilities": ["genomics"]}] * 2)
+        self.assertEqual(self.fake.bodies, [{"capabilities": ["imaging"]}] * 2)
 
     def test_a_busy_executor_stays_visible_but_nothing_is_claimed(self):
         write_ready(self.root, accepting=False)
@@ -58,7 +58,7 @@ class Delivery(DispatcherCase):
 
     def test_wrong_checksum_is_reported_and_never_delivered(self):
         write_ready(self.root)
-        self.fake.served_input = genomics_input(gene="OTHER1")
+        self.fake.served_input = imaging_input(marker=b"other")
         self.assertEqual(self.dispatcher.run_once(), "failed")
         self.assertEqual(self.fake.failures, ["input-invalid"])
         self.assertSpoolEmpty()
@@ -142,7 +142,7 @@ class ExecutorVerdicts(DispatcherCase):
 
     def test_a_result_for_another_job_is_not_uploaded(self):
         write_ready(self.root)
-        self.start_executor(result=genomics_result(job_id="d" * 32))
+        self.start_executor(result=imaging_result(job_id="d" * 32))
         self.assertEqual(self.dispatcher.run_once(), "failed")
         self.assertEqual(self.fake.failures, ["inference-failed"])
         self.assertEqual(self.fake.upload_attempts, 0)

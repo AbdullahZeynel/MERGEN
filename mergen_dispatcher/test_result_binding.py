@@ -10,7 +10,7 @@ import httpx
 
 from mergen_dispatcher import runtime
 from mergen_dispatcher.control import CHUNK, ControlClient, ResultChanged
-from mergen_dispatcher.test_support import (JOB_ID, DispatcherCase, genomics_result, make_config,
+from mergen_dispatcher.test_support import (JOB_ID, DispatcherCase, imaging_result, make_config,
                                             make_runtime, sha256, write_ready)
 from mergen_spool.fs import lock_directory
 
@@ -52,7 +52,7 @@ class ResultBinding(DispatcherCase):
     def test_replacing_the_path_after_verification_changes_nothing_sent(self):
         write_ready(self.root)
         executor = self.start_executor()
-        swapped = genomics_result(report=b'{"status":"swapped"}')
+        swapped = imaging_result(report=b'{"status":"swapped"}')
 
         def replace(path):
             temporary = path.with_name(".swap")
@@ -117,7 +117,7 @@ class UploadStream(unittest.TestCase):
         self.assertEqual(len(self.server.received[0][1]), 2 * CHUNK, "the final chunk must be withheld")
 
     def test_the_declared_digest_travels_with_the_body(self):
-        payload = genomics_result()
+        payload = imaging_result()
         path = self.base / "result.zip"
         path.write_bytes(payload)
         client = self.client(lambda body: httpx.Response(

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "mergen-executor-ready",
-  "capabilities": ["genomics"],
+  "capabilities": ["imaging"],
   "acceptingJobs": true,
   "updatedAt": 1757800000
 }

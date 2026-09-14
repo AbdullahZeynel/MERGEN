@@ -52,20 +52,42 @@ class Spool:
             raise SpoolLayoutError("the runtime root is open to other users")
         if not info.st_mode & stat.S_ISGID:
             raise SpoolLayoutError("the runtime root is not setgid; the executor could not read job files")
-        for directory in (self.staging, self.jobs, self.trash):
+        if info.st_gid not in {os.getegid(), *os.getgroups()}:
+            raise SpoolLayoutError("the dispatcher is not a member of the runtime root's group")
+        expected = {
+            self.staging: contract.STAGING_MODE,
+            self.jobs: contract.JOBS_MODE,
+            self.trash: contract.TRASH_MODE,
+        }
+        for directory, expected_mode in expected.items():
+            created = False
             try:
-                directory.mkdir(mode=0o770)
+                directory.mkdir(mode=expected_mode)
+                created = True
             except FileExistsError:
                 pass
-            if not stat.S_ISDIR(os.lstat(directory).st_mode):
+            if created:
+                os.chmod(directory, expected_mode)
+            child = os.lstat(directory)
+            if not stat.S_ISDIR(child.st_mode):
                 raise SpoolLayoutError(f"{directory.name}/ is not a real directory")
+            mode = stat.S_IMODE(child.st_mode)
+            if mode != expected_mode:
+                raise SpoolLayoutError(
+                    f"{directory.name}/ has mode {mode:04o}; expected {expected_mode:04o}")
+            if child.st_uid != os.geteuid():
+                raise SpoolLayoutError(f"{directory.name}/ is not owned by the dispatcher")
+            if child.st_gid != info.st_gid:
+                raise SpoolLayoutError(
+                    f"{directory.name}/ does not belong to the runtime root's group")
 
     def job_directory(self, job_id: str) -> Path:
         return self.jobs / job_id
 
     def new_staging(self, job_id: str) -> Path:
         path = self.staging / f"{job_id}-{secrets.token_hex(4)}"
-        path.mkdir(mode=0o770)
+        path.mkdir(mode=contract.JOB_DIRECTORY_MODE)
+        os.chmod(path, contract.JOB_DIRECTORY_MODE)
         return path
 
     def remove_staging(self, path: Path) -> None:

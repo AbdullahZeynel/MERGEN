@@ -38,7 +38,7 @@ def status_document(state, **overrides):
 
 def ready_document(**overrides):
     document = {"schemaVersion": 1, "kind": "mergen-executor-ready",
-                "capabilities": ["genomics"], "acceptingJobs": True, "updatedAt": 1}
+                "capabilities": ["imaging"], "acceptingJobs": True, "updatedAt": 1}
     return {**document, **overrides}
 
 
@@ -69,7 +69,7 @@ class Documents(unittest.TestCase):
                 contract.SpoolStatus.model_validate(document)
 
     def test_executor_capabilities_are_known_unique_and_typed(self):
-        for overrides in ({"capabilities": ["genomics", "genomics"]},
+        for overrides in ({"capabilities": ["imaging", "imaging"]},
                           {"capabilities": ["radiology"]}, {"acceptingJobs": "true"},
                           {"acceptingJobs": 1}):
             with self.subTest(overrides=sorted(overrides)), self.assertRaises(ValidationError):

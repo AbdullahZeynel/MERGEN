@@ -4,9 +4,9 @@
 
 # MERGEN
 
-**Glioma için çok modlu onkoloji karar destek prototipi**
+**Glioma MR görüntüleme karar destek prototipi**
 
-MR segmentasyonunu ve varyant patojenite tahminini tek çalışma alanında toplar.
+MR segmentasyonunu 2B kesitler ve etkileşimli 3B yüzeylerle tek çalışma alanında sunar.
 ERGENEKON R+D Takımı · TEKNOFEST *Onkolojide 3T*
 
 [![Kontroller](https://github.com/AbdullahZeynel/MERGEN/actions/workflows/checks.yml/badge.svg)](https://github.com/AbdullahZeynel/MERGEN/actions/workflows/checks.yml)
@@ -19,12 +19,11 @@ ERGENEKON R+D Takımı · TEKNOFEST *Onkolojide 3T*
 > **Araştırma ve gösterim amaçlıdır.** Klinik kararda kullanılamaz. Ekrandaki
 > MR görselleri UCSF-PDGM koleksiyonundan türetilmiş, kimliksizleştirilmiş ve
 > kafatası çıkarılmış kamuya açık araştırma verisidir (CC BY 4.0, atıf:
-> [`docs/ATTRIBUTIONS.md`](docs/ATTRIBUTIONS.md)). İki modülün çıktısını yan
-> yana göstermek, doğrulanmış bir klinik füzyon modeli anlamına gelmez.
+> [`docs/ATTRIBUTIONS.md`](docs/ATTRIBUTIONS.md)).
 
 ---
 
-## İki modül
+## Görüntüleme
 
 ### Görüntü — MR tümör segmentasyonu
 
@@ -43,22 +42,6 @@ olarak üretilmiştir; korteks segmentasyonu değildir.
 <td><img src="docs/images/2d-kesit-koronal.png" alt="Koronal kesit ve segmentasyon katmanı"></td>
 </tr>
 </table>
-
-### Genomik — missense varyant patojenite tahmini
-
-Protein dizisinden ESM-2 (`esm2_t30_150M_UR50D`) log-likelihood oranı, AAindex
-tabanlı fizikokimyasal delta özellikleri, göreli konum ve CGGA missense
-frekansı hesaplanır; XGBoost bunları tek bir patojenite olasılığına indirir.
-Her tahmin TreeSHAP ile açıklanır: hangi özelliğin margini ne kadar ittiği
-gösterilir, katkıların toplamı taban değerle birlikte modelin ham çıktısına
-eşitlenir ve bu toplamsallık arayüzde doğrulanır.
-
-![Genomik varyant paneli](docs/images/arayuz-genomik.png)
-
-Model kendi zayıf noktalarını da gösterir — ekrandaki `cosmic_frekans_log`
-notu buna örnektir. Denetim kaydı: [`docs/GENOMICS_AUDIT.md`](docs/GENOMICS_AUDIT.md).
-
----
 
 ## Sistem mimarisi
 
@@ -86,7 +69,6 @@ flowchart LR
         W["Dispatcher<br/>iş çek · lease · aktarım"]
         X["Executor"]
         IMG["Görüntü çıkarımı<br/>nnU-Net + Swin UNETR + UWCSE"]
-        GEN["Genomik çıkarım<br/>ESM-2 + XGBoost"]
     end
 
     U -->|HTTPS| CADDY
@@ -99,10 +81,9 @@ flowchart LR
     CTRL <-. "Tailscale · iş çek, sonuç yükle" .-> W
     W -. "yerel spool" .-> X
     X -.-> IMG
-    X -.-> GEN
 
     classDef planlanan stroke-dasharray:5 4,color:#7c8ba1
-    class GPU,W,X,IMG,GEN planlanan
+    class GPU,W,X,IMG planlanan
 ```
 
 Kesikli çizgiler henüz çalışır durumda olmayan parçaları gösterir: dispatcher
@@ -111,10 +92,9 @@ dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 
 | Bileşen | Durum |
 |---|---|
-| React arayüzü, 2D/3D görüntüleyici, genomik panel | Çalışıyor |
+| React arayüzü, 2D/3D görüntüleyici | Çalışıyor |
 | Genel API — hazır demo uçları | Çalışıyor |
 | Demo MCP (salt okunur, loopback) | Çalışıyor |
-| Genomik çıkarım adaptörü (tek varyant, çevrimdışı ESM) | Çalışıyor |
 | Oturum, iş kuyruğu, worker kontrol API'si, temizlik | Yazıldı, worker'sız |
 | GPU dispatcher ve yerel spool sözleşmesi | Yazıldı; executor'sız, gerçek hostta denenmedi |
 | GPU executor ve canlı model adaptörleri | Planlanan |
@@ -122,8 +102,8 @@ dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 
 ### Hazır demo paketi
 
-Katalog modül ve hastalık kırılımına göre büyür; görüntü ve genomik vakalar
-ayrı koleksiyonlardır ve birbirine eşleştirilmez.
+Katalog modül ve hastalık kırılımına göre büyüyebilir; bugün yalnız görüntü
+koleksiyonu desteklenir.
 
 ```
 catalog.json
@@ -132,11 +112,6 @@ catalog.json
 │       ├── slices/{axial,coronal,sagittal}/…   MR kesitleri
 │       ├── overlays/{prediction,ground_truth}/ segmentasyon katmanları
 │       └── mesh-<sha256>.glb                   3D tümör yüzeyleri
-└── genomics/glioma-variant-pathogenicity/manifest.json
-    └── cases/IDH1-R132H/
-        ├── input.json        varyant girdisi
-        ├── result.json       olasılık ve karar
-        └── explanation.json  SHAP katkıları
 ```
 
 Paketin kendisi Git dışıdır; nasıl üretildiği
@@ -172,10 +147,9 @@ python -m unittest discover -s infra/ci -p 'test_*.py'
 python infra/ci/repo_guard.py                   # sır, adres ve büyük dosya taraması
 ```
 
-Model ağırlıkları, MR veri kümesi ve genomik eğitim verisi Git klonuyla
-gelmez; konumları [`docs/LOCAL_ASSETS.md`](docs/LOCAL_ASSETS.md) içinde
-listelenmiştir. `main.py` genomik modeli **eğitir**, görüntü betikleri
-**değerlendirme** yapar — bunlar servis komutu değildir.
+Model ağırlıkları ve MR veri kümesi Git klonuyla gelmez; konumları
+[`docs/LOCAL_ASSETS.md`](docs/LOCAL_ASSETS.md) içinde listelenmiştir. Görüntü
+betikleri değerlendirme yapar; bunlar servis komutu değildir.
 
 ---
 
@@ -183,17 +157,15 @@ listelenmiştir. `main.py` genomik modeli **eğitir**, görüntü betikleri
 
 | Yol | Sorumluluk |
 |---|---|
-| `frontend/` | React vaka arayüzü; `frontend/legacy/` eski Three.js dashboard |
+| `frontend/` | React vaka arayüzü |
 | `backend/` | Genel API, canlı oturum, worker kontrol API'si, temizlik |
 | `mcp/` | Salt okunur demo araçları; disk yollarını dışarı vermez |
 | `mergen_dispatcher/` | GPU hostunda VPS'ten iş çeken dispatcher; model çalıştırmaz |
 | `mergen_spool/` | Dispatcher ile executor arasındaki yerel spool sözleşmesi |
 | `models/imaging/` | Görüntü algoritmaları, çıkarım ve değerlendirme betikleri |
-| `models/VeriOdakliCozum/` | Genomik paket; eğitim, çıkarım adaptörü, fixture'lar |
 | `infra/` | VPS, Caddy, Tailscale ve CI koruması |
 | `docs/PLAN.md` | Mimari kararlar ve çalışma sırası |
 | `docs/SYSTEM_SPRINTS.md` | Canlı oturum, worker ve entegrasyon sprintleri |
-| `docs/GENOMICS_AUDIT.md` | Genomik modelin denetimi ve bilinen sınırları |
 | `docs/LOCAL_ASSETS.md` | Git dışı ağırlık, veri ve sonuç konumları |
 | `docs/ATTRIBUTIONS.md` | Veri kümesi atıfları ve üçüncü taraf lisansları |
 
@@ -203,20 +175,13 @@ listelenmiştir. `main.py` genomik modeli **eğitir**, görüntü betikleri
 
 Bu depo, ölçmediği hiçbir şeyi iddia etmemeye çalışır.
 
-- **Yayımlanmış performans metriği yok.** Segmentasyon ve patojenite skorları
+- **Yayımlanmış performans metriği yok.** Segmentasyon skorları
   bağımsız bir test kümesinde raporlanana kadar Dice, AUC ve benzeri sayılar
   README'de yer almayacak.
-- **Genomik model klinik olarak doğrulanmadı.** Çalışma zamanı yeniden
-  üretilebilir ve sessiz varsayılan içermez; bu doğruluk kanıtı değildir.
-  Bilinen zayıflıklar (baskın CGGA gen kimliği sinyali, eğitimde sabit kalan
-  bir özellik, benign bir polimorfizmin yanlış sınıflanması)
-  [`docs/GENOMICS_AUDIT.md`](docs/GENOMICS_AUDIT.md) içinde açıkça yazılıdır.
 - **Demo görselleri kimliksizleştirilmiş insan araştırma verisidir.** Görüntü
   vakaları UCSF-PDGM koleksiyonundan gelir: TCIA tarafından kimliksizleştirilmiş
   ve kafatası çıkarılmış, CC BY 4.0 ile yayımlanmış MR verisi. Kişisel
-  tanımlayıcı içermez. Genomik kayıtlar UniProtKB referans dizilerinden
-  türetilir; görüntü ve genomik vakalar aynı kişiye ait değildir ve
-  eşleştirilmez.
+  tanımlayıcı içermez.
 - **Canlı hata sessizce demoya düşmez.** Servis yanıt vermezse arayüz bunu
   açıkça söyler, hazır sonucu canlı sonuç gibi göstermez.
 
@@ -245,11 +210,8 @@ Bağımlılık olarak kullanılan ve depoda kaynağı bulunmayan bileşenler:
 
 | Bileşen | Şart |
 |---|---|
-| nnU-Net, MONAI, XGBoost | Apache-2.0 |
-| ESM-2 kaynak kodu | MIT (Meta AI) |
-| ESM-2 model ağırlıkları | Git deposunda yer almaz; indirme sırasında ilgili model dağıtım şartları ayrıca doğrulanmalıdır |
+| nnU-Net, MONAI | Apache-2.0 |
 | UCSF-PDGM MR veri kümesi | CC BY 4.0 — atıf zorunlu |
-| CGGA genomik verisi | CGGA veri kullanım şartları |
 
 Veri atıfları, DOI'ler ve tam liste:
 [`docs/ATTRIBUTIONS.md`](docs/ATTRIBUTIONS.md). Veri kümelerini ve model

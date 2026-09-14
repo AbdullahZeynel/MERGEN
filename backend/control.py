@@ -44,12 +44,12 @@ async def worker_header(worker_id: str | None = Header(None, alias="X-Mergen-Wor
 
 
 class ClaimRequest(BaseModel):
-    capabilities: list[str] = Field(min_length=1, max_length=2)
+    capabilities: list[str] = Field(min_length=1, max_length=1)
 
     def normalized(self):
         if len(set(self.capabilities)) != len(self.capabilities):
             raise HTTPException(422, "Duplicate capability")
-        if not set(self.capabilities) <= {"imaging", "genomics"}:
+        if set(self.capabilities) != {"imaging"}:
             raise HTTPException(422, "Unsupported capability")
         return self.capabilities
 

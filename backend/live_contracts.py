@@ -14,8 +14,6 @@ LIVE_PROFILES = {
     "profiles": [
         {"module": "imaging", "disease": "glioma", "bundle": "zip",
          "modalities": ["T1", "T1CE", "T2", "FLAIR"], "groundTruthAccepted": False},
-        {"module": "genomics", "disease": "glioma-variant-pathogenicity", "bundle": "zip",
-         "modalities": [], "groundTruthAccepted": False},
     ],
 }
 
@@ -26,49 +24,25 @@ class InputFile(BaseModel):
     modality: Literal["T1", "T1CE", "T2", "FLAIR"] | None = None
 
 
-class VariantInput(BaseModel):
-    gene: Annotated[str, StringConstraints(pattern=r"^[A-Z0-9-]{2,32}$")]
-    proteinChange: Annotated[str, StringConstraints(pattern=r"^p\.[A-Z][0-9]+[A-Z]$")]
-    proteinSequence: Annotated[str, StringConstraints(
-        pattern=r"^[ACDEFGHIKLMNPQRSTVWY]+$", min_length=2, max_length=50000
-    )] | None = None
-    uniprotAccession: Annotated[str, StringConstraints(pattern=r"^[A-Z0-9-]{6,16}$")] | None = None
-
-    @model_validator(mode="after")
-    def require_sequence_source(self):
-        if not self.proteinSequence and not self.uniprotAccession:
-            raise ValueError("proteinSequence or uniprotAccession is required")
-        return self
-
-
 class InputManifest(BaseModel):
     schemaVersion: Literal[1]
-    module: Literal["imaging", "genomics"]
+    module: Literal["imaging"]
     disease: Slug
     files: list[InputFile] = Field(default_factory=list, max_length=4096)
-    variant: VariantInput | None = None
 
     @model_validator(mode="after")
     def validate_module_input(self):
         paths = [item.path for item in self.files]
         if len(paths) != len(set(paths)):
             raise ValueError("duplicate file path")
-        if self.module == "imaging":
-            if self.disease != "glioma":
-                raise ValueError("unsupported imaging disease profile")
-            if any(not (item.path.endswith(".nii") or item.path.endswith(".nii.gz")) for item in self.files):
-                raise ValueError("imaging volumes must use NIfTI format")
-            modalities = {item.modality for item in self.files}
-            if (modalities != {"T1", "T1CE", "T2", "FLAIR"} or len(self.files) != 4
-                    or any(item.role != "volume" for item in self.files)):
-                raise ValueError("glioma imaging requires one T1, T1CE, T2 and FLAIR volume")
-            if self.variant is not None:
-                raise ValueError("imaging input cannot include a variant")
-        else:
-            if self.disease != "glioma-variant-pathogenicity":
-                raise ValueError("unsupported genomics disease profile")
-            if self.variant is None or self.files:
-                raise ValueError("genomics input requires one variant and no volume files")
+        if self.disease != "glioma":
+            raise ValueError("unsupported imaging disease profile")
+        if any(not (item.path.endswith(".nii") or item.path.endswith(".nii.gz")) for item in self.files):
+            raise ValueError("imaging volumes must use NIfTI format")
+        modalities = {item.modality for item in self.files}
+        if (modalities != {"T1", "T1CE", "T2", "FLAIR"} or len(self.files) != 4
+                or any(item.role != "volume" for item in self.files)):
+            raise ValueError("glioma imaging requires one T1, T1CE, T2 and FLAIR volume")
         return self
 
 
@@ -93,7 +67,7 @@ class ResultAsset(BaseModel):
 class ResultManifest(BaseModel):
     schemaVersion: Literal[1]
     jobId: Annotated[str, StringConstraints(pattern=r"^[a-f0-9]{32}$")]
-    module: Literal["imaging", "genomics"]
+    module: Literal["imaging"]
     disease: Slug
     modelId: Slug
     modelVersion: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")]
@@ -107,8 +81,7 @@ class ResultManifest(BaseModel):
         if len(paths) != len(set(paths)):
             raise ValueError("duplicate result asset")
         kinds = {asset.kind for asset in self.assets}
-        required = ({"report-json", "prediction-nifti", "prediction-glb"}
-                    if self.module == "imaging" else {"report-json"})
+        required = {"report-json", "prediction-nifti", "prediction-glb"}
         if not required <= kinds:
             raise ValueError(f"required assets are missing: {sorted(required - kinds)}")
         return self
