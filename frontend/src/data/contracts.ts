@@ -51,11 +51,11 @@ export const caseSchema = z
     brainContext: z.literal('mr-foreground-envelope').optional(),
     mesh: z
       .string()
-      .regex(/^\/api\/demo\/cases\/[A-Za-z0-9_-]+\/mesh$/)
+      .regex(/^\/api\/demo\/cases\/[A-Za-z0-9_-]+\/mesh(?:\/[0-9a-f]{64}\.glb)?$/)
       .optional(),
   })
   .superRefine((item, ctx) => {
-    if (item.mesh && item.mesh !== `/api/demo/cases/${item.id}/mesh`)
+    if (item.mesh && !item.mesh.startsWith(`/api/demo/cases/${item.id}/mesh`))
       ctx.addIssue({ code: 'custom', message: 'Vaka ve mesh uyuşmuyor.' });
     if (new Set(item.previews.map((p) => p.axis)).size !== 3)
       ctx.addIssue({ code: 'custom', message: 'Üç farklı eksen gerekli.' });

@@ -1,5 +1,6 @@
 """Gateway and store boundaries. Synthetic bytes test transport, not medical output."""
 import base64
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -40,13 +41,19 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
         }))
         collection = self.root_v3 / 'imaging/glioma'
         collection.mkdir(parents=True)
+        self.glb_payload = b'glTF\x02\x00\x00\x00transport-test'
+        self.glb_digest = hashlib.sha256(self.glb_payload).hexdigest()
         (collection / 'manifest.json').write_text(json.dumps({
             'schemaVersion': 3, 'module': 'imaging', 'disease': 'glioma',
-            'cases': [{'id': 'V3-TEST', 'shape': [2, 2, 2]}],
+            'cases': [{'id': 'V3-TEST', 'shape': [2, 2, 2],
+                       'mesh': ('/api/demo/modules/imaging/diseases/glioma/cases/'
+                                f'V3-TEST/mesh/{self.glb_digest}.glb')}],
         }))
         v3_slice = collection / 'cases/V3-TEST/slices/axial'
         v3_slice.mkdir(parents=True)
         (v3_slice / '0.png').write_bytes(b'v3-transport-test')
+        (collection / 'cases/V3-TEST' / f'mesh-{self.glb_digest}.glb').write_bytes(
+            self.glb_payload)
         genomics = self.root_v3 / 'genomics/glioma-variant-pathogenicity'
         genomics.mkdir(parents=True)
         (genomics / 'manifest.json').write_text(json.dumps({
@@ -106,6 +113,30 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
             with patch('backend.api.call_tool', AsyncMock(return_value=result)):
                 self.assertEqual((await client.get('/api/demo/cases/TEST/slices/axial/0')).status_code, 502)
 
+    async def test_hashed_glb_is_immutable_and_digest_bound(self):
+        asset = self.store_v3.asset('V3-TEST', 'mesh', module='imaging', disease='glioma')
+        self.assertEqual(asset['mime'], 'model/gltf-binary')
+        self.assertEqual(base64.b64decode(asset['base64']), self.glb_payload)
+        path = f'/api/demo/cases/V3-TEST/mesh/{self.glb_digest}.glb'
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                     base_url='https://test') as client:
+            with patch('backend.api.call_tool', AsyncMock(return_value=asset)):
+                response = await client.get(path)
+                self.assertEqual(response.content, self.glb_payload)
+                self.assertEqual(response.headers['content-type'], 'model/gltf-binary')
+                self.assertEqual(response.headers['cache-control'],
+                                 'public, max-age=31536000, immutable')
+            with patch('backend.api.call_tool', AsyncMock(return_value=asset)):
+                wrong = '0' * 64
+                self.assertEqual((await client.get(path.replace(self.glb_digest, wrong))).status_code,
+                                 502)
+            self.assertEqual((await client.get(path.replace(self.glb_digest, 'invalid'))).status_code,
+                             404)
+        glb_path = self.root_v3 / 'imaging/glioma/cases/V3-TEST' / f'mesh-{self.glb_digest}.glb'
+        glb_path.write_bytes(b'tampered')
+        self.assertEqual(self.store_v3.asset('V3-TEST', 'mesh', module='imaging',
+                                             disease='glioma')['error'], 'invalid')
+
     async def test_overlay_is_bounded_and_uses_mcp(self):
         result = self.store.asset('TEST', 'overlay', 'axial', 0, 'prediction')
         self.assertEqual(base64.b64decode(result['base64']), b'overlay-test')
@@ -151,7 +182,9 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://test') as client:
             with patch('backend.api.call_tool', AsyncMock(return_value=manifest)):
                 response = await client.get('/api/demo/cases')
-        self.assertEqual(response.json(), {'version': 2, 'cases': manifest['cases']})
+        expected = dict(manifest['cases'][0])
+        expected['mesh'] = f'/api/demo/cases/V3-TEST/mesh/{self.glb_digest}.glb'
+        self.assertEqual(response.json(), {'version': 2, 'cases': [expected]})
 
     async def test_genomics_report_is_bounded(self):
         gen = ('GEN-TEST', 'report')

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Box, ImageOff, ScanLine, Info } from 'lucide-react';
 import { axes, axisLabels, type Axis, type CaseRecord } from '../data/contracts';
 import { EmptyState } from './EmptyState';
@@ -20,7 +20,13 @@ function VolumeViewerLoading() {
   );
 }
 
-export function ImagingWorkspace({ record }: { record: CaseRecord }) {
+export function ImagingWorkspace({
+  record,
+  nextMeshUrl,
+}: {
+  record: CaseRecord;
+  nextMeshUrl?: string;
+}) {
   const [axis, setAxis] = useState<Axis>('axial');
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const [indices, setIndices] = useState(
@@ -29,6 +35,23 @@ export function ImagingWorkspace({ record }: { record: CaseRecord }) {
   const [loadedSrc, setLoadedSrc] = useState<string | null>(null);
   const [predictionVisible, setPredictionVisible] = useState(true);
   const [groundTruthVisible, setGroundTruthVisible] = useState(false);
+  useEffect(() => {
+    if (!nextMeshUrl?.endsWith('.glb')) return;
+    const controller = new AbortController();
+    let idle: number | undefined;
+    const timeout = window.setTimeout(() => {
+      const prefetch = () => {
+        void fetch(nextMeshUrl, { cache: 'force-cache', signal: controller.signal }).catch(() => {});
+      };
+      if ('requestIdleCallback' in window) idle = window.requestIdleCallback(prefetch, { timeout: 2000 });
+      else prefetch();
+    }, 2500);
+    return () => {
+      window.clearTimeout(timeout);
+      if (idle !== undefined && 'cancelIdleCallback' in window) window.cancelIdleCallback(idle);
+      controller.abort();
+    };
+  }, [nextMeshUrl]);
   const count = record.shape[{ axial: 2, coronal: 1, sagittal: 0 }[axis]];
   const index = indices[axis];
   const src = `/api/demo/cases/${record.id}/slices/${axis}/${index}`;

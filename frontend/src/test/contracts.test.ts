@@ -20,4 +20,14 @@ describe('demo boundary validation', () => {
     c.previews[1].axis = 'axial';
     expect(manifestSchema.safeParse({ version: 2, cases: [c] }).success).toBe(false);
   });
+  it('accepts only case-bound content-addressed GLB meshes', () => {
+    const c = makeCase('TEST-0001');
+    const digest = 'a'.repeat(64);
+    c.mesh = `/api/demo/cases/${c.id}/mesh/${digest}.glb`;
+    expect(manifestSchema.safeParse({ version: 2, cases: [c] }).success).toBe(true);
+    c.mesh = `/api/demo/cases/OTHER/mesh/${digest}.glb`;
+    expect(manifestSchema.safeParse({ version: 2, cases: [c] }).success).toBe(false);
+    c.mesh = `/api/demo/cases/${c.id}/mesh/not-a-digest.glb`;
+    expect(manifestSchema.safeParse({ version: 2, cases: [c] }).success).toBe(false);
+  });
 });

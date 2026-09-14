@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RotateCcw, Box } from 'lucide-react';
 import { parseMesh, regions, type Region } from '../data/mesh';
 import { EmptyState } from './EmptyState';
@@ -93,36 +94,61 @@ export function VolumeViewer({ url }: { url?: string }) {
     };
     renderer.domElement.addEventListener('webglcontextlost', lost);
     sceneControl.current = { group, draw, reset };
+    const addGeometry = (region: Region, geometry: THREE.BufferGeometry) => {
+      if (!geometry.getAttribute('normal')) geometry.computeVertexNormals();
+      const material = new THREE.MeshPhongMaterial({
+        color: colors[region],
+        transparent: true,
+        opacity: region === 'BRAIN' ? 0.12 : opacity / 100,
+        side: THREE.DoubleSide,
+        depthWrite: false,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.userData.region = region;
+      group.add(mesh);
+    };
     fetch(url, { signal: controller.signal })
-      .then((response) => {
+      .then(async (response) => {
         if (!response.ok) throw new Error('Mesh yüklenemedi');
-        return response.json();
-      })
-      .then((value) => {
-        if (controller.signal.aborted) return;
-        const meshes = parseMesh(value);
-        setAvailable(regions.filter((region) => meshes[region]));
-        for (const region of regions) {
-          const data = meshes[region];
-          if (!data) continue;
-          const geometry = new THREE.BufferGeometry();
-          geometry.setAttribute(
-            'position',
-            new THREE.Float32BufferAttribute(data.vertices.flat(), 3),
-          );
-          geometry.setIndex(data.faces.flat());
-          geometry.computeVertexNormals();
-          const material = new THREE.MeshPhongMaterial({
-            color: colors[region],
-            transparent: true,
-            opacity: 0.75,
-            side: THREE.DoubleSide,
-            depthWrite: false,
+        const found = new Set<Region>();
+        if (url.endsWith('.glb')) {
+          const payload = await response.arrayBuffer();
+          const loaded = await new Promise<THREE.Group>((resolve, reject) => {
+            new GLTFLoader().parse(payload, '', (gltf) => resolve(gltf.scene), reject);
           });
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.userData.region = region;
-          group.add(mesh);
+          loaded.traverse((object) => {
+            if (!(object instanceof THREE.Mesh)) return;
+            const candidate = object.userData.region ?? object.name ?? object.parent?.name;
+            if (!regions.includes(candidate as Region) || found.has(candidate as Region)) return;
+            const region = candidate as Region;
+            found.add(region);
+            addGeometry(region, object.geometry);
+            const sourceMaterials = Array.isArray(object.material)
+              ? object.material
+              : [object.material];
+            sourceMaterials.forEach((material) => material.dispose());
+          });
+        } else {
+          const meshes = parseMesh(await response.json());
+          for (const region of regions) {
+            const data = meshes[region];
+            if (!data) continue;
+            found.add(region);
+            const geometry = new THREE.BufferGeometry();
+            geometry.setAttribute(
+              'position',
+              new THREE.Float32BufferAttribute(data.vertices.flat(), 3),
+            );
+            geometry.setIndex(data.faces.flat());
+            addGeometry(region, geometry);
+          }
         }
+        if (!found.size) throw new Error('Görüntülenecek segmentasyon bulunamadı');
+        return [...found];
+      })
+      .then((found) => {
+        if (controller.signal.aborted || !found) return;
+        setAvailable(found);
         const { width, height } = element.getBoundingClientRect();
         renderer.setSize(width, height);
         camera.aspect = width / Math.max(height, 1);
