@@ -1,9 +1,24 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Box, ImageOff, ScanLine, Info } from 'lucide-react';
 import { axes, axisLabels, type Axis, type CaseRecord } from '../data/contracts';
 import { EmptyState } from './EmptyState';
 import { ViewerFrame } from './ViewerFrame';
-import { VolumeViewer } from './VolumeViewer';
+
+const VolumeViewer = lazy(() =>
+  import('./VolumeViewer').then((module) => ({ default: module.VolumeViewer })),
+);
+
+function VolumeViewerLoading() {
+  return (
+    <div className="mesh-stage">
+      <div className="mesh-message" role="status">
+        <EmptyState icon={<Box />} title="3D görüntüleyici hazırlanıyor…">
+          Etkileşimli görüntüleyici kodu yükleniyor.
+        </EmptyState>
+      </div>
+    </div>
+  );
+}
 
 export function ImagingWorkspace({ record }: { record: CaseRecord }) {
   const [axis, setAxis] = useState<Axis>('axial');
@@ -146,7 +161,9 @@ export function ImagingWorkspace({ record }: { record: CaseRecord }) {
           </div>
         </ViewerFrame>
         <ViewerFrame title="3D segmentasyon" icon={<Box size={18} />}>
-          <VolumeViewer url={record.mesh} />
+          <Suspense fallback={<VolumeViewerLoading />}>
+            <VolumeViewer url={record.mesh} />
+          </Suspense>
         </ViewerFrame>
       </div>
       <div className="notice">
