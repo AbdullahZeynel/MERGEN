@@ -77,6 +77,13 @@ export default function App() {
   );
   const record = filtered.find((c) => c.id === selectedId) ?? filtered[0] ?? null;
   const genomicsRecord = module === 'genomics' ? (record as GenomicsCase | null) : null;
+  const imagingCases = imagingQuery.data ?? [];
+  const imagingIndex = module === 'imaging' && record
+    ? imagingCases.findIndex((candidate) => candidate.id === record.id)
+    : -1;
+  const nextMeshUrl = imagingIndex >= 0
+    ? imagingCases.slice(imagingIndex + 1).find((candidate) => candidate.mesh)?.mesh
+    : undefined;
   const changeMode = (value: SourceMode) => {
     setMode(value);
     setSelectedId(null);
@@ -381,6 +388,7 @@ export default function App() {
                   <ImagingWorkspace
                     key={`${mode}:${record.id}`}
                     record={record as CaseRecord}
+                    nextMeshUrl={nextMeshUrl}
                   />
                 ) : (
                   <section className="panel genomics-panel">
