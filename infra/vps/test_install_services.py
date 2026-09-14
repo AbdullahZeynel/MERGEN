@@ -5,7 +5,10 @@ halves: the env checker it calls runs against temporary files, and the script
 text is checked for its non-overwrite and ordering guarantees. Fixture values
 are fake, and no assertion echoes file content.
 """
+import importlib.util
+import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -13,6 +16,7 @@ import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[1]
 CHECKER = HERE / "check_services_env.py"
 ENV_PATH = "/etc/mergen/services.env"
 # Proves redaction only; it is not a credential.
@@ -114,6 +118,64 @@ class InstallerScript(unittest.TestCase):
     def test_installer_starts_no_service(self):
         text = "\n".join(self.code)
         self.assertIsNone(re.search(r"systemctl\s+(enable|start|restart)\b", text))
+
+
+def unit_exec(name: str) -> list[str]:
+    for line in (HERE / name).read_text(encoding="utf-8").splitlines():
+        if line.startswith("ExecStart="):
+            return line.removeprefix("ExecStart=").split()
+    raise AssertionError(f"{name} has no ExecStart")
+
+
+class ServiceUnits(unittest.TestCase):
+    """Run each backend unit's real command line against a copy of the
+    installed layout, where WorkingDirectory holds the `backend/` package."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="mergen-unit-test-")
+        self.addCleanup(tmp.cleanup)
+        self.root = Path(tmp.name)
+        self.services = self.root / "services"
+        (self.services / "backend").mkdir(parents=True)
+        for source in (REPO / "backend").glob("*.py"):
+            if not source.name.startswith("test_"):
+                shutil.copy2(source, self.services / "backend" / source.name)
+
+    def run_unit(self, name: str, extra_env: dict[str, str]):
+        argv = unit_exec(name)
+        self.assertEqual(argv[0], "/srv/mergen/services/.venv/bin/python")
+        env = {"PATH": os.environ.get("PATH", ""), **extra_env}
+        return subprocess.run([sys.executable, *argv[1:]], cwd=self.services, env=env,
+                              capture_output=True, text=True, timeout=60)
+
+    def test_backend_units_use_the_module_form(self):
+        for name in ("mergen-api.service", "mergen-control.service", "mergen-cleanup.service"):
+            argv = unit_exec(name)
+            with self.subTest(unit=name):
+                self.assertEqual(argv[1], "-m")
+                self.assertTrue(argv[2] == "uvicorn" or argv[2].startswith("backend."))
+                self.assertIn("WorkingDirectory=/srv/mergen/services",
+                              (HERE / name).read_text(encoding="utf-8"))
+
+    def test_cleanup_unit_command_imports_and_runs(self):
+        result = self.run_unit("mergen-cleanup.service",
+                               {"MERGEN_RUNTIME_ROOT": str(self.root / "runtime")})
+        self.assertEqual(result.returncode, 0, result.stderr[-400:])
+        self.assertIn("expiredSessions", result.stdout)
+
+    def test_cleanup_unit_refuses_to_guess_under_systemd(self):
+        result = self.run_unit("mergen-cleanup.service", {"INVOCATION_ID": "0" * 32})
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("MERGEN_RUNTIME_ROOT", result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertFalse((self.services / ".local").exists(), "fell back to the checkout default")
+
+    @unittest.skipUnless(importlib.util.find_spec("uvicorn"), "uvicorn is not installed")
+    def test_control_unit_command_imports_before_validating(self):
+        result = self.run_unit("mergen-control.service", {})
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("MERGEN_CONTROL_HOST", result.stderr)
+        self.assertNotIn("ModuleNotFoundError", result.stderr)
 
 
 if __name__ == "__main__":
