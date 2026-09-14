@@ -6,8 +6,17 @@
 #
 # Grants the human maintenance account the few privileged commands needed to
 # operate the MERGEN services on a computer somebody else also uses daily.
-# Full sudo is not granted, and no rule is passwordless: the password prompt is
-# the last barrier if the account is ever misused.
+#
+# Why NOPASSWD here. install-base.sh locks the password of the `mergen`
+# account, so nobody can log in as it directly; you reach it with
+# `sudo -u mergen -i` from your own account. A locked password cannot satisfy
+# sudo's own prompt, so a password-requiring rule would simply never run. The
+# barrier is therefore the command list, not a prompt: every entry is a fixed
+# command with fixed arguments, and the set contains no shell, no editor, no
+# package manager and no arbitrary systemctl.
+#
+# If you instead give `mergen` a real password, drop NOPASSWD and close the
+# direct login surface (SSH, display manager) separately -- and test it.
 #
 # Excluded on purpose: package and driver installation, shutdown, reboot, user
 # management, arbitrary systemctl, editors, and any shell. Those stay with the
@@ -42,7 +51,7 @@ Cmnd_Alias MERGEN_LOGS = /usr/bin/journalctl --no-pager -n 200 -u mergen-dispatc
 Cmnd_Alias MERGEN_DIAG = /usr/bin/nvidia-smi, \
                          /usr/bin/tailscale status
 
-mergen ALL=(root) MERGEN_UNITS, MERGEN_STATUS, MERGEN_LOGS, MERGEN_DIAG
+mergen ALL=(root) NOPASSWD: MERGEN_UNITS, MERGEN_STATUS, MERGEN_LOGS, MERGEN_DIAG
 
 # Binary paths differ between distributions. Verify each with `command -v` on
 # the target host before installing: a path that does not exist grants nothing
