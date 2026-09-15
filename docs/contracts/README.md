@@ -54,8 +54,11 @@ kilidi kendisi alabildiğinde siler. Şemalar `mergen_spool/contract.py` içinde
 Executor da başlarken kökü (2770, sahibi `MERGEN_SPOOL_OWNER`, grubuna üyelik) ve
 `jobs/` dizinini (2750) doğrular. İşe yalnız kilitlediği dizin tanımlayıcısı
 üzerinden erişir; `job.json`, `input.zip` ve `cancel` dosyalarını yalnız okur,
-`gate`'i yalnız kilitler. Durum `accepted → running → completed | failed` sırasıyla
-ilerler; terminal durum yeniden yazılmaz. Sonuç `.result.zip.<rastgele>.tmp` adıyla
+`gate`'i yalnız kilitler. Executor durumu birer adım ilerletir: başlangıç →
+`accepted` ya da `failed`, `accepted` → `running` ya da `failed`, `running` →
+`completed` ya da `failed`. Adım atlanmaz, terminal durum yeniden yazılmaz. Durumu
+okuyan dispatcher ara adımları kaçırabilir; bu yüzden yalnız geri gitmeyi ve
+terminal durumdan çıkmayı reddeder. Sonuç `.result.zip.<rastgele>.tmp` adıyla
 yazılıp fsync edilir, doğrulanır ve tek `rename` ile `result.zip` olur; `completed`
 ancak bundan sonra yazılır. Sonucun `manifest.json`'ındaki `modelId` ve
 `modelVersion`, adaptörün başlarken doğrulanan kimliğiyle aynı olmalıdır; değilse

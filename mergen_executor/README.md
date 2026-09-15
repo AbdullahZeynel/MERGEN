@@ -23,7 +23,9 @@ running
 completed(result: sha256, boyut)       aynı gate kilidi altında yazılır
 ```
 
-Terminal durum yeniden yazılmaz; durum geri gitmez ve tekrarlanmaz. Okunamayan bir
+Durum birer adım ilerler: başlangıç → `accepted` ya da `failed`, `accepted` →
+`running` ya da `failed`, `running` → `completed` ya da `failed`. Adım atlanmaz,
+geri gidilmez, tekrarlanmaz; terminal durum yeniden yazılmaz. Okunamayan bir
 `status.json`'a dokunulmaz, iş başarılı sayılmaz. `job.json`, `input.zip`, `cancel`
 ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
 

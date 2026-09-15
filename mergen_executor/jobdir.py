@@ -32,6 +32,15 @@ JOB_NAME = re.compile(r"^[a-f0-9]{32}$")
 RESULT_NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.zip$")
 # Names this side may leave behind after a crash; nothing else is ever removed.
 TEMPORARY = re.compile(r"^\.(status\.json|result\.zip)\.[0-9a-f]{8}\.tmp$")
+# The statuses the executor may write next, one step at a time (None: no status
+# yet). A poller may miss a step, so it checks with contract.advances() instead.
+NEXT_STATES: dict[str | None, frozenset[str]] = {
+    None: frozenset({"accepted", "failed"}),
+    "accepted": frozenset({"running", "failed"}),
+    "running": frozenset({"completed", "failed"}),
+    "completed": frozenset(),
+    "failed": frozenset(),
+}
 DIRECTORY = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
 READ = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
 
@@ -102,14 +111,13 @@ class LockedJob:
 
     def advance(self, state: str, *, result: contract.ResultRef | None = None,
                 error_code: str | None = None) -> None:
-        """Write the next status. A terminal status is never rewritten and a
-        status never moves backwards or repeats."""
+        """Write the next status, one step at a time (NEXT_STATES): no step is
+        skipped, repeated or taken backwards, and a terminal status is never
+        rewritten."""
         current = self.read_status()
-        if current is not None:
-            if current.state in contract.TERMINAL_STATES:
-                raise StatusProblem(f"status is already {current.state}")
-            if current.state == state or not contract.advances(current.state, state):
-                raise StatusProblem(f"status cannot move from {current.state} to {state}")
+        previous = None if current is None else current.state
+        if state not in NEXT_STATES[previous]:
+            raise StatusProblem(f"status cannot move from {previous or 'no status'} to {state}")
         document = contract.SpoolStatus(
             schemaVersion=contract.SCHEMA_VERSION, kind="mergen-spool-status", jobId=self.job_id,
             state=state, updatedAt=int(self._wall()), result=result, errorCode=error_code)

@@ -11,6 +11,7 @@ from mergen_executor.jobdir import LockedJob, StatusProblem
 from mergen_executor.test_support import (JOB_ID, MARKER, ExecutorCase, FakeImagingAdapter, imaging_input,
                                           imaging_manifest, publish_job, recorded_states, result_zip, sha256,
                                           status_of, zip_bytes)
+from mergen_spool import contract
 
 OWNED_BY_DISPATCHER = ("gate", "job.json", "input.zip")
 
@@ -180,6 +181,45 @@ class TerminalStates(ExecutorCase):
         finally:
             job.close()
         self.assertEqual(status_of(self.root)["state"], "failed")
+
+
+class StrictTransitions(ExecutorCase):
+    """The executor writes one step at a time: no status → accepted | failed,
+    accepted → running | failed, running → completed | failed, and nothing after
+    a terminal state. A poller may miss a step; it checks with contract.advances."""
+
+    RESULT = contract.ResultRef(path="result.zip", sha256="0" * 64, size=1)
+
+    def fields(self, state: str) -> dict:
+        if state == "completed":
+            return {"result": self.RESULT}
+        return {"error_code": "internal-error"} if state == "failed" else {}
+
+    def walk(self, number: int, path: tuple[str, ...]) -> LockedJob:
+        publish_job(self.root, job_id=job_id(number))
+        job = LockedJob.acquire(self.root / contract.JOBS_DIR, job_id(number))
+        self.addCleanup(job.close)
+        for state in path:
+            job.advance(state, **self.fields(state))
+        return job
+
+    def test_no_step_is_skipped(self):
+        cases = [((), "running"), ((), "completed"), (("accepted",), "completed")]
+        for number, (path, state) in enumerate(cases, start=1):
+            with self.subTest(after=path[-1] if path else "no status", to=state):
+                job = self.walk(number, path)
+                with self.assertRaises(StatusProblem):
+                    job.advance(state, **self.fields(state))
+                status = status_of(self.root, job_id(number))
+                self.assertEqual(status and status["state"], path[-1] if path else None)
+
+    def test_every_allowed_step_is_written(self):
+        paths = [("failed",), ("accepted", "failed"), ("accepted", "running", "failed"),
+                 ("accepted", "running", "completed")]
+        for number, path in enumerate(paths, start=1):
+            with self.subTest(path=" → ".join(path)):
+                self.walk(number, path)
+                self.assertEqual(status_of(self.root, job_id(number))["state"], path[-1])
 
 
 if __name__ == "__main__":
