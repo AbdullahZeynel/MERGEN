@@ -262,6 +262,54 @@ class DropIns(StagingCase):
         self.assertFalse(self.release("r2").exists())
 
 
+class UnprivilegedPlan(StagingCase):
+    """On the host executor.env is root:mergen-executor 640 and the maintenance
+    account is not in that group. The test account stands in for it by keeping
+    no read bit of its own on the file."""
+
+    def setUp(self):
+        super().setUp()
+        if os.geteuid() == 0:
+            self.skipTest("root reads any file; an unreadable env cannot be built")
+
+    def unreadable_env(self, text: str) -> Path:
+        return self.host.write_env("executor", text, mode=0o040)
+
+    def test_a_plan_by_the_maintenance_account_warns_instead_of_failing(self):
+        self.unreadable_env(f"MERGEN_CONTROL_TOKEN={SECRET}\n")
+        before = self.host.snapshot()
+        for result in (self.host.verify("before", fake_root=False), self.host.stage(fake_root=False)):
+            output = result.stdout + result.stderr
+            self.assert_code(result, 0)
+            self.assertIn("WARN  executor.env is not readable by this account", result.stdout)
+            self.assertNotIn("Permission denied", output)
+            self.assertNotIn(SECRET, output)
+        self.assertEqual(self.host.snapshot(), before)
+
+    def test_root_never_counts_an_unreadable_executor_env_as_clean(self):
+        self.unreadable_env("MERGEN_RUNTIME_ROOT=/var/lib/mergen/runtime\n")
+        before = self.host.snapshot()
+        for result in (self.host.verify("before"), self.host.stage("--apply")):
+            self.assert_code(result, 1)
+            self.assertIn("FAIL  executor.env cannot be read even as root", result.stdout)
+            self.assertNotIn("Permission denied", result.stdout + result.stderr)
+        self.assertEqual(self.host.snapshot(), before)
+        self.assertIsNone(self.current())
+
+    def test_root_still_refuses_a_forbidden_key_and_changes_nothing(self):
+        self.assert_code(self.apply("r1"), 0)
+        self.host.write_env("executor", f"MERGEN_RUNTIME_ROOT=/var/lib/mergen/runtime\nMERGEN_CONTROL_TOKEN={SECRET}\n")
+        self.changed_source()
+        before = self.host.snapshot()
+        result = self.apply("r2")
+        self.assert_code(result, 1)
+        self.assertIn("executor.env must not set: MERGEN_CONTROL_TOKEN\n", result.stdout)
+        self.assertNotIn(SECRET, result.stdout + result.stderr)
+        self.assertEqual(self.host.snapshot(), before)
+        self.assertEqual(self.current(), "releases/r1")
+        self.assertFalse(self.release("r2").exists())
+
+
 class Separation(StagingCase):
     def test_each_venv_gets_only_its_own_requirements(self):
         self.assert_code(self.apply(), 0)

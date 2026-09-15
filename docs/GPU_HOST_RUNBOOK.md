@@ -110,6 +110,11 @@ snapshot'ın kapsamı tartışmasız temiz.
 - Hiçbiri yoksa: `/etc/passwd`, `/etc/group`, `/etc/shadow`, `/etc/sudoers.d/`,
   `/etc/systemd/system/` ve `/usr/lib/{sysusers,tmpfiles}.d/` dizinlerini
   tarihli bir arşive al.
+- Her durumda ayrıca: `sudo bash infra/gpu-host/capture-baseline.sh --output
+  /root/mergen-baseline-oncesi`. Bu, MERGEN'in değiştireceği hedeflerin yalnız
+  metadata kaydıdır ve 20. adımdaki kaldırmanın kanıtıdır; snapshot değildir.
+  Snapshot alınamayan bir hostta (ör. LVM'siz ext4) hesapların ve dosyaların
+  MERGEN'den önce var olup olmadığını gösteren kayıt budur.
 
 Geri yükleme adımını yaz ve **bir kez prova et**. Prova edilmemiş rollback,
 rollback değildir.
@@ -389,6 +394,16 @@ sudo bash infra/gpu-host/stage-services.sh --version <sürüm> --apply
 sudo bash infra/gpu-host/verify-services.sh --after                   # salt okunur
 ```
 
+Bakım hesabı `executor.env`'yi okuyamaz (`root:mergen-executor` 0640) ve bu
+kasıtlıdır; hesap `mergen-executor` grubuna eklenmez. Bu yüzden bakım hesabıyla
+çalışan `--before` ve plan, bu dosyadaki `MERGEN_CONTROL_*`, `MERGEN_WORKER_*`,
+`MERGEN_VPS_*` taramasını yapamaz; hata vermek yerine WARN ile root'a bırakır ve
+dosyanın içeriğini hiçbir durumda yazdırmaz. `dispatcher.env`'nin executor
+tarafından okunamadığı ve spool alt dizinleri de yalnız root ile denetlenir. Tam
+denetim için `sudo bash infra/gpu-host/verify-services.sh --before` çalıştır.
+`--apply` her zaman root'tur: okunamayan bir `executor.env`'yi temiz saymaz,
+yasak bir anahtar bulursa hiçbir şeyi değiştirmeden durur.
+
 Plan hiçbir dosyayı değiştirmez. `--apply` yalnız root ile çalışır ve sırayla:
 önkoşulları doğrular (hesaplar, gruplar, dizin modları, env dosyaları, çalışan servis
 yok), release'i kendi adıyla kurar, iki venv'i ayrı ayrı oluşturur, release'i
@@ -459,19 +474,10 @@ Alternatif `sudo systemctl stop mergen-executor.service`; fark şu ki durdurma
 **Bakım.** Sürücü güncellemesi, çekirdek güncellemesi veya ağır oyun
 oturumundan önce pause koy. Güncelleme sonrası 14. adımı tekrar çalıştır.
 
-**Rollback.** 2. adımdaki noktaya dön. Hesap ve dizin tabanını geri almak
-için minimum sıra:
-
-```bash
-sudo systemctl disable --now mergen-dispatcher.service mergen-executor.service 2>/dev/null || true
-sudo rm -f /etc/sudoers.d/mergen-maintenance
-sudo rm -f /usr/lib/sysusers.d/mergen.conf /usr/lib/tmpfiles.d/mergen.conf
-sudo userdel mergen-dispatcher; sudo userdel mergen-executor
-sudo groupdel mergen-svc
-```
-
-Dizinleri **silmeden önce** içeriğe bak: `/srv/mergen-models` altında saatler
-süren indirmeler olabilir. Runtime dizinini boşaltmak ise istenen davranıştır.
+**Rollback.** Bir release'i geri almak için 16. adımdaki `current` geçişi yeter.
+MERGEN'i bilgisayardan kaldırmak ayrı bir prosedürdür (20. adım): sırası kurulum
+öncesi baseline'a bağlıdır ve hiçbir dizini, `mergen` bakım hesabını ya da
+MERGEN dışındaki bir şeyi otomatik silmez.
 
 ### 18. Snapshot periyodu ve veri kapsamı
 
@@ -507,6 +513,118 @@ varsayılan sessizce yanlış davranır.
 sınıf kartlarda kullanılabilir değildir; cgroup'lar VRAM'i bölmez. Bu yüzden
 kabul kontrolü ya hep ya hiçtir: iş ya GPU'yu yeterince boş bulur ve çalışır,
 ya da bekler. systemd sınırları yalnız CPU, IO ve sistem RAM'i içindir.
+
+### 20. Bilgisayarı MERGEN öncesi hâline döndürme
+
+Bu prosedür bir disk snapshot'ı değildir ve bilgisayarı bayt bayt eski hâline
+döndürdüğünü iddia etmez. Yalnız MERGEN'in eklediği sistem yüzeylerini hedefler:
+iki unit, sysusers/tmpfiles/sudoers tanımları, servis hesapları, `mergen-svc` grubu
+ve MERGEN dizinleri. NVIDIA sürücüsüne, CUDA'ya, Tailscale'e, çekirdeğe, bölümlere
+ve masaüstüne dokunmaz. Otomatik bir kaldırma betiği yoktur; her adım elle ve
+sırayla yapılır, silme kararları operatöre aittir.
+
+**Kanıt: kurulum öncesi baseline.** Neyin MERGEN'e ait olduğunu, 6. adımdan önce
+alınan kayıt söyler:
+
+```bash
+sudo bash infra/gpu-host/capture-baseline.sh --output /root/mergen-baseline-oncesi
+```
+
+Kayıt yalnız metadata tutar: hesap kimlikleri, gruplar, tanım dosyaları ve
+checksum'ları, drop-in yolları, dizinlerin tür/mod/sahip/girdi sayısı ve release
+adları, env dosyalarının yalnız varlığı/türü/sahipliği/modu, systemd enable/active
+durumları, paket listesi, APT geçmişinin varlığı ve GPU adı/sürücü/toplam VRAM.
+Env içeriği veya checksum'ı, token, hostname, adres, GPU kimliği ve spool, model
+ya da release içeriği kaydedilmez. Araç yeni bir 0700 dizine yazar, dolu bir
+dizini asla ezmez ve başka hiçbir dosyayı değiştirmez.
+
+Kurulumdan önce baseline alınmamış bir hostta (G0–G3'ü baseline'sız kurulmuş
+host dahil) servis hesaplarının ve `mergen-svc`'nin MERGEN tarafından
+oluşturulduğu **kanıtlanamaz**; 6. alt adım o hostta uygulanmaz. Yine de bugünkü
+durumu kaydet; kaldırmadan sonraki karşılaştırmanın temeli budur.
+
+1. **Şimdiki durumu kaydet ve kurulum öncesiyle karşılaştır.** Farklar
+   MERGEN'in eklediklerini gösterir; kaldırma bu farklarla sınırlıdır.
+
+   ```bash
+   sudo bash infra/gpu-host/capture-baseline.sh --output /root/mergen-baseline-kaldirma-oncesi
+   sudo diff /root/mergen-baseline-oncesi/baseline.txt /root/mergen-baseline-kaldirma-oncesi/baseline.txt
+   ```
+
+2. **Token'ı iptal et, servisleri durdur ve devre dışı bırak.** Worker token'ını
+   önce VPS tarafında iptal et ya da yenile: hosttaki dosyayı silmek token'ı
+   geçersiz kılmaz.
+
+   ```bash
+   sudo systemctl disable --now mergen-dispatcher.service mergen-executor.service
+   ```
+
+3. **Unit dosyalarını kaldır ve systemd'yi yeniden yükle.** Yalnız baseline'da
+   `absent` görünen yolları kaldır. Drop-in dizini varsa içeriğini incele ve ayrıca
+   karar ver.
+
+   ```bash
+   sudo rm /etc/systemd/system/mergen-dispatcher.service /etc/systemd/system/mergen-executor.service
+   ls -d /etc/systemd/system/mergen-*.service.d 2>/dev/null
+   sudo systemctl daemon-reload
+   sudo systemctl reset-failed mergen-dispatcher.service mergen-executor.service 2>/dev/null || true
+   ```
+
+4. **sysusers, tmpfiles ve sudoers tanımlarını kaldır.** Yine yalnız baseline'da
+   `absent` olanları. Bu, hesapları ve dizinleri silmez; systemd'nin onları bir
+   sonraki açılışta yeniden oluşturmasını ve bakım sudo'sunu durdurur.
+
+   ```bash
+   sudo rm /usr/lib/sysusers.d/mergen.conf /usr/lib/tmpfiles.d/mergen.conf /etc/sudoers.d/mergen-maintenance
+   sudo visudo -c
+   ```
+
+5. **Dizinleri göster, her biri için ayrıca karar ver.** Hiçbiri otomatik silinmez.
+
+   ```bash
+   sudo ls -la /opt/mergen /opt/mergen/releases
+   sudo du -sh /srv/mergen-models /var/lib/mergen/runtime /var/lib/mergen/dispatcher /var/lib/mergen/executor
+   sudo ls -la /etc/mergen          # env dosyaları token taşır: cat etme, kopyalama
+   ```
+
+   `/srv/mergen-models` saatler süren indirmeler, `/var/lib/mergen/runtime` iş
+   verisi, `/etc/mergen` sırlar, release dizinleri eski sürümler taşır. Silinecekse
+   komutu yol yol elle yaz; runtime ayrı bir mount ise önce `umount` ve
+   `/etc/fstab` satırı 3. adımdaki kararla birlikte ele alınır.
+
+6. **Servis hesapları ve grup: yalnız kanıtlanırsa.** Kurulum öncesi baseline
+   `account mergen-dispatcher: absent`, `account mergen-executor: absent` ve
+   `group mergen-svc: absent` diyorsa:
+
+   ```bash
+   sudo userdel mergen-dispatcher
+   sudo userdel mergen-executor
+   sudo groupdel mergen-svc
+   ```
+
+   `userdel`'e `-r` verme; state dizinleri 5. alt adımın kararıdır. Bu hesaplara
+   ait kalan dosyalar bundan sonra sayısal kimlikle görünür. Baseline bu hesapları
+   `present` gösteriyorsa ya da baseline yoksa hiçbirini silme.
+
+   **`mergen` bakım hesabı bu prosedürde hiçbir durumda silinmez.** Önceden var
+   olabilir ve sahibinin başka işlerini taşıyabilir; kaldırılması makine sahibinin
+   ayrı ve açık kararıdır.
+
+7. **Dokunulmayanlar.** NVIDIA sürücüsü, CUDA, Tailscale (node'u konsoldan
+   çıkarmak ayrı karardır), çekirdek, bölümler ve `/etc/fstab`'daki diğer satırlar,
+   masaüstü ve paketler. MERGEN paket kurmaz; `packages.txt` karşılaştırması bunu
+   doğrular.
+
+8. **Son audit ve systemd doğrulaması.** Kalan farklar yalnız bilerek bırakılan
+   dizinler ve korunan hesaplar olmalıdır.
+
+   ```bash
+   systemctl list-unit-files 'mergen-*'               # boş olmalı
+   getent passwd mergen-dispatcher mergen-executor    # 6. alt adım uygulandıysa boş
+   bash infra/gpu-host/audit-host.sh                  # MERGEN hesap ve dizinleri "missing"
+   sudo bash infra/gpu-host/capture-baseline.sh --output /root/mergen-baseline-kaldirma-sonrasi
+   sudo diff /root/mergen-baseline-oncesi/baseline.txt /root/mergen-baseline-kaldirma-sonrasi/baseline.txt
+   ```
 
 ---
 
@@ -544,6 +662,9 @@ Aşağıdakiler gerçek makinede doğrulanana kadar
 - İki venv'de CUDA'lı PyTorch
 - Gerçek GPU tensor smoke testi
 - Yeniden başlatma sonrası Tailscale ve GPU doğrulamasının tekrarı
+- 20. adımdaki kaldırma prosedürünün gerçek hostta provası; G0–G3'ü kurulum
+  öncesi baseline'sız kurulmuş bir hostta servis hesaplarının ve `mergen-svc`'nin
+  MERGEN'e ait olduğunun kanıtı
 
 Repo tarafında hazır olan şey yalnız bu adımları güvenli ve tekrarlanabilir
 biçimde yürütecek scriptler, deklaratif yapılandırma ve bu sıradır.

@@ -86,10 +86,15 @@ expect_dir "$DISPATCHER_STATE" "$MERGEN_DISPATCHER_USER:$MERGEN_DISPATCHER_USER"
 expect_dir "$EXECUTOR_STATE" "$MERGEN_EXECUTOR_USER:$MERGEN_EXECUTOR_USER" 700
 expect_dir "$RUNTIME_ROOT" "$MERGEN_DISPATCHER_USER:$MERGEN_SERVICE_GROUP" "$MERGEN_RUNTIME_MODE" exact
 # The dispatcher creates these on its first start with the spool contract's modes.
-for sub in jobs:2750 staging:2700 trash:2700; do
-    [[ -e "$RUNTIME_ROOT/${sub%%:*}" ]] &&
-        expect_dir "$RUNTIME_ROOT/${sub%%:*}" "$MERGEN_DISPATCHER_USER:$MERGEN_SERVICE_GROUP" "${sub##*:}" exact
-done
+# The maintenance account is not in the spool group and cannot enter it.
+if [[ -d "$RUNTIME_ROOT" && ! -x "$RUNTIME_ROOT" ]]; then
+    info 'This account cannot enter the runtime directory; root checks jobs/, staging/ and trash/.'
+else
+    for sub in jobs:2750 staging:2700 trash:2700; do
+        [[ -e "$RUNTIME_ROOT/${sub%%:*}" ]] &&
+            expect_dir "$RUNTIME_ROOT/${sub%%:*}" "$MERGEN_DISPATCHER_USER:$MERGEN_SERVICE_GROUP" "${sub##*:}" exact
+    done
+fi
 
 # -- env files ----------------------------------------------------------------
 section 'Configuration files'
@@ -115,9 +120,18 @@ executor_env="$(env_file executor)" dispatcher_env="$(env_file dispatcher)"
 if [[ -f "$executor_env" ]]; then
     # By prefix, not by a list of today's names: a new or misspelt control
     # setting must not reach the executor either. Names only, never a value.
-    leaked="$(env_keys "$executor_env" | control_keys)"
-    [[ -z "$leaked" ]] && pass 'executor.env sets no MERGEN_CONTROL_*, MERGEN_WORKER_* or MERGEN_VPS_* key' \
-        || fail "executor.env must not set: ${leaked% }"
+    # The maintenance account cannot read the file (root:mergen-executor 640,
+    # on purpose), so a plan it runs leaves this check to root. Root must read
+    # it: an unreadable file never counts as clean.
+    if keys="$(env_keys "$executor_env" 2>/dev/null)"; then
+        leaked="$(printf '%s\n' "$keys" | control_keys)"
+        [[ -z "$leaked" ]] && pass 'executor.env sets no MERGEN_CONTROL_*, MERGEN_WORKER_* or MERGEN_VPS_* key' \
+            || fail "executor.env must not set: ${leaked% }"
+    elif [[ "$as_root" -eq 1 ]]; then
+        fail 'executor.env cannot be read even as root; its keys cannot be checked'
+    else
+        warn 'executor.env is not readable by this account, as its 640 mode intends; root checks its keys (sudo verify-services.sh --before, and every --apply)'
+    fi
 fi
 if [[ -f "$dispatcher_env" && "$as_root" -eq 1 ]] && have runuser && user_exists "$MERGEN_EXECUTOR_USER"; then
     if runuser -u "$MERGEN_EXECUTOR_USER" -- test -r "$dispatcher_env"; then

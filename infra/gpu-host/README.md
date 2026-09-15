@@ -17,6 +17,7 @@ içindedir; bu dosya yalnız neyin ne olduğunu söyler.
 | `dispatcher.env.example`, `executor.env.example` | Boş yapılandırma şablonları | Hayır |
 | `stage-services.sh` | Dispatcher ve executor'ı sürümlü release'e kurar, ayrı venv'ler, unit ve env kopyası, atomik `current` geçişi | Yalnız `--apply` ile; servis başlatmaz |
 | `verify-services.sh` | Staging öncesi/sonrası doğrulama: hesap, dizin, env, token ayrımı, importlar, gate, unit; bu unit'lere uygulanan her drop-in (genel `service.d` dahil) reddedilir | Hayır |
+| `capture-baseline.sh` | MERGEN'in değiştireceği hedeflerin başlangıç durumunu yalnız metadata olarak yeni bir 0700 dizine kaydeder; env içeriği, kimlik, spool veya model içeriği almaz | Hayır; yalnız `--output` dizinine yazar |
 | `lib/services.sh`, `lib/service_probe.py` | Release düzeni yardımcıları; venv içinde değer yazdırmayan probe | Hayır |
 | `systemd/*.service.example` | Dispatcher ve executor unit'leri | `stage-services.sh` kopyalar; enable/start yok |
 | `test_gpu_host.py`, `test_stage_services.py`, `fake_host.py` | Sözleşme ve sahte host üzerinde staging testleri | Hayır |
