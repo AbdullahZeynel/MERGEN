@@ -1,4 +1,5 @@
-# EXAMPLE ONLY. Review every path on the host; nothing installs or starts this.
+# EXAMPLE ONLY until reviewed on the host. stage-services.sh copies it into a
+# release and to /etc/systemd/system, but never enables, starts or restarts it.
 #
 # Matches the G3 package `mergen_executor`, run from the same release layout
 # as the dispatcher:
