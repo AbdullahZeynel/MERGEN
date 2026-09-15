@@ -3,7 +3,6 @@ Run: python -m unittest discover -s mergen_executor -t ."""
 import os
 import stat
 import threading
-import time
 import unittest
 from unittest.mock import patch
 
@@ -90,18 +89,29 @@ class Readiness(ExecutorCase):
         publish_job(self.root)
         adapter = FakeImagingAdapter("block")
         executor = self.started(adapter=adapter, ready_refresh_seconds=0.02)
+        refreshed = threading.Event()
+        refresh_count = 0
+        refresh_lock = threading.Lock()
+        real_publish_ready = executor.publish_ready
+
+        def observe_refresh(*, accepting, force=False):
+            nonlocal refresh_count
+            real_publish_ready(accepting=accepting, force=force)
+            if threading.current_thread().name == "readiness":
+                with refresh_lock:
+                    refresh_count += 1
+                    if refresh_count >= 2:
+                        refreshed.set()
+
+        executor.publish_ready = observe_refresh
         worker = threading.Thread(target=executor.tick)
         worker.start()
         self.addCleanup(worker.join, 5)
         self.assertTrue(adapter.started.wait(5))
-        inodes, deadline = set(), time.monotonic() + 0.3
-        while time.monotonic() < deadline:
-            inodes.add(os.stat(self.root / "executor.json").st_ino)
-            self.assertFalse(ready_of(self.root)["acceptingJobs"])
-            time.sleep(0.01)
+        self.assertTrue(refreshed.wait(5), "executor.json was not refreshed during the job")
+        self.assertFalse(ready_of(self.root)["acceptingJobs"])
         adapter.release.set()
         worker.join(5)
-        self.assertGreaterEqual(len(inodes), 3, "executor.json was not refreshed during the job")
         self.assertEqual(status_of(self.root)["state"], "completed")
 
 
