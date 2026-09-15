@@ -12,10 +12,13 @@ never race on the same file:
         cancel                       dispatcher  empty marker: lease is gone
         status.json                  executor    replaced atomically
         result.zip                   executor    complete before `completed`
+        work/                        executor    scratch, gone before a verdict
     <runtime>/trash/<jobId>-<rand>/  dispatcher  removed once unlocked
 
 The executor holds an exclusive flock on a job directory while it works in
 it; the dispatcher deletes a directory only while holding that lock itself.
+The executor reaches a job only through the descriptor it locked, because the
+dispatcher may rename the directory into trash/ at any time.
 """
 from __future__ import annotations
 
@@ -35,6 +38,7 @@ INPUT_FILE = "input.zip"
 CANCEL_FILE = "cancel"
 STATUS_FILE = "status.json"
 RESULT_FILE = "result.zip"
+WORK_DIR = "work"
 
 # Directory modes. The runtime root is 2770 from tmpfiles. staging/ and trash/
 # are the dispatcher's alone; jobs/ lets the service group list and enter

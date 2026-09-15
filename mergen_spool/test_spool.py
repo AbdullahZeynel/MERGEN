@@ -9,7 +9,8 @@ from unittest.mock import patch
 from pydantic import ValidationError
 
 from mergen_spool import contract
-from mergen_spool.fs import create_marker, lock_directory, read_json, remove_unlocked, write_json_atomic
+from mergen_spool.fs import (create_marker, exists_at, lock_directory, read_json, read_json_at,
+                             remove_unlocked, write_json_atomic, write_json_atomic_at)
 
 REPO = Path(__file__).resolve().parents[1]
 JOB_ID = "a" * 32
@@ -166,6 +167,54 @@ class FileSystem(unittest.TestCase):
         with self.assertRaises(OSError):
             remove_unlocked(self.dir / "link")
         self.assertTrue((real / "keep").exists())
+
+
+class DescriptorHelpers(unittest.TestCase):
+    """The executor works through the descriptor of the job directory it
+    locked; these helpers must behave like their path versions."""
+
+    def setUp(self):
+        tmp = tempfile.TemporaryDirectory(prefix="mergen-spool-test-")
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name) / "job"
+        self.dir.mkdir()
+        self.fd = os.open(self.dir, os.O_RDONLY | os.O_DIRECTORY)
+        self.addCleanup(os.close, self.fd)
+
+    def test_writes_land_in_the_held_directory_even_after_a_rename(self):
+        moved = self.dir.with_name("trash-job")
+        os.rename(self.dir, moved)
+        write_json_atomic_at(self.fd, "status.json", {"state": "running"})
+        self.assertEqual(read_json(moved / "status.json"), {"state": "running"})
+        self.assertEqual(read_json_at(self.fd, "status.json"), {"state": "running"})
+        self.assertEqual(os.listdir(moved), ["status.json"])
+
+    def test_the_file_is_synced_before_the_rename_and_the_directory_after(self):
+        events, real_fsync, real_replace = [], os.fsync, os.replace
+
+        def fsync(fd):
+            events.append("fsync-dir" if stat.S_ISDIR(os.fstat(fd).st_mode) else "fsync-file")
+            real_fsync(fd)
+
+        def replace(*args, **kwargs):
+            events.append("rename")
+            real_replace(*args, **kwargs)
+
+        with patch("os.fsync", side_effect=fsync), patch("os.replace", side_effect=replace):
+            write_json_atomic_at(self.fd, "status.json", {"state": "accepted"})
+        self.assertEqual(events, ["fsync-file", "rename", "fsync-dir"])
+
+    def test_links_and_oversized_files_are_refused_and_existence_ignores_links(self):
+        (self.dir / "target.json").write_text("{}", encoding="utf-8")
+        (self.dir / "link.json").symlink_to(self.dir / "target.json")
+        with self.assertRaises(OSError):
+            read_json_at(self.fd, "link.json")
+        (self.dir / "big.json").write_text("[" + "0," * 40000 + "0]", encoding="utf-8")
+        with self.assertRaises(ValueError):
+            read_json_at(self.fd, "big.json")
+        (self.dir / "dangling").symlink_to(self.dir / "missing")
+        self.assertTrue(exists_at(self.fd, "dangling"))
+        self.assertFalse(exists_at(self.fd, "cancel"))
 
 
 if __name__ == "__main__":
