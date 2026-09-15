@@ -92,6 +92,15 @@ class Configuration(unittest.TestCase):
         self.assertEqual(config.gpu_lock_path, Path("/var/lib/mergen/executor/gpu.lock"))
         self.assertEqual(config.spool_owner_uid, os.geteuid())
         self.assertLess(config.ready_refresh_seconds, 90)
+        self.assertEqual(config.model_root, Path("/srv/mergen-models"))
+        self.assertIsNone(config.imaging_venv)
+
+    def test_model_root_and_venv_are_configurable(self):
+        config = ExecutorConfig.from_env(self.env(
+            MERGEN_MODEL_ROOT="/srv/mergen-models/imaging/v1",
+            MERGEN_IMAGING_VENV="/srv/mergen-models/venv/imaging"))
+        self.assertEqual(config.model_root, Path("/srv/mergen-models/imaging/v1"))
+        self.assertEqual(config.imaging_venv, Path("/srv/mergen-models/venv/imaging"))
 
     def test_invalid_values_name_the_variable(self):
         cases = {"MERGEN_RUNTIME_ROOT": "relative/runtime",
@@ -102,6 +111,10 @@ class Configuration(unittest.TestCase):
                  "MERGEN_GPU_WAIT_SECONDS": "120",
                  "MERGEN_EXECUTOR_POLL_SECONDS": "soon",
                  "MERGEN_MAX_INPUT_BYTES": "0"}
+        cases.update({"MERGEN_MODEL_ROOT": "relative/model",
+                      "MERGEN_IMAGING_VENV": "relative/venv",
+                      "MERGEN_ADAPTER_TIMEOUT_SECONDS": "5",
+                      "MERGEN_ADAPTER_TERM_GRACE_SECONDS": "0"})
         for name, value in cases.items():
             with self.subTest(name=name), self.assertRaisesRegex(ConfigError, name):
                 ExecutorConfig.from_env(self.env(**{name: value}))

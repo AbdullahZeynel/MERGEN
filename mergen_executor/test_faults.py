@@ -203,6 +203,8 @@ class Isolation(unittest.TestCase):
                     continue
                 for module in modules:
                     with self.subTest(file=path.name, module=module):
+                        if path.name == "process_adapter.py" and module == "subprocess":
+                            continue  # G4's sole, audited process boundary.
                         self.assertNotIn(module.split(".")[0], self.FORBIDDEN)
 
     def test_the_package_never_names_a_vps_setting(self):
