@@ -202,6 +202,9 @@ tanımlayıcısı üzerinden kilitler; `job.json`'u ve girdinin boyutunu/SHA-256
 yeniden doğrular, arşivi `backend.archive_io` ile denetleyip `work/input`'a açar ve
 adaptöre işe özel giriş/çıkış dizinleri verir. Sonucu geçici adla kopyalar, fsync
 eder, doğrular ve `rename` ile yayımlar; `completed` ancak bundan sonra yazılır.
+Terminal kararı dispatcher'ın `cancel` işaretiyle aynı `gate` kilidi altında yazar;
+`rename`'den sonra ama karardan önce gelen `cancel` sonucu geri çektirir ve iş
+`failed/cancelled` olur.
 G3'te gerçek model yoktur: üretim kaydında adaptör bulunmadığı için hiçbir yetenek
 ilan edilmez, testler sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA
 preflight'ı ve NVIDIA cihaz izinleri G4'tedir.

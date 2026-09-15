@@ -43,7 +43,8 @@ class Cancellation(ExecutorCase):
         self.assertEqual(outcomes, ["cancelled"])
         status = status_of(self.root)
         self.assertEqual((status["state"], status["errorCode"]), ("failed", "cancelled"))
-        self.assertEqual(sorted(os.listdir(directory)), ["cancel", "input.zip", "job.json", "status.json"])
+        self.assertEqual(sorted(os.listdir(directory)),
+                         ["cancel", "gate", "input.zip", "job.json", "status.json"])
 
     def test_a_cancel_racing_the_publication_publishes_nothing(self):
         directory = publish_job(self.root)
@@ -56,7 +57,8 @@ class Cancellation(ExecutorCase):
 
         with patch("mergen_executor.jobdir.validate_result_archive", side_effect=validate):
             self.assertEqual(self.started().tick(), "cancelled")
-        self.assertEqual(sorted(os.listdir(directory)), ["cancel", "input.zip", "job.json", "status.json"])
+        self.assertEqual(sorted(os.listdir(directory)),
+                         ["cancel", "gate", "input.zip", "job.json", "status.json"])
 
 
 class SingleInference(ExecutorCase):
@@ -105,7 +107,7 @@ class Recovery(ExecutorCase):
         executor = self.started()
         status = status_of(self.root)
         self.assertEqual((status["state"], status["errorCode"]), ("failed", "internal-error"))
-        self.assertEqual(sorted(os.listdir(directory)), ["input.zip", "job.json", "status.json"])
+        self.assertEqual(sorted(os.listdir(directory)), ["gate", "input.zip", "job.json", "status.json"])
         self.assertEqual(executor.tick(), "idle")
         self.assertEqual(self.adapter.runs, [])
 

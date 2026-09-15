@@ -15,6 +15,7 @@ from types import MappingProxyType
 from backend.archive_io import InvalidArchive, validate_input_archive
 from mergen_executor.adapter import AdapterFailure, ImagingAdapter, ImagingJob
 from mergen_executor.config import ExecutorConfig
+from mergen_executor.finalize import check_gate, finalize
 from mergen_executor.gpu import GpuProbe, UncheckedGpu
 from mergen_executor.jobdir import JOB_NAME, Cancelled, JobRejected, LockedJob, StatusProblem
 from mergen_executor.layout import verify_jobs_directory, verify_spool, verify_state
@@ -213,6 +214,7 @@ class Executor:
     def _process(self, job: LockedJob) -> str:
         try:
             document = job.read_job()
+            check_gate(job)
             job.advance("accepted")
             LOG.info("job %s: accepted", job.tag)
             with job.open_input(document, self.config.max_input_bytes) as archive:
@@ -239,7 +241,11 @@ class Executor:
             result = job.publish_result(name, document, max_result_bytes=self.config.max_result_bytes,
                                         max_expanded_bytes=self.config.max_expanded_bytes)
             job.remove_work()
-            job.advance("completed", result=result)
+            # The only way to `completed`: under the gate, after a last look for cancel.
+            state, code = finalize(job, "completed", result=result)
+            if state != "completed":
+                LOG.warning("job %s: result withdrawn before the verdict (%s)", job.tag, code)
+                return CANCELLED if code == "cancelled" else FAILED
             LOG.info("job %s: completed", job.tag)
             return COMPLETED
         except Cancelled:
@@ -276,10 +282,13 @@ class Executor:
         except OSError as exc:
             LOG.warning("job %s: cleanup incomplete (%s)", job.tag, type(exc).__name__)
         try:
-            job.advance("failed", error_code=error_code)
+            _, written = finalize(job, "failed", error_code=error_code)
         except StatusProblem:
             LOG.error("job %s: the failure could not be recorded", job.tag)
-        LOG.warning("job %s: %s (%s)", job.tag, outcome, error_code)
+            return outcome
+        if written == "cancelled":
+            outcome = CANCELLED
+        LOG.warning("job %s: %s (%s)", job.tag, outcome, written)
         return outcome
 
     # -- recovery ------------------------------------------------------------------
@@ -311,5 +320,5 @@ class Executor:
 
     def _fail_interrupted(self, job: LockedJob) -> None:
         job.remove_leftovers(keep_result=False)
-        job.advance("failed", error_code="internal-error")
-        LOG.warning("job %s: an interrupted run was failed (internal-error)", job.tag)
+        _, written = finalize(job, "failed", error_code="internal-error")
+        LOG.warning("job %s: an interrupted run was failed (%s)", job.tag, written)

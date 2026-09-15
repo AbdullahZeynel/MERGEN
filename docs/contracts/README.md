@@ -53,11 +53,33 @@ kilidi kendisi alabildiğinde siler. Şemalar `mergen_spool/contract.py` içinde
 
 Executor da başlarken kökü (2770, sahibi `MERGEN_SPOOL_OWNER`, grubuna üyelik) ve
 `jobs/` dizinini (2750) doğrular. İşe yalnız kilitlediği dizin tanımlayıcısı
-üzerinden erişir ve `job.json`, `input.zip`, `cancel` dosyalarını yalnız okur.
-Durum `accepted → running → completed | failed` sırasıyla ilerler; terminal durum
-yeniden yazılmaz. Sonuç `.result.zip.<rastgele>.tmp` adıyla yazılıp fsync edilir,
-doğrulanır ve tek `rename` ile `result.zip` olur; `completed` ancak bundan sonra
-yazılır. `cancel` varsa iş başlamaz; çalışırken gelirse sonuç yayımlanmaz.
+üzerinden erişir; `job.json`, `input.zip` ve `cancel` dosyalarını yalnız okur,
+`gate`'i yalnız kilitler. Durum `accepted → running → completed | failed` sırasıyla
+ilerler; terminal durum yeniden yazılmaz. Sonuç `.result.zip.<rastgele>.tmp` adıyla
+yazılıp fsync edilir, doğrulanır ve tek `rename` ile `result.zip` olur; `completed`
+ancak bundan sonra yazılır. `cancel` varsa iş başlamaz.
+
+### `cancel` ile kararın sırası
+
+`cancel`'a bakıp sonra `completed` yazmak, arada `cancel`'ın gelebileceği bir boşluk
+bırakır; ikinci bir bakış bu boşluğu yalnız daraltır, kapatmaz. Boşluğu `gate`
+kapatır:
+
+- Dispatcher `cancel`'ı yalnız `gate` üzerinde `flock(LOCK_EX)` tutarken oluşturur.
+- Executor her terminal durumu (`completed` ve `failed`) aynı kilidi tutarken ve
+  `cancel`'a son kez baktıktan sonra yazar. Bu bakış ile yazma karşı taraf için tek
+  adımdır.
+- Kilidi önce alan sırayı belirler. `cancel` önceyse executor `result.zip`'i geri
+  çeker ve `failed/cancelled` yazar. Karar önceyse `cancel` kararı değiştirmez:
+  dispatcher `cancel`'ı yalnız sonucunu yüklemeyeceği bir iş için yazar (lease kaybı
+  ya da VPS'e bildirilen hata) ve ardından dizini atar; VPS de süresi dolmuş lease
+  için sonuç kabul etmez.
+- Kilit adaptör çalışırken tutulmaz; `cancel` çalışan işe hemen görünür. `flock`
+  sahibi ölünce bırakılır, çöken bir süreç kilidi tutulu bırakamaz.
+- `gate`'i olmayan, bağlantı olan ya da başka sürümde `gate`'i olan iş çalıştırılmaz
+  (`failed/internal-error`). Executor kilidi 10 sn içinde alamazsa `completed`
+  yazmaz, iş `failed/internal-error` olur; dispatcher alamazsa işareti yazmaz ve yine
+  hiçbir şey yüklemez.
 
 ## Hazır demo paketleri
 

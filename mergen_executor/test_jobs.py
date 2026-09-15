@@ -6,28 +6,13 @@ import stat
 import unittest
 import warnings
 import zipfile
-from unittest.mock import patch
 
-from mergen_executor import jobdir
 from mergen_executor.jobdir import LockedJob, StatusProblem
 from mergen_executor.test_support import (JOB_ID, MARKER, ExecutorCase, FakeImagingAdapter, imaging_input,
-                                          imaging_manifest, publish_job, result_zip, sha256, status_of,
-                                          zip_bytes)
-from mergen_spool import contract
+                                          imaging_manifest, publish_job, recorded_states, result_zip, sha256,
+                                          status_of, zip_bytes)
 
-OWNED_BY_DISPATCHER = ("job.json", "input.zip")
-
-
-def recorded_states():
-    """Patch the status writer so that it also records each state it writes."""
-    states, real = [], jobdir.write_json_atomic_at
-
-    def write(fd, name, document):
-        if name == contract.STATUS_FILE:
-            states.append(document["state"])
-        real(fd, name, document)
-
-    return states, patch("mergen_executor.jobdir.write_json_atomic_at", side_effect=write)
+OWNED_BY_DISPATCHER = ("gate", "job.json", "input.zip")
 
 
 def job_id(number: int) -> str:
@@ -47,7 +32,8 @@ class HappyPath(ExecutorCase):
         result = (directory / "result.zip").read_bytes()
         self.assertEqual(status_of(self.root)["result"],
                          {"path": "result.zip", "sha256": sha256(result), "size": len(result)})
-        self.assertEqual(sorted(os.listdir(directory)), ["input.zip", "job.json", "result.zip", "status.json"])
+        self.assertEqual(sorted(os.listdir(directory)),
+                         ["gate", "input.zip", "job.json", "result.zip", "status.json"])
         after = {name: (sha256((directory / name).read_bytes()), os.stat(directory / name).st_mtime_ns)
                  for name in OWNED_BY_DISPATCHER}
         self.assertEqual(before, after, "the executor changed a file the dispatcher owns")
@@ -151,7 +137,8 @@ class AdapterVerdicts(ExecutorCase):
                 self.assertEqual(self.started(adapter=adapter).tick(), "failed")
                 status = status_of(self.root, job_id(number))
                 self.assertEqual((status["state"], status["errorCode"]), ("failed", code))
-                self.assertEqual(sorted(os.listdir(directory)), ["input.zip", "job.json", "status.json"])
+                self.assertEqual(sorted(os.listdir(directory)),
+                                 ["gate", "input.zip", "job.json", "status.json"])
         self.assertEqual(outside.read_bytes(), result_zip(), "a linked result was written through")
 
     def test_a_result_over_its_size_limit_is_refused(self):

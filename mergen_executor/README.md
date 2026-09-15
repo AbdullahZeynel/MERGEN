@@ -11,28 +11,30 @@ istemcisi, VPS adresi veya worker token'ı yoktur; dispatcher ile yalnız
 kabul: adaptör hazır · pause yok · GPU probe boş · gpu.lock alındı  → acceptingJobs=true
 jobs/<id> → flock(LOCK_EX); dosyalara yalnız dizin tanımlayıcısı üzerinden erişilir
   durum yok + cancel var             → dokunulmaz
-  job.json (v1, bu iş, glioma)       ─✗→ failed
+  job.json (v1, bu iş, glioma), gate v1  ─✗→ failed
 accepted
   input.zip boyut + SHA-256 = job.json, archive_io, work/input'a açma  ─✗→ failed
 running
   adaptör: work/input → work/output   ─✗→ failed
   cancel?                             → failed(cancelled), sonuç yayımlanmaz
   .result.zip.<rastgele>.tmp → fsync → sonuç sözleşmesi → rename result.zip → fsync
-completed(result: sha256, boyut)       work/ bu karardan önce silinir
+  work/ silinir
+  flock(gate) + cancel?               → result.zip geri çekilir, failed(cancelled)
+completed(result: sha256, boyut)       aynı gate kilidi altında yazılır
 ```
 
 Terminal durum yeniden yazılmaz; durum geri gitmez ve tekrarlanmaz. Okunamayan bir
-`status.json`'a dokunulmaz, iş başarılı sayılmaz. `job.json`, `input.zip` ve
-`cancel` dispatcher'ındır ve yalnız okunur.
+`status.json`'a dokunulmaz, iş başarılı sayılmaz. `job.json`, `input.zip`, `cancel`
+ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
 
 | Durum | Hata kodu |
 |---|---|
-| `job.json` geçersiz ya da başka işe ait; girdinin boyutu veya özeti `job.json`'la uyuşmuyor | `internal-error` |
+| `job.json` geçersiz ya da başka işe ait; girdinin boyutu veya özeti `job.json`'la uyuşmuyor; `gate` yok, bağlantı ya da başka sürüm; karar anında `gate` 10 sn içinde alınamadı | `internal-error` |
 | Hastalık `glioma` değil; girdi arşivi sözleşmeye uymuyor; girdi executor sınırını aşıyor | `input-invalid` |
 | Adaptörün `AdapterFailure` kodu (sözleşme dışıysa `internal-error`) | olduğu gibi |
 | Adaptör istisnası; sonuç eksik, bağlantı, geçersiz ya da başka işe ait | `inference-failed` |
 | Bellek bitti, sonuç sınırı aşıldı, disk doldu | `resource-exhausted` |
-| `cancel` işareti | `cancelled` |
+| Karardan önce görülen `cancel` işareti (`rename`'den sonra gelse de) | `cancelled` |
 
 ## Kilit, cancel ve yeniden başlatma
 
@@ -42,6 +44,13 @@ Terminal durum yeniden yazılmaz; durum geri gitmez ve tekrarlanmaz. Okunamayan 
   ve dizini silmek için aynı kilidi bekler.
 - `cancel` başlamadan önce varsa iş hiç açılmaz. Adaptör çalışırken `cancelled()`
   doğru döner; adaptör döndükten ve `rename`'den hemen önce yeniden bakılır.
+- Bu bakışlar yalnız gereksiz işi keser; sırayı `gate` belirler. Her terminal durum
+  `gate` üzerinde `flock` tutulurken ve `cancel`'a son kez bakıldıktan sonra yazılır;
+  dispatcher `cancel`'ı yalnız aynı kilit altında oluşturur. `rename`'den sonra ama
+  karardan önce gelen `cancel` `result.zip`'i geri çektirir ve iş `failed/cancelled`
+  olur. Karardan sonra gelen `cancel` kararı değiştirmez; dispatcher o işin sonucunu
+  zaten yüklemez. Kilit adaptör çalışırken tutulmaz. Ayrıntı:
+  [spool sözleşmesi](../docs/contracts/README.md).
 - Başlarken: bayat `executor.json` `acceptingJobs=false` ile değiştirilir, geçici
   dosyalar ve `work/` silinir, `accepted`/`running` kalmış işler
   `failed/internal-error` olur ve `completed` olmayan bir `result.zip` silinir.

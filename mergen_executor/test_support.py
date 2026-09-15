@@ -13,13 +13,16 @@ import time
 import unittest
 import zipfile
 from pathlib import Path
+from unittest.mock import patch
 
+from mergen_executor import jobdir
 from mergen_executor.adapter import AdapterFailure, ImagingAdapter, ImagingJob
 from mergen_executor.config import ExecutorConfig
 from mergen_executor.gpu import GpuState
 from mergen_executor.runtime import Executor
 from mergen_spool import contract
 from mergen_spool.fs import read_json, write_json_atomic
+from mergen_spool.gate import create_gate
 
 JOB_ID = "e" * 32
 # Stands in for image content and manifest detail; must never reach a log line.
@@ -85,6 +88,7 @@ def publish_job(root: Path, job_id: str = JOB_ID, payload: bytes | None = None, 
     directory = root / contract.JOBS_DIR / job_id
     directory.mkdir()
     os.chmod(directory, contract.JOB_DIRECTORY_MODE)
+    create_gate(directory)
     (directory / contract.INPUT_FILE).write_bytes(payload)
     document = {"schemaVersion": 1, "kind": "mergen-spool-job", "jobId": job_id, "module": "imaging",
                 "disease": "glioma",
@@ -111,6 +115,18 @@ def status_of(root: Path, job_id: str = JOB_ID) -> dict | None:
 
 def ready_of(root: Path) -> dict:
     return read_json(root / contract.READY_FILE)
+
+
+def recorded_states():
+    """Patch the status writer so that it also records each state it writes."""
+    states, real = [], jobdir.write_json_atomic_at
+
+    def write(fd, name, document):
+        if name == contract.STATUS_FILE:
+            states.append(document["state"])
+        real(fd, name, document)
+
+    return states, patch("mergen_executor.jobdir.write_json_atomic_at", side_effect=write)
 
 
 def wait_until(predicate, timeout: float = 5.0) -> None:

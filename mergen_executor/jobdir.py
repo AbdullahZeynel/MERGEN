@@ -2,9 +2,10 @@
 
 The dispatcher may rename a job directory into trash/ at any time, so every
 file operation here is relative to the descriptor that holds the lock, and no
-path component is ever followed through a link. job.json, input.zip and cancel
-belong to the dispatcher and are only read; status.json, result.zip and work/
-belong to the executor.
+path component is ever followed through a link. job.json, input.zip, cancel and
+gate belong to the dispatcher and are only read, the gate also locked (see
+mergen_executor.finalize); status.json, result.zip and work/ belong to the
+executor.
 """
 from __future__ import annotations
 
@@ -187,8 +188,8 @@ class LockedJob:
     def publish_result(self, name: str, job: contract.SpoolJob, *, max_result_bytes: int,
                        max_expanded_bytes: int) -> contract.ResultRef:
         """Copy the adapter's ZIP to a temporary name, fsync it, validate what
-        was written and rename it to result.zip. The caller writes `completed`
-        only after this returns."""
+        was written and rename it to result.zip. `completed` is written only
+        after this returns, and only by finalize() under the gate."""
         if not isinstance(name, str) or not RESULT_NAME.fullmatch(name):
             raise JobRejected("inference-failed", "the adapter returned an unusable result name")
         limit = min(job.maxResultBytes, max_result_bytes)
