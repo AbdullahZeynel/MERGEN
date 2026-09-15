@@ -111,6 +111,12 @@ Canlı veri yalnızca şu dizinde tutulur:
 - VPS temizleyicisi her dakika sona eren oturumları, ilişkili dosyaları ve iş
   satırlarını kaldırır. Uygulama logları dosya adı, payload veya
   oturum kimliğinin tamamını içermez; yalnızca toplu süre/hata kodu tutulur.
+- Oturum silme, dizini önce aynı dosya sistemindeki `.trash/sessions` alanına
+  atomik taşıyıp veritabanı satırını kaldırır. Yeniden başlatma, yarım kararı
+  satırın varlığına göre geri alır veya tamamlar. Eski ve kesin protokol adına
+  sahip sahipsiz upload/job/session yolları silinmeden `.quarantine` alanına
+  taşınır; yeni yollar aktif isteklerle karışmaması için varsayılan bir saatlik
+  grace süresi dolmadan orphan sayılmaz.
 - SSD'de dosya silmek fiziksel blokların anında geri döndürülemez silindiğini garanti
   etmez. Host disk şifrelemesi, kısa saklama süresi ve yedeklere runtime dizinini
   almamak tasarımın parçasıdır. Bu teknik tasarım tek başına KVKK uygunluk beyanı

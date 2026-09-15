@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import io
 import json
+import os
 import tempfile
 import unittest
 import zipfile
@@ -193,6 +194,12 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(result.status_code, 200)
         self.assertEqual(result.headers["cache-control"], "no-store")
 
+        result_path = self.store.job_directory(
+            self.store.get_session(self.public.cookies.get("mergen_session"))["id"], job_id
+        ) / "result.zip"
+        result_path.write_bytes(b"corrupted-after-completion")
+        self.assertEqual((await self.public.get(glb_url)).status_code, 503)
+
         session_id = self.store.get_session(self.public.cookies.get("mergen_session"))["id"]
         session_path = self.store.session_directory(session_id)
         self.assertTrue(session_path.exists())
@@ -234,6 +241,21 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         session = self.store.get_session(self.public.cookies.get("mergen_session"))
         self.assertEqual(list(self.store.session_directory(session["id"]).glob("*.part")), [])
 
+    async def test_job_publish_rolls_back_the_row_and_upload_on_fsync_failure(self):
+        session = self.store.create_session()
+        staging = self.store.session_directory(session["id"]) / "upload-test.part"
+        staging.write_bytes(imaging_input())
+        job_id = "a" * 32
+        with patch("backend.live_store.os.fsync", side_effect=OSError("synthetic storage fault")):
+            with self.assertRaises(OSError):
+                self.store.publish_job_input(
+                    session["id"], "imaging", "glioma", hashlib.sha256(staging.read_bytes()).hexdigest(),
+                    staging, job_id,
+                )
+        self.assertTrue(staging.is_file())
+        self.assertIsNone(self.store.job_for_session(job_id, session["id"]))
+        self.assertFalse(self.store.job_directory(session["id"], job_id).exists())
+
     async def test_worker_authentication_is_required(self):
         self.assertEqual((await self.control.get("/internal/health")).status_code, 401)
         self.assertEqual((await self.control.get("/internal/health", headers=self.worker_headers)).status_code, 200)
@@ -261,6 +283,116 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.cleanup()["expiredSessions"], 1)
         self.assertFalse(marker.exists())
         self.assertIsNone(self.store.get_session(token))
+
+    async def test_cleanup_rechecks_a_session_refreshed_after_selection(self):
+        session = self.store.create_session()
+        cleanup_now = self.store.now()
+        with self.store.connect() as db:
+            db.execute("UPDATE sessions SET last_seen=0,absolute_expires=? WHERE id=?",
+                       (cleanup_now + 500, session["id"]))
+        with patch.object(self.store, "now", return_value=cleanup_now):
+            self.assertEqual(self.store.heartbeat(session["id"]), cleanup_now)
+            self.assertFalse(self.store.delete_session(session["id"], expired_before=cleanup_now))
+        self.assertTrue(self.store.session_directory(session["id"]).is_dir())
+        self.assertIsNotNone(self.store.get_session(session["token"]))
+
+    async def test_startup_restores_a_session_renamed_before_its_row_was_deleted(self):
+        session = self.store.create_session()
+        live = self.store.session_directory(session["id"])
+        tombstone = self.store.session_trash / session["id"]
+        live.replace(tombstone)
+
+        LiveStore(self.store.settings)
+
+        self.assertTrue(live.is_dir())
+        self.assertFalse(tombstone.exists())
+        self.assertIsNotNone(self.store.get_session(session["token"]))
+
+    async def test_startup_finishes_a_committed_session_deletion(self):
+        session = self.store.create_session()
+        live = self.store.session_directory(session["id"])
+        tombstone = self.store.session_trash / session["id"]
+        marker = live / "private-payload"
+        marker.write_bytes(b"temporary")
+        live.replace(tombstone)
+        with self.store.connect() as db:
+            db.execute("DELETE FROM sessions WHERE id=?", (session["id"],))
+
+        LiveStore(self.store.settings)
+
+        self.assertFalse(tombstone.exists())
+        self.assertFalse(marker.exists())
+
+    async def test_startup_leaves_unrecognised_trash_entries_alone(self):
+        unknown = self.store.session_trash / "operator-recovery"
+        unknown.mkdir()
+        marker = unknown / "keep"
+        marker.write_bytes(b"not-owned-by-the-session-protocol")
+
+        LiveStore(self.store.settings)
+
+        self.assertTrue(marker.is_file())
+
+    async def test_session_delete_refuses_a_replaced_directory_symlink(self):
+        session = self.store.create_session()
+        live = self.store.session_directory(session["id"])
+        live.rmdir()
+        live.symlink_to(self.store.settings.runtime_root)
+
+        with self.assertRaisesRegex(ValueError, "invalid session path"):
+            self.store.delete_session(session["id"])
+
+        with self.store.connect() as db:
+            self.assertEqual(
+                db.execute("SELECT COUNT(*) FROM sessions WHERE id=?", (session["id"],)).fetchone()[0], 1
+            )
+
+    async def test_startup_quarantines_only_protocol_owned_orphans(self):
+        session = self.store.create_session()
+        live = self.store.session_directory(session["id"])
+        partial = live / "upload-0123456789abcdef.part"
+        partial.write_bytes(b"partial-patient-upload")
+        unknown = live / "operator-note.part"
+        unknown.write_bytes(b"keep")
+        orphan_job = live / "jobs" / ("b" * 32)
+        orphan_job.mkdir(parents=True)
+        (orphan_job / "input.zip").write_bytes(b"orphan-patient-upload")
+        orphan_session = self.store.settings.runtime_root / "sessions" / ("c" * 32)
+        orphan_session.mkdir()
+        (orphan_session / "payload").write_bytes(b"orphan-session-payload")
+        old = self.store.now() - self.store.settings.orphan_grace_seconds - 1
+        for path in (partial, orphan_job, orphan_session):
+            os.utime(path, (old, old), follow_symlinks=False)
+
+        LiveStore(self.store.settings)
+
+        quarantine = self.store.settings.runtime_root / ".quarantine"
+        self.assertTrue((quarantine / "uploads" / f"{session['id']}-0123456789abcdef").is_file())
+        self.assertTrue((quarantine / "jobs" / f"{session['id']}-{'b' * 32}").is_dir())
+        self.assertTrue((quarantine / "sessions" / ("c" * 32)).is_dir())
+        self.assertFalse(partial.exists())
+        self.assertFalse(orphan_job.exists())
+        self.assertFalse(orphan_session.exists())
+        self.assertTrue(unknown.is_file())
+
+    async def test_startup_does_not_quarantine_recent_inflight_paths(self):
+        session = self.store.create_session()
+        live = self.store.session_directory(session["id"])
+        partial = live / "upload-fedcba9876543210.part"
+        partial.write_bytes(b"inflight")
+        orphan_job = live / "jobs" / ("d" * 32)
+        orphan_job.mkdir(parents=True)
+
+        LiveStore(self.store.settings)
+
+        self.assertTrue(partial.is_file())
+        self.assertTrue(orphan_job.is_dir())
+
+    async def test_heartbeat_does_not_report_a_concurrently_deleted_session_as_active(self):
+        csrf = await self.create_session()
+        with patch.object(self.store, "heartbeat", return_value=None):
+            response = await self.public.post("/api/live/session/heartbeat", headers=csrf)
+        self.assertEqual(response.status_code, 401)
 
     async def test_documented_input_examples_match_contract(self):
         examples = Path(__file__).parents[1] / "docs/contracts"
@@ -326,6 +458,11 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
         self.assertFalse((self.store.job_directory(session["id"], job_id) / "result.zip").exists())
         renewal = await self.control.post(f"/internal/jobs/{job_id}/lease", headers=self.worker_headers)
         self.assertEqual(renewal.status_code, 409)
+        failure = await self.control.post(
+            f"/internal/jobs/{job_id}/failure", headers=self.worker_headers,
+            json={"errorCode": "inference-failed"},
+        )
+        self.assertEqual(failure.status_code, 409)
 
 
 class LiveSettingsEnvironmentTests(unittest.IsolatedAsyncioTestCase):
