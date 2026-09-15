@@ -39,6 +39,38 @@ services_paths() {
     DISPATCHER_STATE="$prefix$MERGEN_DISPATCHER_STATE"
     EXECUTOR_STATE="$prefix$MERGEN_EXECUTOR_STATE"
     MODEL_ROOT="$prefix$MERGEN_MODEL_ROOT"
+    SYSTEM_PREFIX="$prefix"
+}
+
+# The system manager's unit search path (systemd.unit(5)), plus /lib for a
+# split-/usr host. A drop-in in any of them changes a unit without touching
+# its file.
+SYSTEMD_UNIT_PATHS=(/etc/systemd/system.control /run/systemd/system.control /run/systemd/transient
+    /run/systemd/generator.early /etc/systemd/system /etc/systemd/system.attached /run/systemd/system
+    /run/systemd/system.attached /run/systemd/generator /usr/local/lib/systemd/system
+    /usr/lib/systemd/system /lib/systemd/system /run/systemd/generator.late)
+
+# Every *.conf drop-in systemd would merge into a MERGEN unit: the unit's own
+# .d directory and the shared mergen- prefix directory, in each search path.
+mergen_dropins() {
+    local path dir file
+    for path in "${SYSTEMD_UNIT_PATHS[@]}"; do
+        for dir in mergen-dispatcher.service.d mergen-executor.service.d mergen-.service.d; do
+            for file in "$SYSTEM_PREFIX$path/$dir"/*.conf; do
+                if [[ -e "$file" || -L "$file" ]]; then printf '%s\n' "$file"; fi
+            done
+        done
+    done
+}
+
+# Drop-ins for every service on the host, which reach these units too.
+global_dropins() {
+    local path file
+    for path in "${SYSTEMD_UNIT_PATHS[@]}"; do
+        for file in "$SYSTEM_PREFIX$path/service.d"/*.conf; do
+            if [[ -e "$file" || -L "$file" ]]; then printf '%s\n' "$file"; fi
+        done
+    done
 }
 
 valid_version() { [[ "$1" =~ $VERSION_PATTERN ]]; }

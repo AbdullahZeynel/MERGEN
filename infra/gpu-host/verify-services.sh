@@ -4,11 +4,12 @@
 #   bash infra/gpu-host/verify-services.sh --before        # is the host ready to stage?
 #   sudo bash infra/gpu-host/verify-services.sh --after    # the release `current` names
 #
-# --before checks accounts, groups, directories, env files and the unit files
-# about to be staged. --after adds the release itself: its manifest, each venv's
-# imports and dependencies, the spool gate version, the configuration each
-# service would load, the installed units and `systemd-analyze verify`.
-# stage-services.sh runs both. Nothing is written, enabled or started.
+# --before checks accounts, groups, directories, env files, the unit files
+# about to be staged and that no drop-in overrides either unit. --after adds
+# the release itself: its manifest, each venv's imports and dependencies, the
+# spool gate version, the configuration each service would load, the
+# installed units and `systemd-analyze verify`. stage-services.sh runs both.
+# Nothing is written, enabled or started.
 #
 # Output names paths, versions and variable names only: never a value from an
 # env file, an address, a hostname or anything found under the spool.
@@ -127,6 +128,23 @@ if [[ -f "$dispatcher_env" && "$as_root" -eq 1 ]] && have runuser && user_exists
 elif [[ -f "$dispatcher_env" ]]; then
     info 'The read test as mergen-executor needs root; only owner, group and mode were checked.'
 fi
+
+# -- drop-ins -------------------------------------------------------------------
+# A drop-in changes a unit without touching its file: it could hand the executor
+# a control setting or turn PrivateNetwork off while the unit itself looks clean.
+# None is accepted; the release's unit is the whole definition. Paths only.
+section 'Unit drop-ins'
+dropins="$(mergen_dropins)"
+if [[ -n "$dropins" ]]; then
+    while IFS= read -r file; do
+        fail "Drop-in found: $file; it could override the unit's environment, network or devices. Remove it."
+    done <<< "$dropins"
+else
+    pass 'No drop-in overrides mergen-dispatcher.service or mergen-executor.service'
+fi
+while IFS= read -r file; do
+    [[ -n "$file" ]] && warn "Global service drop-in, applied to these units too: $file; review it"
+done <<< "$(global_dropins)"
 
 # -- units ----------------------------------------------------------------------
 check_unit() {

@@ -181,6 +181,70 @@ class Failures(StagingCase):
         self.assertEqual(self.host.snapshot(), before)
 
 
+class DropIns(StagingCase):
+    def drop_in(self, directory: str, text: str, name: str = "override.conf") -> Path:
+        path = self.host.path(f"{directory}/{name}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+        return path
+
+    def assert_refused(self, result: subprocess.CompletedProcess, path: Path) -> None:
+        self.assert_code(result, 1)
+        self.assertIn(f"Drop-in found: {path};", result.stdout)
+
+    def test_a_control_token_in_an_executor_drop_in_is_refused(self):
+        path = self.drop_in("/etc/systemd/system/mergen-executor.service.d",
+                            f"[Service]\nEnvironment=MERGEN_CONTROL_TOKEN={SECRET}\n")
+        before = self.host.snapshot()
+        for result in (self.host.verify("before"), self.host.stage(), self.host.stage("--apply")):
+            self.assert_refused(result, path)
+            self.assertNotIn(SECRET, result.stdout + result.stderr)
+        self.assertEqual(self.host.snapshot(), before)
+
+    def test_a_private_network_override_is_refused(self):
+        path = self.drop_in("/etc/systemd/system/mergen-executor.service.d", "[Service]\nPrivateNetwork=false\n",
+                            name="10-network.conf")
+        self.assert_refused(self.host.verify("before"), path)
+
+    def test_a_dispatcher_drop_in_is_refused(self):
+        path = self.drop_in("/etc/systemd/system/mergen-dispatcher.service.d", "[Service]\nNice=0\n")
+        self.assert_refused(self.host.stage("--apply"), path)
+        self.assertIsNone(self.current())
+
+    def test_drop_ins_in_other_unit_paths_are_refused(self):
+        for directory in ("/run/systemd/system/mergen-executor.service.d",
+                          "/usr/lib/systemd/system/mergen-.service.d",
+                          "/etc/systemd/system.control/mergen-dispatcher.service.d"):
+            with self.subTest(directory=directory):
+                path = self.drop_in(directory, "[Service]\n")
+                self.assert_refused(self.host.verify("before"), path)
+                path.unlink()
+
+    def test_a_host_without_drop_ins_passes(self):
+        result = self.host.verify("before")
+        self.assert_code(result, 0)
+        self.assertIn("No drop-in overrides mergen-dispatcher.service or mergen-executor.service", result.stdout)
+        self.assert_code(self.apply(), 0)
+
+    def test_a_refused_apply_leaves_current_release_units_and_env_as_they_were(self):
+        self.assert_code(self.apply("r1"), 0)
+        self.drop_in("/etc/systemd/system/mergen-executor.service.d", "[Service]\nPrivateNetwork=false\n")
+        self.changed_source()
+        before = self.host.snapshot()
+        result = self.apply("r2")
+        self.assert_code(result, 1)
+        self.assertEqual(self.host.snapshot(), before)
+        self.assertEqual(self.current(), "releases/r1")
+        self.assertFalse(self.release("r2").exists())
+
+    def test_a_global_service_drop_in_is_a_warning(self):
+        path = self.drop_in("/etc/systemd/system/service.d", "[Service]\n")
+        result = self.host.verify("before")
+        self.assert_code(result, 0)
+        self.assertIn(f"WARN  Global service drop-in, applied to these units too: {path}; review it",
+                      result.stdout)
+
+
 class Separation(StagingCase):
     def test_each_venv_gets_only_its_own_requirements(self):
         self.assert_code(self.apply(), 0)

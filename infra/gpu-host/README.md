@@ -16,7 +16,7 @@ içindedir; bu dosya yalnız neyin ne olduğunu söyler.
 | `sudoers.d/mergen-maintenance.example` | Bakım hesabı için dar sudo örneği | Hayır — elle `visudo` |
 | `dispatcher.env.example`, `executor.env.example` | Boş yapılandırma şablonları | Hayır |
 | `stage-services.sh` | Dispatcher ve executor'ı sürümlü release'e kurar, ayrı venv'ler, unit ve env kopyası, atomik `current` geçişi | Yalnız `--apply` ile; servis başlatmaz |
-| `verify-services.sh` | Staging öncesi/sonrası doğrulama: hesap, dizin, env, token ayrımı, importlar, gate, unit | Hayır |
+| `verify-services.sh` | Staging öncesi/sonrası doğrulama: hesap, dizin, env, token ayrımı, importlar, gate, unit ve drop-in yokluğu | Hayır |
 | `lib/services.sh`, `lib/service_probe.py` | Release düzeni yardımcıları; venv içinde değer yazdırmayan probe | Hayır |
 | `systemd/*.service.example` | Dispatcher ve executor unit'leri | `stage-services.sh` kopyalar; enable/start yok |
 | `test_gpu_host.py`, `test_stage_services.py`, `fake_host.py` | Sözleşme ve sahte host üzerinde staging testleri | Hayır |
