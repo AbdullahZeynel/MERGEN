@@ -1,7 +1,7 @@
 # EXAMPLE ONLY until reviewed on the host. stage-services.sh copies it into a
 # release and to /etc/systemd/system, but never enables, starts or restarts it.
 #
-# Matches the G3 package `mergen_executor`, run from the same release layout
+# Matches the G3/G4-A package `mergen_executor`, run from the same release layout
 # as the dispatcher:
 #
 #   /opt/mergen/releases/<version>/src/        backend/archive_io.py,
@@ -12,8 +12,8 @@
 #
 # The executor runs one job at a time on a job directory the dispatcher
 # published. It holds no token, knows no VPS address and has no network leg.
-# G3 runs no model and opens no GPU device: the NVIDIA device allow-list and
-# the imaging model environment arrive with the G4 adapter.
+# G4-A supplies the isolated process boundary but no real runner and opens no
+# GPU device. The NVIDIA allow-list arrives with the G4-B model runner.
 
 [Unit]
 Description=MERGEN GPU model executor
@@ -41,7 +41,7 @@ RestartPreventExitStatus=2
 NoNewPrivileges=true
 CapabilityBoundingSet=
 PrivateTmp=true
-# G3 opens no GPU device. G4 replaces this with DevicePolicy=closed and a
+# G4-A opens no GPU device. G4-B replaces this with DevicePolicy=closed and a
 # DeviceAllow line for each NVIDIA node the host really has.
 PrivateDevices=true
 ProtectSystem=strict
@@ -58,7 +58,7 @@ RestrictNamespaces=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
-# G4 revisits this if its CUDA stack needs writable executable memory.
+# G4-B revisits this if its CUDA stack needs writable executable memory.
 MemoryDenyWriteExecute=true
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
@@ -70,9 +70,8 @@ RestrictAddressFamilies=AF_UNIX
 # 0007, not 0077: the spool is a hand-off. Files land 0660 in the setgid
 # group mergen-svc so the other service can read them; others get nothing.
 UMask=0007
-# These bound the whole service, the in-process G3 adapter included; they do
-# not separate the adapter from the executor. G4 must confine a real adapter
-# to its job's work/output before enabling it (mergen_executor/README.md).
+# These bound the whole service. G4-A additionally confines the model child to
+# its job's work/output with Landlock (mergen_executor/README.md).
 ReadWritePaths=/var/lib/mergen/executor /var/lib/mergen/runtime
 
 # Shared desktop manners. Admission is all-or-nothing and lives in the

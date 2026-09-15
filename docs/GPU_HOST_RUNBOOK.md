@@ -361,8 +361,9 @@ yerleştir ve checksum kaydet:
 ```
 
 Dizin `mergen:mergen-svc` 0750'dir: servisler okur, yalnız bakım hesabı yazar.
-Executor bir ağırlığı kullanmadan önce checksum'ı doğrulamalıdır (G4 işi);
-manifest'i şimdi üret ki o doğrulamanın karşılaştıracağı bir referans olsun.
+G4-A executor'ı bir ağırlığı kullanmadan önce yol, boyut ve SHA-256 değerini
+model kökündeki `manifest.json` ile doğrular. Bu manifestin kesin biçimi ve
+runner protokolü [`contracts/MODEL_RUNNER.md`](contracts/MODEL_RUNNER.md)'dedir.
 
 ### 16. Servis staging'i ve release geçişi (başlatmadan)
 
@@ -428,8 +429,10 @@ doğrulanan bir yol tasarlanana kadar bu kural geçerlidir.
 
 Env dosyalarında elle doldurulacak alanlar yalnız adlarıyla: `dispatcher.env`
 içinde `MERGEN_CONTROL_URL`, `MERGEN_WORKER_TOKEN`, `MERGEN_WORKER_ID`. Executor
-env'i G3 için örnekteki değerlerle çalışır; GPU eşikleri ve `MERGEN_IMAGING_VENV`
-G4'tedir. `verify-services.sh --after` doğrulanmayan ayarı yalnız adıyla gösterir.
+env'i G3 için örnekteki değerlerle çalışır. `MERGEN_IMAGING_VENV` boşken model
+adaptörü seçilmez. G4-B'de gerçek runner kurulduktan sonra `MERGEN_MODEL_ROOT`,
+`MERGEN_IMAGING_VENV` ve GPU eşikleri birlikte doldurulur. `verify-services.sh
+--after` doğrulanmayan ayarı yalnız adıyla gösterir.
 
 Dispatcher ile executor aynı `current/src`'den aynı `mergen_spool` gate sürümünü
 yükler; biri tek başına güncellenemez. Gate sürümü release'ler arasında değişirse
@@ -449,14 +452,13 @@ sudo bash infra/gpu-host/verify-services.sh --after
 `ln -sfn` kullanma: eski bağlantıyı silip yenisini yazar, arada `current` yoktur.
 Servisler çalışıyorsa önce durdurulur, geçişten sonra birlikte başlatılır.
 
-İki servis de G4'ten önce `enable` edilmez. G3 sürümünde gerçek görüntü adaptörü yoktur:
+İki servis de G4-B'den önce `enable` edilmez. Bu sürümde gerçek görüntü runner'ı yoktur:
 executor `executor.json`'a hiçbir yetenek yazmaz, dispatcher da bu yüzden VPS'e
 yetenek bildirmez ve iş almaz. Executor unit'i ağ ve GPU cihazı açmaz; NVIDIA cihaz
-izinleri G4 adaptörüyle eklenir. G3'te adaptör executor sürecinin içinde çalışır ve
-unit onu executor'dan ayırmaz; gerçek adaptör, ayrı süreç/venv, süreç grubu
-sonlandırma ve yalnız `work/output`'a yazma sınırı
-([`mergen_executor/README.md`](../mergen_executor/README.md)) sağlanmadan
-etkinleştirilmez. Şu an başlatılması gereken tek servis `tailscaled`.
+izinleri G4-B gerçek runner'ıyla eklenir. G4-A ayrı süreç/venv, süreç grubu
+sonlandırma, checksum preflight ve Landlock ile yalnız `work/output`'a yazma
+sınırını hazırlar; gerçek model içermez. Şu an başlatılması gereken tek servis
+`tailscaled`.
 
 ### 17. Pause, bakım ve rollback
 
