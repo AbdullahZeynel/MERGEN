@@ -237,12 +237,29 @@ class DropIns(StagingCase):
         self.assertEqual(self.current(), "releases/r1")
         self.assertFalse(self.release("r2").exists())
 
-    def test_a_global_service_drop_in_is_a_warning(self):
-        path = self.drop_in("/etc/systemd/system/service.d", "[Service]\n")
-        result = self.host.verify("before")
-        self.assert_code(result, 0)
-        self.assertIn(f"WARN  Global service drop-in, applied to these units too: {path}; review it",
-                      result.stdout)
+    def test_a_global_service_drop_in_is_refused(self):
+        # systemd applies service.d/*.conf to every service, these two included.
+        path = self.drop_in("/etc/systemd/system/service.d",
+                            f"[Service]\nEnvironment=MERGEN_CONTROL_TOKEN={SECRET}\n")
+        before = self.host.snapshot()
+        for result in (self.host.verify("before"), self.host.stage(), self.host.stage("--apply")):
+            self.assert_refused(result, path)
+            self.assertNotIn(SECRET, result.stdout + result.stderr)
+        self.assertEqual(self.host.snapshot(), before)
+        self.assertIsNone(self.current())
+
+    def test_a_global_drop_in_leaves_current_release_units_and_env_as_they_were(self):
+        # A drop-in the distribution ships is not assumed safe either.
+        self.assert_code(self.apply("r1"), 0)
+        path = self.drop_in("/usr/lib/systemd/system/service.d", "[Service]\nPrivateNetwork=false\n",
+                            name="10-vendor.conf")
+        self.changed_source()
+        before = self.host.snapshot()
+        result = self.apply("r2")
+        self.assert_refused(result, path)
+        self.assertEqual(self.host.snapshot(), before)
+        self.assertEqual(self.current(), "releases/r1")
+        self.assertFalse(self.release("r2").exists())
 
 
 class Separation(StagingCase):

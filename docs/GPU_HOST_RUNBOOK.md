@@ -402,11 +402,14 @@ Hiçbir zaman: mevcut bir release'i, env dosyasını veya farklı içerikli bir 
 ezer; servis `enable`/`start`/`restart` eder ya da `daemon-reload` çalıştırır;
 sürücü, CUDA, Tailscale veya model paketi kurar; bir release'i siler; env değeri
 yazdırır. Farklı bir unit bulunursa betik durur; unit elle incelenip kenara alınır.
-İki unit için hiçbir drop-in (`mergen-*.service.d/*.conf`, systemd'nin arama
-yolundaki her dizinde) kabul edilmez: drop-in unit dosyasına dokunmadan ortamı,
-ağı veya cihazları değiştirebilir. Bulunursa `verify-services.sh` ve `--apply`
-yalnız dosya yolunu gösterip durur; tüm servislere uygulanan genel `service.d`
-drop-in'leri uyarı olarak raporlanır.
+İki unit için hiçbir drop-in kabul edilmez: ne `mergen-*.service.d/*.conf` ne de
+systemd'nin bütün servislere uyguladığı genel `service.d/*.conf`, arama yolundaki
+hiçbir dizinde. Drop-in unit dosyasına dokunmadan ortamı, ağı veya cihazları
+değiştirebilir. Bulunursa `verify-services.sh` ve `--apply` yalnız dosya yolunu
+gösterip durur ve hiçbir şeyi değiştirmez; genel `service.d` drop-in'leri de
+reddedilir. Dağıtımın kendi koyduğu bir drop-in de güvenli sayılmaz: host
+yöneticisi onu kaldırır. MERGEN servislerini böyle bir dosyadan koruyan, ayrıca
+doğrulanan bir yol tasarlanana kadar bu kural geçerlidir.
 
 Env dosyalarında elle doldurulacak alanlar yalnız adlarıyla: `dispatcher.env`
 içinde `MERGEN_CONTROL_URL`, `MERGEN_WORKER_TOKEN`, `MERGEN_WORKER_ID`. Executor

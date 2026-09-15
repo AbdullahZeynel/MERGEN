@@ -132,19 +132,18 @@ fi
 # -- drop-ins -------------------------------------------------------------------
 # A drop-in changes a unit without touching its file: it could hand the executor
 # a control setting or turn PrivateNetwork off while the unit itself looks clean.
-# None is accepted; the release's unit is the whole definition. Paths only.
+# None is accepted, including service.d/ ones that systemd applies to every
+# service on the host: the release's unit is the whole definition. A drop-in
+# the distribution ships is not assumed safe either. Paths only, never content.
 section 'Unit drop-ins'
-dropins="$(mergen_dropins)"
+dropins="$(mergen_dropins; global_dropins)"
 if [[ -n "$dropins" ]]; then
     while IFS= read -r file; do
-        fail "Drop-in found: $file; it could override the unit's environment, network or devices. Remove it."
+        fail "Drop-in found: $file; it could override these units' environment, network or devices. Remove it."
     done <<< "$dropins"
 else
     pass 'No drop-in overrides mergen-dispatcher.service or mergen-executor.service'
 fi
-while IFS= read -r file; do
-    [[ -n "$file" ]] && warn "Global service drop-in, applied to these units too: $file; review it"
-done <<< "$(global_dropins)"
 
 # -- units ----------------------------------------------------------------------
 check_unit() {
