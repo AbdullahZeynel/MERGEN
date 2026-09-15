@@ -112,9 +112,11 @@ for service in "${SERVICES[@]}"; do
 done
 executor_env="$(env_file executor)" dispatcher_env="$(env_file dispatcher)"
 if [[ -f "$executor_env" ]]; then
-    leaked="$(env_keys "$executor_env" | grep -xE 'MERGEN_(CONTROL_URL|WORKER_TOKEN|WORKER_ID)' | sort -u | tr '\n' ' ' || true)"
-    [[ -z "$leaked" ]] && pass 'executor.env names no VPS address, worker id or token' \
-        || fail "executor.env must not set: $leaked"
+    # By prefix, not by a list of today's names: a new or misspelt control
+    # setting must not reach the executor either. Names only, never a value.
+    leaked="$(env_keys "$executor_env" | control_keys)"
+    [[ -z "$leaked" ]] && pass 'executor.env sets no MERGEN_CONTROL_*, MERGEN_WORKER_* or MERGEN_VPS_* key' \
+        || fail "executor.env must not set: ${leaked% }"
 fi
 if [[ -f "$dispatcher_env" && "$as_root" -eq 1 ]] && have runuser && user_exists "$MERGEN_EXECUTOR_USER"; then
     if runuser -u "$MERGEN_EXECUTOR_USER" -- test -r "$dispatcher_env"; then
@@ -146,6 +148,10 @@ check_unit() {
         grep -q 'dispatcher.env' -- "$file" && problems=' names-dispatcher.env'
         for directive in PrivateNetwork=true IPAddressDeny=any RestrictAddressFamilies=AF_UNIX; do
             grep -qx -- "$directive" "$file" || problems="$problems missing-$directive"
+        done
+        # Environment= lines reach the executor as surely as its env file.
+        for key in $(unit_env_keys "$file" | control_keys); do
+            problems="$problems sets-$key"
         done
         [[ -z "$problems" ]] && pass "$label: no network and no access to the dispatcher's configuration" \
             || fail "$label: isolation problem:$problems"

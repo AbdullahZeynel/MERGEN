@@ -472,9 +472,10 @@ class EnvExamples(unittest.TestCase):
 
     def test_executor_never_learns_the_vps_or_the_token(self):
         pairs = self._pairs("executor.env.example")
-        for key in self.SECRET_KEYS:
-            self.assertNotIn(key, pairs,
-                             f"{key} must not exist in the executor environment")
+        for key in pairs:
+            # The same prefix rule verify-services.sh applies on the host.
+            self.assertNotRegex(key, r"(?i)^MERGEN_(CONTROL|WORKER|VPS)_",
+                                f"{key} must not exist in the executor environment")
         text = read(HERE / "executor.env.example")
         self.assertNotIn("9100", text)
         self.assertNotIn("tailscale", text.lower())

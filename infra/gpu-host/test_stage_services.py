@@ -251,11 +251,68 @@ class Secrets(StagingCase):
         self.assertIn("could read the worker token", result.stdout)
         self.assertIsNone(self.current())
 
-    def test_an_executor_env_naming_the_vps_is_refused(self):
-        self.host.write_env("executor", "MERGEN_CONTROL_URL=\nMERGEN_WORKER_TOKEN=\n")
-        result = self.host.verify("before")
+    def executor_env_verdict(self, text: str) -> subprocess.CompletedProcess:
+        self.host.write_env("executor", text)
+        return self.host.verify("before")
+
+    def assert_refused(self, key: str) -> None:
+        value = "sentinel-" + key.lower().replace("_", "-") + "-" + "v" * 12
+        result = self.executor_env_verdict(f"MERGEN_RUNTIME_ROOT=/var/lib/mergen/runtime\n{key}={value}\n")
         self.assert_code(result, 1)
-        self.assertIn("executor.env must not set: MERGEN_CONTROL_URL MERGEN_WORKER_TOKEN", result.stdout)
+        self.assertIn(f"executor.env must not set: {key}\n", result.stdout)
+        self.assertNotIn(value, result.stdout + result.stderr)
+
+    def test_an_executor_env_naming_the_vps_is_refused(self):
+        # The rule is a prefix, not today's three names; each key is named once.
+        result = self.executor_env_verdict("MERGEN_CONTROL_URL=\nMERGEN_WORKER_TOKEN=\nMERGEN_WORKER_ID=\n"
+                                           "MERGEN_WORKER_TOKEN=\n")
+        self.assert_code(result, 1)
+        self.assertIn("executor.env must not set: MERGEN_CONTROL_URL MERGEN_WORKER_ID MERGEN_WORKER_TOKEN\n",
+                      result.stdout)
+
+    def test_a_control_token_is_refused_in_the_executor_env(self):
+        self.assert_refused("MERGEN_CONTROL_TOKEN")
+
+    def test_a_control_host_is_refused_in_the_executor_env(self):
+        self.assert_refused("MERGEN_CONTROL_HOST")
+
+    def test_an_unknown_control_setting_is_refused_in_the_executor_env(self):
+        self.assert_refused("MERGEN_CONTROL_FALLBACK_ORIGIN")
+
+    def test_an_unknown_worker_setting_is_refused_in_the_executor_env(self):
+        self.assert_refused("MERGEN_WORKER_SECRET_FILE")
+
+    def test_a_vps_setting_is_refused_in_the_executor_env(self):
+        self.assert_refused("MERGEN_VPS_ADDRESS")
+
+    def test_a_refused_key_never_shows_its_value(self):
+        # Every spelling a mistake could take, and staging stops before any change.
+        text = f"MERGEN_CONTROL_TOKEN={SECRET}\nexport MERGEN_VPS_HOST={ADDRESS}\nmergen_worker_id={WORKER}\n"
+        outputs = [self.executor_env_verdict(text), self.host.stage(), self.host.stage("--apply")]
+        self.assertIn("executor.env must not set: MERGEN_CONTROL_TOKEN MERGEN_VPS_HOST mergen_worker_id\n",
+                      outputs[0].stdout)
+        for result in outputs:
+            self.assert_code(result, 1)
+            for value in (SECRET, ADDRESS, WORKER):
+                self.assertNotIn(value, result.stdout + result.stderr)
+        self.assertIsNone(self.current())
+
+    def test_the_normal_executor_settings_are_accepted(self):
+        example = (self.host.source / "infra/gpu-host/executor.env.example").read_text()
+        result = self.executor_env_verdict(example + "MERGEN_SPOOL_OWNER=mergen-dispatcher\n")
+        self.assert_code(result, 0)
+        self.assertIn("executor.env sets no MERGEN_CONTROL_*, MERGEN_WORKER_* or MERGEN_VPS_* key", result.stdout)
+
+    def test_a_control_setting_in_the_executor_unit_is_refused(self):
+        self.assert_code(self.apply(), 0)
+        unit = self.host.path("/etc/systemd/system/mergen-executor.service")
+        unit.write_text(unit.read_text().replace(
+            "Environment=PYTHONDONTWRITEBYTECODE=1",
+            f'Environment=PYTHONDONTWRITEBYTECODE=1 "MERGEN_CONTROL_TOKEN={SECRET}"'))
+        result = self.host.verify("after")
+        self.assert_code(result, 1)
+        self.assertIn("isolation problem: sets-MERGEN_CONTROL_TOKEN", result.stdout)
+        self.assertNotIn(SECRET, result.stdout + result.stderr)
 
     def test_no_output_carries_a_secret_or_an_address(self):
         self.host.write_env("dispatcher", f"MERGEN_CONTROL_URL=https://{ADDRESS}\nMERGEN_WORKER_TOKEN={SECRET}\n"

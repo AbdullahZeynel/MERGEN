@@ -89,6 +89,17 @@ env_keys() {
     sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}\([A-Za-z_][A-Za-z0-9_]*\)[[:space:]]*=.*/\2/p' -- "$1"
 }
 
+# Keys that would tell the executor about the control plane: the VPS address,
+# the worker identity or any token. Matched by prefix and without regard to
+# case, so a new or misspelt setting is caught too. Names in, names out.
+CONTROL_KEY_PATTERN='^MERGEN_(CONTROL|WORKER|VPS)_'
+control_keys() { { grep -iE "$CONTROL_KEY_PATTERN" || true; } | LC_ALL=C sort -u | tr '\n' ' '; }
+
+# Keys a unit's Environment= lines assign, e.g. `Environment=A=1 "B=two words"`.
+unit_env_keys() {
+    unit_values "$1" Environment | { grep -oE '(^|[[:space:]"])[A-Za-z_][A-Za-z0-9_]*=' || true; } | tr -d ' "='
+}
+
 # First value of a unit directive (KEY=value), comments ignored.
 unit_value() { sed -n "s/^$2=//p" -- "$1" | head -n 1; }
 unit_values() { sed -n "s/^$2=//p" -- "$1"; }
