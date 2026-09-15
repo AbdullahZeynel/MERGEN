@@ -150,7 +150,7 @@ istekte doğrulanır.
 | G1 — `chore/native-gpu-host-bootstrap` | `mergen` bakım hesabı, ayrı yetkisiz servis hesapları, dizin/izin standardı, Tailscale ACL, sürücü ve CUDA'lı PyTorch doğrulaması | Servisler sudo/login olmadan çalışır; sırlar ayrılır; yeniden başlatma sonrası Tailscale ve GPU smoke testi geçer |
 | G2 — `feat/gpu-dispatcher` | Eski pull-worker çekirdeğini dispatcher'a uyarla; claim, lease, checksum, indirme, sonuç yükleme, yeniden deneme ve temizlik | Sahte executor ile uçtan uca iş tamamlanır; ağ kesintisi/yeniden başlatmada iş kaybolmaz veya iki kez yayımlanmaz |
 | G3 — `feat/gpu-executor` | Yerel iş sözleşmesi, manifest doğrulama, adaptör registry, `flock`, GPU boşluk eşiği, pause/resume ve systemd sınırları | Meşgul GPU'da iş ertelenir ve kullanıcı süreci öldürülmez; tek inference sınırı ile sahte adaptör testi geçer |
-| G4 — `feat/gpu-model-adapter` | Kilitli görüntü ortamı, sürümlü model dizini, gerçek adaptör ve başlangıç preflight'ı | Görüntü fixture'ı gerçek modelle çalışır; eksik ağırlık/şema capability olarak ilan edilmez |
+| G4 — `feat/gpu-model-adapter` | Kilitli görüntü ortamı, sürümlü model dizini, gerçek adaptör, başlangıç preflight'ı ve adaptörün süreç yalıtımı | Görüntü fixture'ı gerçek modelle çalışır; eksik ağırlık/şema capability olarak ilan edilmez; adaptör ayrı süreç ve venv'de, kendi süreç grubunda çalışır; zaman aşımı ve cancel bu grubu sonlandırır; yazma alanı OS düzeyinde işin `work/output`'una daraltılır ve dışına yazma denemesinin başarısız olduğu test edilir |
 | G5 — `feat/live-end-to-end` | Mevcut VPS oturum/kuyruk katmanını dispatcher'a bağla; canlı UI, ilerleme, sonuç varlıkları ve ZIP indirme | Kullanıcı yalnız kendi işini görür/indirir; 3 dk idle/logout GPU+VPS kopyalarını siler; bağlantı kopması demo sonucu gibi görünmez |
 | G6 — `chore/resilience-privacy-drill` | Yedek host, servis boot, disk sınırı, log denetimi, veri yaşam döngüsü ve sunum provası | GPU kapalıyken demo çalışır; yedek elle devreye alınır; 10 oturum/1 GPU işi ve temizlik kanıtı kaydedilir |
 
@@ -209,6 +209,15 @@ taşımalıdır; kimliği geçersiz adaptör hiçbir yetenek ilan etmez. Termina
 G3'te gerçek model yoktur: üretim kaydında adaptör bulunmadığı için hiçbir yetenek
 ilan edilmez, testler sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA
 preflight'ı ve NVIDIA cihaz izinleri G4'tedir.
+
+G3'te adaptör bir güvenlik sınırı değil, güvenilir koddur: executor sürecinin
+içinde, onun kullanıcısı, açık dosyaları ve belleğiyle çalışır. Adaptöre yalnız
+`work/input` ve `work/output` yollarının verilmesi onu bu dizinlere kapatmaz;
+executor'ın yazabildiği her yere yazabilir, `cancel`'ı yok sayabilir ve
+executor'ın onu tek başına durdurma yolu yoktur. Unit'teki `ProtectSystem=strict`,
+`ReadWritePaths` ve ağ kısıtları bütün servisi sınırlar, adaptörü executor'dan
+ayırmaz. G4 gerçek adaptörü etkinleştirmeden önce bunu kapatmalıdır (G4 satırı ve
+[`mergen_executor/README.md`](../mergen_executor/README.md)).
 
 ## Git ve ekip çalışma düzeni
 

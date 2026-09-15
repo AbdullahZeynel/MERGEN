@@ -57,7 +57,7 @@ ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
 - Pause dosyası veya meşgul GPU yeni işi başlatmaz; çalışan iş biter. Executor
   kullanıcının GPU süreçlerine dokunmaz.
 
-## Adaptör sınırı (G4)
+## Adaptör arayüzü (G4)
 
 `mergen_executor.adapter.ImagingAdapter`, gerçek modelin takılacağı tek yerdir:
 
@@ -73,12 +73,48 @@ ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
   `cancelled()`. Sonuç ZIP'ini `output_dir`'e yazar ve yalnız dosya adını döndürür.
   ZIP, bu iş için `backend.live_contracts.ResultManifest`'e uyan `manifest.json` ile
   en az `report.json`, `prediction.nii.gz` ve `prediction.glb` taşır.
-- Adaptör VPS'i, dispatcher'ı, token'ı veya spool yönetimini bilmez; başka bir yere
-  yazmaz. Sistem sınırı unit'teki `ProtectSystem=strict` ve `ReadWritePaths`'tir.
+- Adaptör VPS'i, dispatcher'ı, token'ı veya spool yönetimini bilmez. Yalnız
+  `output_dir`'e yazmak ve `cancelled()`'a uymak sözleşmesinin parçasıdır; G3'te
+  bunu zorlayan bir mekanizma yoktur.
 
 G3 üretim kaydında adaptör yoktur (`default_imaging_adapter()` → `None`); testler
 sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA preflight'ı ve NVIDIA
 cihaz izinleri G4'tedir.
+
+### G3'te adaptör güvenilir koddur, güvenlik sınırı değildir
+
+Adaptör executor sürecinin içinde, aynı kullanıcı (`mergen-executor`) ve grupla
+(`mergen-svc`), executor'ın açık dosyaları ve belleğiyle çalışır. Bu yüzden:
+
+- Executor'ın yazabildiği her yere yazabilir: `/var/lib/mergen/executor` ve
+  `/var/lib/mergen/runtime` altındaki her şey; başka işlerin dizinleri,
+  `status.json`, `result.zip`, `executor.json` ve dispatcher'ın grup-yazılabilir
+  dosyaları dahil. Adaptöre yalnız `work/input` ve `work/output` yollarının
+  verilmesi onu bu dizinlere kapatmaz;
+  `test_the_adapter_is_handed_job_specific_paths` yalnız hangi yolların verildiğini
+  doğrular.
+- Executor'ın durumunu ve kodunu (kilitler, `finalize`, `cancelled()`, beklenen
+  model kimliği) değiştirebilir ve `cancel`'ı yok sayabilir. Zaman aşımı yoktur;
+  executor'ın adaptörü tek başına durdurma yolu yoktur, yalnız servisin tamamı
+  durdurulabilir.
+- Unit'teki `ProtectSystem=strict`, `ReadWritePaths`, `PrivateNetwork=true` ve
+  diğer kısıtlar gerçek bir OS sınırıdır, ama bütün servisin çevresindedir;
+  adaptörle executor arasında sınır yoktur.
+
+Dispatcher'ın özet ve boyut doğrulaması, arşiv denetimi ve VPS'in yeniden
+doğrulaması bozuk bir sonucun VPS'e ulaşmasını sınırlar; adaptörün yerel dosyalara
+yazmasını engellemez.
+
+Gerçek bir adaptör etkinleştirilmeden önce G4 şunları sağlamalı ve testle
+kanıtlamalıdır:
+
+1. Adaptör ayrı bir süreçte ve ayrı, kilitli bir venv'de çalışır; executor'ın
+   belleğini, açık dosyalarını ve spool kilitlerini devralmaz.
+2. Adaptör kendi süreç grubunda başlar; zaman aşımında, `cancel`'da ve executor
+   dururken bütün grup sonlandırılır (önce SIGTERM, süre dolunca SIGKILL).
+3. Yazma alanı OS düzeyinde yalnız o işin `work/output`'una daraltılır (ayrı uid
+   ya da mount namespace); spool'un geri kalanına, `executor.json`'a ve durum
+   dizinine yazma denemesinin başarısız olduğu test edilir.
 
 ## Çalıştırma ve test
 

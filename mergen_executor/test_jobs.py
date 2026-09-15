@@ -38,7 +38,9 @@ class HappyPath(ExecutorCase):
                  for name in OWNED_BY_DISPATCHER}
         self.assertEqual(before, after, "the executor changed a file the dispatcher owns")
 
-    def test_the_adapter_gets_only_job_specific_directories(self):
+    def test_the_adapter_is_handed_job_specific_paths(self):
+        # What the executor hands over, not what the adapter can reach: in G3 the
+        # adapter runs inside this process with its permissions (adapter.py).
         publish_job(self.root)
         self.started().tick()
         job, work = self.adapter.runs[0], self.job_dir() / "work"

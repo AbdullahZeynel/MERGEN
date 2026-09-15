@@ -377,7 +377,11 @@ bekler:
 İkisi de G4'ten önce `enable` edilmez. G3 sürümünde gerçek görüntü adaptörü yoktur:
 executor `executor.json`'a hiçbir yetenek yazmaz, dispatcher da bu yüzden VPS'e
 yetenek bildirmez ve iş almaz. Executor unit'i ağ ve GPU cihazı açmaz; NVIDIA cihaz
-izinleri G4 adaptörüyle eklenir. Şu an başlatılması gereken tek servis `tailscaled`.
+izinleri G4 adaptörüyle eklenir. G3'te adaptör executor sürecinin içinde çalışır ve
+unit onu executor'dan ayırmaz; gerçek adaptör, ayrı süreç/venv, süreç grubu
+sonlandırma ve yalnız `work/output`'a yazma sınırı
+([`mergen_executor/README.md`](../mergen_executor/README.md)) sağlanmadan
+etkinleştirilmez. Şu an başlatılması gereken tek servis `tailscaled`.
 
 ### 17. Pause, bakım ve rollback
 
