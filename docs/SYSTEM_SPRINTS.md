@@ -190,6 +190,22 @@ Başlangıçta `staging/` silinir, yayımlanmış işler lease yenilemesiyle dev
 da atılır. Sahte kontrol API'si ve sahte executor ile test edildi; gerçek hostta,
 Tailscale üzerinden ve G3 executor'la uçtan uca denenmedi.
 
+### G3 güncel durum
+
+`mergen_executor` spool'dan başka kanalı olmayan, ağ istemcisi, VPS adresi veya
+token'ı bulunmayan ayrı bir süreçtir ve yalnız `imaging` yeteneğini ilan eder.
+Başlarken spool'un ve kendi durum dizininin izin, sahiplik ve grup üyeliğini
+doğrular, bayat `executor.json`'u `acceptingJobs: false` ile değiştirir ve yarım
+kalan işleri `failed/internal-error` yapar. Pause dosyası, enjekte edilen GPU
+probe'u veya başka bir sürecin tuttuğu `gpu.lock` varken iş başlatmaz. İşi dizin
+tanımlayıcısı üzerinden kilitler; `job.json`'u ve girdinin boyutunu/SHA-256'sını
+yeniden doğrular, arşivi `backend.archive_io` ile denetleyip `work/input`'a açar ve
+adaptöre işe özel giriş/çıkış dizinleri verir. Sonucu geçici adla kopyalar, fsync
+eder, doğrular ve `rename` ile yayımlar; `completed` ancak bundan sonra yazılır.
+G3'te gerçek model yoktur: üretim kaydında adaptör bulunmadığı için hiçbir yetenek
+ilan edilmez, testler sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA
+preflight'ı ve NVIDIA cihaz izinleri G4'tedir.
+
 ## Git ve ekip çalışma düzeni
 
 - Bir sprint dalı bir sorumluluk alanını değiştirir. Aynı dosyaları değiştirecek iki

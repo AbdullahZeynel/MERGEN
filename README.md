@@ -87,8 +87,8 @@ flowchart LR
 ```
 
 Kesikli çizgiler henüz çalışır durumda olmayan parçaları gösterir: dispatcher
-yazıldı ama bir hostta çalışmıyor, executor ve model adaptörleri yok. Geçici oturum
-dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
+ve executor yazıldı ama bir hostta çalışmıyor, gerçek model adaptörü yok. Geçici
+oturum dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 
 | Bileşen | Durum |
 |---|---|
@@ -96,8 +96,8 @@ dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 | Genel API — hazır demo uçları | Çalışıyor |
 | Demo MCP (salt okunur, loopback) | Çalışıyor |
 | Oturum, iş kuyruğu, worker kontrol API'si, temizlik | Yazıldı, worker'sız |
-| GPU dispatcher ve yerel spool sözleşmesi | Yazıldı; executor'sız, gerçek hostta denenmedi |
-| GPU executor ve canlı model adaptörleri | Planlanan |
+| GPU dispatcher, executor ve yerel spool sözleşmesi | Yazıldı; sahte adaptörle test edildi, gerçek hostta denenmedi |
+| Canlı görüntü model adaptörü | Planlanan (G4) |
 | Sohbet asistanı | Ertelendi |
 
 ### Hazır demo paketi
@@ -161,6 +161,7 @@ betikleri değerlendirme yapar; bunlar servis komutu değildir.
 | `backend/` | Genel API, canlı oturum, worker kontrol API'si, temizlik |
 | `mcp/` | Salt okunur demo araçları; disk yollarını dışarı vermez |
 | `mergen_dispatcher/` | GPU hostunda VPS'ten iş çeken dispatcher; model çalıştırmaz |
+| `mergen_executor/` | GPU hostunda işi spool'dan alıp adaptöre veren executor; ağ ve token yok |
 | `mergen_spool/` | Dispatcher ile executor arasındaki yerel spool sözleşmesi |
 | `models/imaging/` | Görüntü algoritmaları, çıkarım ve değerlendirme betikleri |
 | `infra/` | VPS, Caddy, Tailscale ve CI koruması |

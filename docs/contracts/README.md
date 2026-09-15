@@ -36,6 +36,7 @@ tek yazarı vardır, bu yüzden iki süreç aynı dosyada yarışmaz:
 | `jobs/<jobId>/cancel` | dispatcher | — | Boş işaret: lease kaybedildi, sonuç yayımlanmayacak |
 | `jobs/<jobId>/status.json` | executor | — | `accepted → running → completed/failed`; atomik değiştirilir |
 | `jobs/<jobId>/result.zip` | executor | — | `completed` yazılmadan önce tamamlanır |
+| `jobs/<jobId>/work/` | executor | 2770 | Adaptörün işe özel giriş/çıkış dizinleri; karardan önce silinir |
 | `trash/` | dispatcher | 2700 | Kilit serbest kalınca silinir |
 
 Kök dizin tmpfiles'tan 2770 gelir. Dispatcher başlarken `staging/`, `jobs/` ve
@@ -48,6 +49,14 @@ iş dizininde çalışırken dizine `flock(LOCK_EX)` alır; dispatcher dizini ya
 kilidi kendisi alabildiğinde siler. Şemalar `mergen_spool/contract.py` içindedir;
 örnekler `gpu-spool-job.v1.example.json`, `gpu-spool-status.v1.example.json` ve
 `gpu-executor-ready.v1.example.json` dosyalarındadır.
+
+Executor da başlarken kökü (2770, sahibi `MERGEN_SPOOL_OWNER`, grubuna üyelik) ve
+`jobs/` dizinini (2750) doğrular. İşe yalnız kilitlediği dizin tanımlayıcısı
+üzerinden erişir ve `job.json`, `input.zip`, `cancel` dosyalarını yalnız okur.
+Durum `accepted → running → completed | failed` sırasıyla ilerler; terminal durum
+yeniden yazılmaz. Sonuç `.result.zip.<rastgele>.tmp` adıyla yazılıp fsync edilir,
+doğrulanır ve tek `rename` ile `result.zip` olur; `completed` ancak bundan sonra
+yazılır. `cancel` varsa iş başlamaz; çalışırken gelirse sonuç yayımlanmaz.
 
 ## Hazır demo paketleri
 
