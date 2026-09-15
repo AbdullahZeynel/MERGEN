@@ -13,7 +13,7 @@ from contextlib import contextmanager
 from types import MappingProxyType
 
 from backend.archive_io import InvalidArchive, validate_input_archive
-from mergen_executor.adapter import AdapterFailure, ImagingAdapter, ImagingJob
+from mergen_executor.adapter import AdapterFailure, ImagingAdapter, ImagingJob, ModelIdentity, model_identity
 from mergen_executor.config import ExecutorConfig
 from mergen_executor.finalize import check_gate, finalize
 from mergen_executor.gpu import GpuProbe, UncheckedGpu
@@ -39,6 +39,8 @@ class Executor:
         self._wall, self._clock = wall, clock
         self.jobs = config.runtime_root / contract.JOBS_DIR
         self.capabilities: list[str] = []
+        # The model checked at start; every result this executor publishes names it.
+        self.model: ModelIdentity | None = None
         self._stop = threading.Event()
         self._ready_lock = threading.Lock()
         self._last_ready: tuple | None = None
@@ -114,8 +116,13 @@ class Executor:
             self._last_ready, self._last_ready_at = state, now
 
     def _preflight(self) -> list[str]:
+        self.model = None
         if self.adapter is None:
             LOG.warning("no imaging adapter in this release; nothing is advertised")
+            return []
+        identity = model_identity(self.adapter)
+        if identity is None:
+            LOG.warning("the imaging adapter declares no valid model identity; nothing is advertised")
             return []
         try:
             self.adapter.preflight()
@@ -125,6 +132,7 @@ class Executor:
         except Exception as exc:  # noqa: BLE001 - any failure means "not ready"
             LOG.warning("imaging adapter preflight raised %s; nothing is advertised", type(exc).__name__)
             return []
+        self.model = identity
         return [CAPABILITY]
 
     def _admission(self) -> str | None:
@@ -238,7 +246,8 @@ class Executor:
                 name = self._run_adapter(imaging)
             if job.cancelled():
                 raise Cancelled
-            result = job.publish_result(name, document, max_result_bytes=self.config.max_result_bytes,
+            result = job.publish_result(name, document, model=self.model,
+                                        max_result_bytes=self.config.max_result_bytes,
                                         max_expanded_bytes=self.config.max_expanded_bytes)
             job.remove_work()
             # The only way to `completed`: under the gate, after a last look for cancel.

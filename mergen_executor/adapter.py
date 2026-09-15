@@ -13,9 +13,15 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import get_args
 
+from pydantic import TypeAdapter, ValidationError
+
+from backend.live_contracts import ModelVersion, Slug
 from mergen_spool.contract import ErrorCode
 
 ERROR_CODES = frozenset(get_args(ErrorCode))
+# The forms ResultManifest.modelId and ResultManifest.modelVersion accept.
+_MODEL_ID = TypeAdapter(Slug)
+_MODEL_VERSION = TypeAdapter(ModelVersion)
 
 
 class AdapterFailure(Exception):
@@ -44,7 +50,18 @@ class ImagingJob:
     cancelled: Callable[[], bool]
 
 
+@dataclass(frozen=True)
+class ModelIdentity:
+    """The model an adapter declares; every result it publishes names it."""
+
+    model_id: str
+    model_version: str
+
+
 class ImagingAdapter(ABC):
+    # The model this adapter runs, as its result manifests name it: model_id is
+    # a slug and model_version has the form of ResultManifest.modelVersion.
+    # Checked at start; an adapter without a valid identity is not advertised.
     model_id: str
     model_version: str
 
@@ -59,9 +76,21 @@ class ImagingAdapter(ABC):
         """Write the result ZIP into job.output_dir and return its file name.
 
         The ZIP holds manifest.json (backend.live_contracts.ResultManifest for
-        this job) and the assets it lists. Write nowhere else, poll
-        job.cancelled() and stop early when it turns true.
+        this job, naming model_id and model_version) and the assets it lists.
+        Write nowhere else, poll job.cancelled() and stop early when it turns true.
         """
+
+
+def model_identity(adapter: ImagingAdapter) -> ModelIdentity | None:
+    """The adapter's declared model, or None when no result could name it."""
+    model_id = getattr(adapter, "model_id", None)
+    model_version = getattr(adapter, "model_version", None)
+    try:
+        _MODEL_ID.validate_python(model_id, strict=True)
+        _MODEL_VERSION.validate_python(model_version, strict=True)
+    except ValidationError:
+        return None
+    return ModelIdentity(model_id, model_version)
 
 
 def default_imaging_adapter() -> ImagingAdapter | None:

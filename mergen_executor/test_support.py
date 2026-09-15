@@ -57,12 +57,14 @@ def imaging_input(extra: list[tuple[zipfile.ZipInfo | str, bytes]] | None = None
     return zip_bytes([("input.json", json.dumps(manifest).encode()), *volumes, *(extra or [])])
 
 
-def result_zip(job_id: str = JOB_ID, report: bytes = b'{"status":"synthetic"}') -> bytes:
+def result_zip(job_id: str = JOB_ID, report: bytes = b'{"status":"synthetic"}', *,
+               model_id: str = "fake-imaging", model_version: str = "g3-test") -> bytes:
+    """A valid result; by default it names the model FakeImagingAdapter declares."""
     assets = {"report.json": (report, "report-json"),
               "prediction.nii.gz": (b"synthetic-mask", "prediction-nifti"),
               "prediction.glb": (b"synthetic-mesh", "prediction-glb")}
     manifest = {"schemaVersion": 1, "jobId": job_id, "module": "imaging", "disease": "glioma",
-                "modelId": "fake-imaging", "modelVersion": "g3-test", "hasPrediction": True,
+                "modelId": model_id, "modelVersion": model_version, "hasPrediction": True,
                 "hasGroundTruth": False,
                 "assets": [{"path": path, "kind": kind, "sha256": sha256(payload), "size": len(payload)}
                            for path, (payload, kind) in assets.items()]}
@@ -182,7 +184,9 @@ class FakeImagingAdapter(ImagingAdapter):
         if self.link_to is not None:
             target.symlink_to(self.link_to)
         else:
-            target.write_bytes(result_zip(job.job_id) if self.payload is None else self.payload)
+            payload = self.payload if self.payload is not None else result_zip(
+                job.job_id, model_id=self.model_id, model_version=self.model_version)
+            target.write_bytes(payload)
         if self.after_write is not None:
             self.after_write(job)
         return self.name

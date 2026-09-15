@@ -57,7 +57,9 @@ Executor da başlarken kökü (2770, sahibi `MERGEN_SPOOL_OWNER`, grubuna üyeli
 `gate`'i yalnız kilitler. Durum `accepted → running → completed | failed` sırasıyla
 ilerler; terminal durum yeniden yazılmaz. Sonuç `.result.zip.<rastgele>.tmp` adıyla
 yazılıp fsync edilir, doğrulanır ve tek `rename` ile `result.zip` olur; `completed`
-ancak bundan sonra yazılır. `cancel` varsa iş başlamaz.
+ancak bundan sonra yazılır. Sonucun `manifest.json`'ındaki `modelId` ve
+`modelVersion`, adaptörün başlarken doğrulanan kimliğiyle aynı olmalıdır; değilse
+iş `failed/inference-failed` olur. `cancel` varsa iş başlamaz.
 
 ### `cancel` ile kararın sırası
 

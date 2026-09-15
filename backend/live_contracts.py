@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 Slug = Annotated[str, StringConstraints(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$")]
 SafePath = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9._/-]*$")]
+ModelVersion = Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")]
 
 LIVE_PROFILES = {
     "schemaVersion": 1,
@@ -70,7 +71,7 @@ class ResultManifest(BaseModel):
     module: Literal["imaging"]
     disease: Slug
     modelId: Slug
-    modelVersion: Annotated[str, StringConstraints(pattern=r"^[A-Za-z0-9][A-Za-z0-9._+-]{0,63}$")]
+    modelVersion: ModelVersion
     hasPrediction: Literal[True]
     hasGroundTruth: Literal[False]
     assets: list[ResultAsset] = Field(min_length=1, max_length=8192)

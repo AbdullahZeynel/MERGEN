@@ -32,7 +32,7 @@ ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
 | `job.json` geçersiz ya da başka işe ait; girdinin boyutu veya özeti `job.json`'la uyuşmuyor; `gate` yok, bağlantı ya da başka sürüm; karar anında `gate` 10 sn içinde alınamadı | `internal-error` |
 | Hastalık `glioma` değil; girdi arşivi sözleşmeye uymuyor; girdi executor sınırını aşıyor | `input-invalid` |
 | Adaptörün `AdapterFailure` kodu (sözleşme dışıysa `internal-error`) | olduğu gibi |
-| Adaptör istisnası; sonuç eksik, bağlantı, geçersiz ya da başka işe ait | `inference-failed` |
+| Adaptör istisnası; sonuç eksik, bağlantı, geçersiz ya da başka işe ait; sonucun `modelId`/`modelVersion`'ı adaptörün ilan ettiği model değil | `inference-failed` |
 | Bellek bitti, sonuç sınırı aşıldı, disk doldu | `resource-exhausted` |
 | Karardan önce görülen `cancel` işareti (`rename`'den sonra gelse de) | `cancelled` |
 
@@ -61,6 +61,11 @@ ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
 
 `mergen_executor.adapter.ImagingAdapter`, gerçek modelin takılacağı tek yerdir:
 
+- `model_id` (slug) ve `model_version` (`ResultManifest.modelVersion` biçimi: harf
+  ya da rakamla başlar, en çok 64 karakter, yalnız `A-Za-z0-9._+-`) başlarken sonuç
+  sözleşmesinin kurallarıyla doğrulanır. Geçersizse `preflight()` çağrılmaz ve
+  hiçbir yetenek ilan edilmez. Her sonucun `manifest.json`'ı başlarken doğrulanan
+  bu kimliği aynen taşımalıdır; değilse iş `failed/inference-failed` olur.
 - `preflight()` model hazır değilse `AdapterFailure("model-unavailable")` fırlatır;
   o zaman hiçbir yetenek ilan edilmez.
 - `run(job)` doğrulanmış bir `ImagingJob` alır: `volumes` (T1, T1CE, T2, FLAIR →

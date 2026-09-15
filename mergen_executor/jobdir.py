@@ -23,6 +23,7 @@ from typing import BinaryIO
 
 from backend.archive_io import InvalidArchive, validate_result_archive
 from backend.live_contracts import InputManifest
+from mergen_executor.adapter import ModelIdentity
 from mergen_spool import contract
 from mergen_spool.fs import exists_at, lock_directory, read_json_at, write_json_atomic_at
 
@@ -185,11 +186,12 @@ class LockedJob:
             os.unlink(contract.RESULT_FILE, dir_fd=self.fd)
 
     # -- result --------------------------------------------------------------
-    def publish_result(self, name: str, job: contract.SpoolJob, *, max_result_bytes: int,
-                       max_expanded_bytes: int) -> contract.ResultRef:
+    def publish_result(self, name: str, job: contract.SpoolJob, *, model: ModelIdentity,
+                       max_result_bytes: int, max_expanded_bytes: int) -> contract.ResultRef:
         """Copy the adapter's ZIP to a temporary name, fsync it, validate what
-        was written and rename it to result.zip. `completed` is written only
-        after this returns, and only by finalize() under the gate."""
+        was written, check that it names the adapter's model and rename it to
+        result.zip. `completed` is written only after this returns, and only by
+        finalize() under the gate."""
         if not isinstance(name, str) or not RESULT_NAME.fullmatch(name):
             raise JobRejected("inference-failed", "the adapter returned an unusable result name")
         limit = min(job.maxResultBytes, max_result_bytes)
@@ -206,10 +208,13 @@ class LockedJob:
             check = os.open(temporary, READ, dir_fd=self.fd)
             with os.fdopen(check, "rb", buffering=0) as written:
                 try:
-                    validate_result_archive(written, max_expanded_bytes,
-                                            {"id": job.jobId, "module": job.module, "disease": job.disease})
+                    manifest = validate_result_archive(
+                        written, max_expanded_bytes,
+                        {"id": job.jobId, "module": job.module, "disease": job.disease})
                 except InvalidArchive:
                     raise JobRejected("inference-failed", "the result fails the result contract") from None
+            if (manifest.modelId, manifest.modelVersion) != (model.model_id, model.model_version):
+                raise JobRejected("inference-failed", "the result names another model than the adapter")
             if self.cancelled():
                 raise Cancelled
             if exists_at(self.fd, contract.RESULT_FILE):
