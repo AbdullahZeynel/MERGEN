@@ -85,9 +85,18 @@ def main() -> int:
     from mergen_spool import contract
     print(f"gate_version={contract.GATE_VERSION}")
     print(f"schema_version={contract.SCHEMA_VERSION}")
+    environ = None
+    config = None
+    if args.env_file:
+        try:
+            environ = read_env(args.env_file)
+            module_name, class_name = CONFIGS[args.service]
+            config = getattr(importlib.import_module(module_name), class_name).from_env(environ)
+        except (OSError, UnicodeDecodeError, ValueError):
+            pass
     if args.service == "executor":
         from mergen_executor.adapter import default_imaging_adapter
-        print("adapter=" + ("none" if default_imaging_adapter() is None else "present"))
+        print("adapter=" + ("none" if default_imaging_adapter(config) is None else "present"))
 
     installed = sorted({normalise(dist.metadata["Name"] or "") for dist in importlib.metadata.distributions()}
                        - {""})
@@ -100,15 +109,13 @@ def main() -> int:
     if not args.env_file:
         print("config=skipped")
         return 0
-    try:
-        environ = read_env(args.env_file)
-    except (OSError, UnicodeDecodeError):
+    if environ is None:
         print("config=unreadable")
         return 0
-    module_name, class_name = CONFIGS[args.service]
-    config_class = getattr(importlib.import_module(module_name), class_name)
     try:
-        config_class.from_env(environ)
+        if config is None:
+            module_name, class_name = CONFIGS[args.service]
+            getattr(importlib.import_module(module_name), class_name).from_env(environ)
     except ValueError as exc:
         names = sorted(set(VARIABLE.findall(str(exc)))) or ["unnamed"]
         print("config=invalid:" + ",".join(names))

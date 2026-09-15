@@ -3,17 +3,11 @@
 An adapter knows nothing of the VPS, the dispatcher, tokens or the spool. It
 receives a verified imaging job and two job-specific directories, and either
 leaves a result ZIP in its output directory or fails with a contract error
-code. G3 ships no implementation: tests use a fake one, G4 adds the real one.
-
-In G3 this is a contract with trusted code, not a security boundary. The
-adapter runs inside the executor process, as its user and with its open files
-and memory: nothing confines it to its output directory, stops it from writing
-wherever the executor can, or ends a run that ignores cancelled(). The
-service's systemd sandbox bounds the executor as a whole, adapter included,
-and does not separate the two. Before a real adapter is enabled, G4 must run
-it in its own process and venv, in a process group that a timeout or cancel
-terminates, with its writes confined to the job's output directory by the
-operating system (mergen_executor/README.md).
+code. G3 ships no model implementation: tests use a fake one. G4-A supplies a
+process adapter which starts a separately configured model venv, confines its
+writes to the current job output with Linux Landlock, and owns its process
+group so timeout and cancellation are enforceable. A real model runner remains
+a separate G4 deliverable (mergen_executor/README.md).
 """
 from __future__ import annotations
 
@@ -53,8 +47,8 @@ class ImagingJob:
     # T1, T1CE, T2 and FLAIR, each a NIfTI file inside input_dir.
     volumes: Mapping[str, Path]
     input_dir: Path
-    # Empty when the adapter starts. By contract the only place it writes;
-    # nothing enforces that in G3 (see the module docstring).
+    # Empty when the adapter starts. The G4 process adapter enforces this as
+    # the child process's only writable tree.
     output_dir: Path
     max_result_bytes: int
     # True once the dispatcher has cancelled the job or the executor stops.
@@ -88,8 +82,9 @@ class ImagingAdapter(ABC):
 
         The ZIP holds manifest.json (backend.live_contracts.ResultManifest for
         this job, naming model_id and model_version) and the assets it lists.
-        By contract the adapter writes nowhere else, polls job.cancelled() and
-        stops early once it turns true; in G3 it is trusted to, not made to.
+        In-process test adapters follow this contract voluntarily. The G4
+        process adapter enforces the write boundary and terminates its runner
+        when job.cancelled() becomes true.
         """
 
 
@@ -105,6 +100,15 @@ def model_identity(adapter: ImagingAdapter) -> ModelIdentity | None:
     return ModelIdentity(model_id, model_version)
 
 
-def default_imaging_adapter() -> ImagingAdapter | None:
-    """The adapter this release runs. None until G4 adds the real model."""
-    return None
+def default_imaging_adapter(config=None) -> ImagingAdapter | None:
+    """The isolated adapter configured for this host, or no capability.
+
+    Imports stay lazy so G3/test environments need no model dependency.
+    """
+    if config is None or config.model_root is None or config.imaging_venv is None:
+        return None
+    from mergen_executor.process_adapter import ProcessImagingAdapter
+    return ProcessImagingAdapter(
+        config.model_root, config.imaging_venv,
+        timeout=config.adapter_timeout_seconds,
+        term_grace=config.adapter_term_grace_seconds)
