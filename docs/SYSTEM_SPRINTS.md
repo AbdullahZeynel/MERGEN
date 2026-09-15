@@ -212,18 +212,27 @@ Sonuç manifesti adaptörün başlarken doğrulanan `modelId`/`modelVersion`'ın
 taşımalıdır; kimliği geçersiz adaptör hiçbir yetenek ilan etmez. Terminal kararı dispatcher'ın `cancel` işaretiyle aynı `gate` kilidi altında yazar;
 `rename`'den sonra ama karardan önce gelen `cancel` sonucu geri çektirir ve iş
 `failed/cancelled` olur.
-G3'te gerçek model yoktur: üretim kaydında adaptör bulunmadığı için hiçbir yetenek
-ilan edilmez, testler sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA
-preflight'ı ve NVIDIA cihaz izinleri G4'tedir.
+G3'te gerçek model yoktur: model ortamı yapılandırılmazsa hiçbir yetenek ilan
+edilmez ve testler sahte adaptörle koşar. Gerçek görüntü çalıştırıcısı,
+NVML/CUDA model preflight'ı ve NVIDIA cihaz izinleri G4-B'dedir.
 
-G3'te adaptör bir güvenlik sınırı değil, güvenilir koddur: executor sürecinin
-içinde, onun kullanıcısı, açık dosyaları ve belleğiyle çalışır. Adaptöre yalnız
-`work/input` ve `work/output` yollarının verilmesi onu bu dizinlere kapatmaz;
-executor'ın yazabildiği her yere yazabilir, `cancel`'ı yok sayabilir ve
-executor'ın onu tek başına durdurma yolu yoktur. Unit'teki `ProtectSystem=strict`,
-`ReadWritePaths` ve ağ kısıtları bütün servisi sınırlar, adaptörü executor'dan
-ayırmaz. G4 gerçek adaptörü etkinleştirmeden önce bunu kapatmalıdır (G4 satırı ve
-[`mergen_executor/README.md`](../mergen_executor/README.md)).
+### G4-A güncel durum
+
+Model sınırı executor'dan ayrı süreç ve ayrı venv olarak uygulanmıştır. Güvenilir
+bakım hesabınca yönetilen sürümlü manifest; model kimliğini, runner modülünü ve her
+checkpoint'in yol/boyut/SHA-256 değerini capability ilanından önce doğrular.
+Runner yeni süreç grubunda çalışır; cancel ve timeout bütün grubu SIGTERM,
+ardından SIGKILL ile kapatır. Linux Landlock ABI 3+ ile runner'ın bütün yazma
+erişimi yalnız mevcut işin `work/output` ağacına açılır; destek yoksa preflight
+kapalı başarısız olur. Kontrol/VPS/worker ortam anahtarları aktarılmaz ve alt
+süreç çıktısı servis loguna bağlanmaz. Ayrıntılı yerel protokol:
+[`contracts/MODEL_RUNNER.md`](contracts/MODEL_RUNNER.md).
+
+G4-A okuma izolasyonu değildir: runner hâlâ `mergen-executor` kullanıcısıyla
+çalışır ve bu hesabın okuyabildiği dosyaları okuyabilir. Kod/venv/model ağacı bu
+nedenle güvenilir ve servis hesaplarınca yazılamaz olmalıdır. Gerçek Swin runner'ı, CUDA
+preflight'ı, fixture inference ve NVIDIA unit izinleri henüz yoktur; bunlar
+tamamlanmadan G4 ve G5 tamamlanmış sayılmaz.
 
 ## Git ve ekip çalışma düzeni
 

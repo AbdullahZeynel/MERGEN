@@ -30,6 +30,10 @@ class ExecutorConfig:
     max_input_bytes: int = 2 * GIB
     max_expanded_bytes: int = 8 * GIB
     max_result_bytes: int = 2 * GIB
+    model_root: Path | None = None
+    imaging_venv: Path | None = None
+    adapter_timeout_seconds: float = 3600.0
+    adapter_term_grace_seconds: float = 10.0
     # Fixed: the dispatcher ignores a readiness document older than 90 s.
     ready_refresh_seconds: float = 30.0
 
@@ -38,6 +42,8 @@ class ExecutorConfig:
         env = os.environ if environ is None else environ
         state = _absolute("MERGEN_EXECUTOR_STATE",
                           env.get("MERGEN_EXECUTOR_STATE", "/var/lib/mergen/executor"))
+        model_root = _absolute("MERGEN_MODEL_ROOT", env.get("MERGEN_MODEL_ROOT", "/srv/mergen-models"))
+        imaging_venv = _optional_absolute("MERGEN_IMAGING_VENV", env.get("MERGEN_IMAGING_VENV", ""))
         return cls(
             runtime_root=_absolute("MERGEN_RUNTIME_ROOT",
                                    env.get("MERGEN_RUNTIME_ROOT", "/var/lib/mergen/runtime")),
@@ -54,6 +60,10 @@ class ExecutorConfig:
             max_input_bytes=_integer(env, "MERGEN_MAX_INPUT_BYTES", 2 * GIB, 1, 64 * GIB),
             max_expanded_bytes=_integer(env, "MERGEN_MAX_EXPANDED_BYTES", 8 * GIB, 1, 64 * GIB),
             max_result_bytes=_integer(env, "MERGEN_MAX_RESULT_BYTES", 2 * GIB, 1, 64 * GIB),
+            model_root=model_root,
+            imaging_venv=imaging_venv,
+            adapter_timeout_seconds=_number(env, "MERGEN_ADAPTER_TIMEOUT_SECONDS", 3600, 10, 86400),
+            adapter_term_grace_seconds=_number(env, "MERGEN_ADAPTER_TERM_GRACE_SECONDS", 10, 1, 60),
         )
 
 
@@ -62,6 +72,10 @@ def _absolute(name: str, raw: str) -> Path:
     if not raw or not path.is_absolute() or ".." in path.parts:
         raise ConfigError(f"{name} must be an absolute path without '..'")
     return path
+
+
+def _optional_absolute(name: str, raw: str) -> Path | None:
+    return None if not raw else _absolute(name, raw)
 
 
 def _inside(state: Path, name: str, raw: str) -> Path:

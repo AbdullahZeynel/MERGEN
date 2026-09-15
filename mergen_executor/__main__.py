@@ -24,7 +24,7 @@ def main(environ: Mapping[str, str] | None = None) -> int:
         print(f"mergen-executor: {exc}", file=sys.stderr)
         return OPERATOR_ACTION
     configure_logging()
-    executor = Executor(config, default_imaging_adapter())
+    executor = Executor(config, default_imaging_adapter(config))
     try:
         executor.start()
     except LayoutError as exc:

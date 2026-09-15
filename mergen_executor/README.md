@@ -1,4 +1,4 @@
-# GPU executor (G3)
+# GPU executor (G3 + G4-A isolation)
 
 GPU hostunda dispatcher'ın yayımladığı işleri teker teker çalıştıran süreç. Ağ
 istemcisi, VPS adresi veya worker token'ı yoktur; dispatcher ile yalnız
@@ -59,7 +59,7 @@ ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
 - Pause dosyası veya meşgul GPU yeni işi başlatmaz; çalışan iş biter. Executor
   kullanıcının GPU süreçlerine dokunmaz.
 
-## Adaptör arayüzü (G4)
+## Adaptör arayüzü ve süreç sınırı (G4-A)
 
 `mergen_executor.adapter.ImagingAdapter`, gerçek modelin takılacağı tek yerdir:
 
@@ -76,47 +76,34 @@ ve `gate` dispatcher'ındır; yalnız okunur, `gate` ayrıca kilitlenir.
   ZIP, bu iş için `backend.live_contracts.ResultManifest`'e uyan `manifest.json` ile
   en az `report.json`, `prediction.nii.gz` ve `prediction.glb` taşır.
 - Adaptör VPS'i, dispatcher'ı, token'ı veya spool yönetimini bilmez. Yalnız
-  `output_dir`'e yazmak ve `cancelled()`'a uymak sözleşmesinin parçasıdır; G3'te
-  bunu zorlayan bir mekanizma yoktur.
+  `output_dir`'e yazabilir.
 
-G3 üretim kaydında adaptör yoktur (`default_imaging_adapter()` → `None`); testler
-sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA preflight'ı ve NVIDIA
-cihaz izinleri G4'tedir.
+`MERGEN_MODEL_ROOT` ve `MERGEN_IMAGING_VENV` birlikte ayarlanırsa
+`ProcessImagingAdapter` seçilir. Model kökündeki bakım hesabınca yönetilen
+`manifest.json`;
+şema sürümünü, model kimliğini, çalıştırıcı modülünü ve her checkpoint'in göreli
+yol/boyut/SHA-256 değerini taşır. Eksik, bağlantı üzerinden ulaşılan veya özeti
+yanlış bir checkpoint capability olarak ilan edilmez. Biçim:
+[`MODEL_RUNNER.md`](../docs/contracts/MODEL_RUNNER.md).
 
-### G3'te adaptör güvenilir koddur, güvenlik sınırı değildir
+Çalıştırıcı executor'dan ayrı süreçte ve ayrı venv Python'ıyla çalışır. Linux
+Landlock ABI 3+, bütün dosya sistemi yazma haklarını ele alıp yalnız o işin
+`work/output` ağacına izin verir; destek yoksa preflight kapalı başarısız olur.
+Alt süreç yeni bir oturum/süreç grubundadır. Cancel veya zaman aşımında önce
+SIGTERM, `MERGEN_ADAPTER_TERM_GRACE_SECONDS` sonra SIGKILL uygulanır; başarıyla
+dönen çalıştırıcının bıraktığı torun süreçler de öldürülür. Kontrol/worker/VPS
+önekli ortam anahtarları alt sürece aktarılmaz ve stdout/stderr loga bağlanmaz.
 
-Adaptör executor sürecinin içinde, aynı kullanıcı (`mergen-executor`) ve grupla
-(`mergen-svc`), executor'ın açık dosyaları ve belleğiyle çalışır. Bu yüzden:
+Bu sınır yazma ve yaşam döngüsü sınırıdır; çalıştırıcı `mergen-executor`
+kullanıcısıyla çalıştığı için executor'ın okuyabildiği dosyaları okuyabilir.
+Model ağacı ve venv bu nedenle yalnız güvenilir bakım hesabınca yönetilmeli,
+model kodu güvenilir olmalı ve hostta gerçek hasta verisi kullanılmadan önce okuma sınırı ayrıca
+değerlendirilmelidir.
 
-- Executor'ın yazabildiği her yere yazabilir: `/var/lib/mergen/executor` ve
-  `/var/lib/mergen/runtime` altındaki her şey; başka işlerin dizinleri,
-  `status.json`, `result.zip`, `executor.json` ve dispatcher'ın grup-yazılabilir
-  dosyaları dahil. Adaptöre yalnız `work/input` ve `work/output` yollarının
-  verilmesi onu bu dizinlere kapatmaz;
-  `test_the_adapter_is_handed_job_specific_paths` yalnız hangi yolların verildiğini
-  doğrular.
-- Executor'ın durumunu ve kodunu (kilitler, `finalize`, `cancelled()`, beklenen
-  model kimliği) değiştirebilir ve `cancel`'ı yok sayabilir. Zaman aşımı yoktur;
-  executor'ın adaptörü tek başına durdurma yolu yoktur, yalnız servisin tamamı
-  durdurulabilir.
-- Unit'teki `ProtectSystem=strict`, `ReadWritePaths`, `PrivateNetwork=true` ve
-  diğer kısıtlar gerçek bir OS sınırıdır, ama bütün servisin çevresindedir;
-  adaptörle executor arasında sınır yoktur.
-
-Dispatcher'ın özet ve boyut doğrulaması, arşiv denetimi ve VPS'in yeniden
-doğrulaması bozuk bir sonucun VPS'e ulaşmasını sınırlar; adaptörün yerel dosyalara
-yazmasını engellemez.
-
-Gerçek bir adaptör etkinleştirilmeden önce G4 şunları sağlamalı ve testle
-kanıtlamalıdır:
-
-1. Adaptör ayrı bir süreçte ve ayrı, kilitli bir venv'de çalışır; executor'ın
-   belleğini, açık dosyalarını ve spool kilitlerini devralmaz.
-2. Adaptör kendi süreç grubunda başlar; zaman aşımında, `cancel`'da ve executor
-   dururken bütün grup sonlandırılır (önce SIGTERM, süre dolunca SIGKILL).
-3. Yazma alanı OS düzeyinde yalnız o işin `work/output`'una daraltılır (ayrı uid
-   ya da mount namespace); spool'un geri kalanına, `executor.json`'a ve durum
-   dizinine yazma denemesinin başarısız olduğu test edilir.
+Bu değişiklik gerçek Swin çalıştırıcısını, NVML/CUDA model preflight'ını veya
+NVIDIA `DeviceAllow` ayarını eklemez. `MERGEN_IMAGING_VENV` boş kaldığı sürece
+adaptör yoktur ve executor capability ilan etmez; G4-B gelmeden servisleri canlı
+iş kabul edecek biçimde açmayın.
 
 ## Çalıştırma ve test
 
