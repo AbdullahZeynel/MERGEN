@@ -1,8 +1,18 @@
-# EXAMPLE ONLY. The executor itself is G3 work; nothing installs this yet.
+# EXAMPLE ONLY. Review every path on the host; nothing installs or starts this.
 #
-# The executor runs models against one job directory the dispatcher prepared.
-# It holds no token, knows no VPS address, and has no reason to reach the
-# network. PrivateDevices is NOT set here: it needs /dev/nvidia*.
+# Matches the G3 package `mergen_executor`, run from the same release layout
+# as the dispatcher:
+#
+#   /opt/mergen/releases/<version>/src/        backend/archive_io.py,
+#                                              backend/live_contracts.py,
+#                                              mergen_spool/, mergen_executor/
+#   /opt/mergen/releases/<version>/executor/   venv: mergen_executor/requirements.txt
+#   /opt/mergen/current -> releases/<version>  one symlink, switched atomically
+#
+# The executor runs one job at a time on a job directory the dispatcher
+# published. It holds no token, knows no VPS address and has no network leg.
+# G3 runs no model and opens no GPU device: the NVIDIA device allow-list and
+# the imaging model environment arrive with the G4 adapter.
 
 [Unit]
 Description=MERGEN GPU model executor
@@ -12,45 +22,58 @@ After=local-fs.target
 Type=simple
 User=mergen-executor
 Group=mergen-executor
+# The spool's setgid group: job files are shared with the dispatcher through it.
 SupplementaryGroups=mergen-svc
 WorkingDirectory=/var/lib/mergen/executor
 EnvironmentFile=/etc/mergen/executor.env
-ExecStart=/opt/mergen/current/executor/bin/python -m mergen_executor
+Environment=PYTHONPATH=/opt/mergen/current/src
+Environment=PYTHONDONTWRITEBYTECODE=1
+# -P: import nothing from the working directory, only from PYTHONPATH and the venv.
+ExecStart=/opt/mergen/current/executor/bin/python -P -m mergen_executor
 Restart=on-failure
 RestartSec=10
+# Exit 2 is a configuration or spool-layout refusal: an operator must fix it,
+# and a restart would only repeat the same refusal.
+RestartPreventExitStatus=2
 
 # Privilege containment
 NoNewPrivileges=true
+CapabilityBoundingSet=
 PrivateTmp=true
+# G3 opens no GPU device. G4 replaces this with DevicePolicy=closed and a
+# DeviceAllow line for each NVIDIA node the host really has.
+PrivateDevices=true
 ProtectSystem=strict
 ProtectHome=true
 ProtectKernelTunables=true
 ProtectKernelModules=true
+ProtectKernelLogs=true
 ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+# The owner's processes stay invisible to the service on this shared desktop.
+ProtectProc=invisible
+RestrictNamespaces=true
+RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
+# G4 revisits this if its CUDA stack needs writable executable memory.
+MemoryDenyWriteExecute=true
 SystemCallArchitectures=native
+SystemCallFilter=@system-service
+# No network leg at all: an empty network namespace, no IP traffic, and only
+# Unix sockets (local account lookups) may be created.
+PrivateNetwork=true
+IPAddressDeny=any
+RestrictAddressFamilies=AF_UNIX
 # 0007, not 0077: the spool is a hand-off. Files land 0660 in the setgid
 # group mergen-svc so the other service can read them; others get nothing.
 UMask=0007
 ReadWritePaths=/var/lib/mergen/executor /var/lib/mergen/runtime
 
-# No network leg at all. Verify on the host: some CUDA and telemetry paths
-# open sockets, and if one does, relax this to IPAddressDeny=any instead of
-# removing the isolation entirely.
-PrivateNetwork=true
-
-# GPU device access. DeviceAllow only grants what is listed.
-DeviceAllow=/dev/nvidiactl rw
-DeviceAllow=/dev/nvidia-uvm rw
-DeviceAllow=/dev/nvidia-uvm-tools rw
-DeviceAllow=/dev/nvidia0 rw
-# Add further /dev/nvidiaN lines only for devices this host really has.
-
-# Shared desktop manners. The GPU itself has no usable quota on a consumer
-# NVIDIA card: there is no reliable percentage share, so admission control is
-# all-or-nothing and lives in the executor (flock plus the VRAM and
-# utilisation thresholds in executor.env), not in systemd.
+# Shared desktop manners. Admission is all-or-nothing and lives in the
+# executor (pause file, GPU probe and the flock on MERGEN_GPU_LOCK_PATH),
+# because a consumer NVIDIA card has no usable percentage share.
 Nice=15
 CPUWeight=30
 IOWeight=30
