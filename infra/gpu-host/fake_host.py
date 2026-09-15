@@ -21,7 +21,13 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parent.parent
-COMMANDS = ("id", "getent", "chown", "stat", "runuser", "systemctl", "systemd-analyze")
+COMMANDS = ("id", "getent", "chown", "stat", "runuser", "systemctl", "systemd-analyze", "nvidia-smi",
+            "dpkg-query", "hostname", "ip", "tailscale")
+# What a careless tool could leak. The fakes answer with these, so a call that
+# would print an identity shows up in the output the tests inspect.
+GPU_UUID = "GPU-" + "5e471ne1-0000-4000-8000-" + "1dent1f1e5"
+PCI_BUS_ID = "00000000:" + "5E:00.0"
+IDENTITY = {"hostname": "sentinel-hostname", "ip": "sentinel-ip-address", "tailscale": "sentinel-tailnet-address"}
 USERS = {"root": (0, 0), "mergen": (1500, 1500), "mergen-dispatcher": (991, 991),
          "mergen-executor": (992, 992)}
 SHELLS = {"root": "/bin/bash", "mergen": "/bin/bash"}
@@ -217,10 +223,33 @@ def command(name: str, args: list[str], base: Path) -> int:
         return 0 if readable else 1
     if name == "systemctl":
         if args and args[0] == "is-active":
-            return 0 if args[-1] in state["active"] else 3
+            active = args[-1] in state["active"]
+            if "--quiet" not in args:
+                print("active" if active else "inactive")
+            return 0 if active else 3
+        if args and args[0] == "is-enabled":
+            enabled = state.get("enabled", {}).get(args[-1], "not-found")
+            print(enabled)
+            return 0 if enabled == "enabled" else 1
         return 97  # anything else would change the host
     if name == "systemd-analyze":
         return 1 if state["analyze_fail"] else 0
+    if name == "nvidia-smi":
+        # Every identifier a careless query could print is a sentinel.
+        if "-L" in args or any(arg.startswith("-q") for arg in args):
+            print(f"GPU 0: NVIDIA Test GPU (UUID: {GPU_UUID})")
+            return 0
+        query = next((arg.split("=", 1)[1] for arg in args if arg.startswith("--query-gpu=")), "")
+        values = {"index": "0", "name": "NVIDIA Test GPU", "driver_version": "999.99.99",
+                  "memory.total": "16384 MiB", "uuid": GPU_UUID, "pci.bus_id": PCI_BUS_ID, "serial": GPU_UUID}
+        print(", ".join(values.get(field.strip(), "SENTINEL-FIELD") for field in query.split(",")))
+        return 0
+    if name == "dpkg-query":
+        print("base-files\t13ubuntu10\nbash\t5.2.21-2ubuntu4")
+        return 0
+    if name in IDENTITY:
+        print(IDENTITY[name])
+        return 0
     if name == "python3":
         if args[:2] == ["-m", "venv"]:
             venv = Path(args[2])
