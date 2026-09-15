@@ -17,10 +17,13 @@ from typing import BinaryIO
 from mergen_spool import contract
 from mergen_spool.fs import (create_marker, fsync_directory, lock_directory, read_json, remove_unlocked,
                              write_json_atomic)
+from mergen_spool.gate import GateBusy, GateMissing, create_gate, finalization_gate
 
 LOG = logging.getLogger("mergen.dispatcher")
 CHUNK = 1024 * 1024
 JOB_NAME = re.compile(r"^[a-f0-9]{32}$")
+# The executor holds the gate only to re-check cancel and write one status.
+GATE_WAIT_SECONDS = 10.0
 
 
 class SpoolLayoutError(RuntimeError):
@@ -100,7 +103,9 @@ class Spool:
             module=job.module, disease=job.disease,
             input=contract.InputRef(path=contract.INPUT_FILE, sha256=job.input_sha256, size=size),
             maxResultBytes=self._max_result_bytes, publishedAt=int(self._wall()))
-        # input.zip was fsynced while it was written; this fsyncs job.json and staging/.
+        # input.zip was fsynced while it was written and create_gate fsyncs the
+        # gate; write_json_atomic fsyncs job.json and staging/.
+        create_gate(staging)
         write_json_atomic(staging / contract.JOB_FILE, document.model_dump())
         target = self.job_directory(job.job_id)
         if os.path.lexists(target):
@@ -162,12 +167,37 @@ class Spool:
             handle.seek(0)
             yield handle
 
-    def cancel(self, directory: Path) -> None:
-        """Tell the executor the lease is gone. Idempotent."""
+    def cancel(self, directory: Path, *, wait: float = GATE_WAIT_SECONDS) -> bool:
+        """Tell the executor the lease is gone, ordered against its verdict.
+
+        The marker is created while holding the job's gate, so the executor has
+        either not decided yet (and will see it) or already written its verdict.
+        Returns whether a marker was written. A skipped marker cannot publish
+        anything: after a lost lease this worker uploads nothing and the VPS
+        accepts no result for an expired lease.
+        """
         try:
-            create_marker(directory / contract.CANCEL_FILE)
+            fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         except OSError as exc:
             LOG.info("cancel marker not written (%s)", type(exc).__name__)
+            return False
+        try:
+            try:
+                with finalization_gate(fd, timeout=wait):
+                    create_marker(directory / contract.CANCEL_FILE)
+            except GateMissing:
+                # The executor refuses a job without a gate, so there is no
+                # verdict to order against; the marker still stops a run early.
+                create_marker(directory / contract.CANCEL_FILE)
+            return True
+        except GateBusy:
+            LOG.warning("cancel marker not written: the finalization gate stayed busy")
+            return False
+        except OSError as exc:
+            LOG.info("cancel marker not written (%s)", type(exc).__name__)
+            return False
+        finally:
+            os.close(fd)
 
     def discard(self, directory: Path) -> None:
         """Take a job out of the executor's view, then delete it once unlocked."""

@@ -109,8 +109,9 @@ class Delivery(DispatcherCase):
         staging = f"{self.root}/staging/{JOB_ID}-"
         publish = next(index for index, event in enumerate(events)
                        if event[0] == "rename" and event[1].startswith(staging))
-        self.assertEqual(events[publish][2], ["input.zip", "job.json"])
+        self.assertEqual(events[publish][2], ["gate", "input.zip", "job.json"])
         before = [event[1] for event in events[:publish] if event[0] == "fsync"]
+        self.assertTrue(any(path.startswith(staging) and path.endswith("/gate") for path in before))
         self.assertTrue(any(path.startswith(staging) and path.endswith("/input.zip") for path in before))
         self.assertTrue(any(path.startswith(staging) and "job.json" in path for path in before))
         self.assertTrue(any(path.startswith(staging) and path.count("/") == staging.count("/")

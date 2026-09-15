@@ -34,6 +34,7 @@ tek yazarı vardır, bu yüzden iki süreç aynı dosyada yarışmaz:
 | `jobs/<jobId>/job.json` | dispatcher | — | Bir kez, yayından önce yazılır |
 | `jobs/<jobId>/input.zip` | dispatcher | — | Checksum'ı doğrulanmış girdi |
 | `jobs/<jobId>/cancel` | dispatcher | — | Boş işaret: lease kaybedildi, sonuç yayımlanmayacak |
+| `jobs/<jobId>/gate` | dispatcher | — | `mergen-spool-gate 1`; `cancel` ile terminal durumu `flock` altında sıralar |
 | `jobs/<jobId>/status.json` | executor | — | `accepted → running → completed/failed`; atomik değiştirilir |
 | `jobs/<jobId>/result.zip` | executor | — | `completed` yazılmadan önce tamamlanır |
 | `jobs/<jobId>/work/` | executor | 2770 | Adaptörün işe özel giriş/çıkış dizinleri; karardan önce silinir |

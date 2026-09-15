@@ -30,6 +30,13 @@ başarılı yenilemenin süresi dolarsa lease kayıp sayılır; o andan sonra hi
 sonuç yüklenmez. Yanıtı kaybolan bir yüklemenin yeniden denemesine VPS 409 döner;
 dispatcher bunu yayımlanmış olabilecek bir iş sayar ve hata bildirmez.
 
+`cancel` işareti iş dizinindeki `gate` dosyasına `flock(LOCK_EX)` alınarak yazılır;
+executor da terminal durumu aynı kilit altında yazar. Bu yüzden executor işareti ya
+kararından önce görür ya da kararını işaretten önce yazmıştır. Kilit en fazla 10
+saniye beklenir; alınamazsa işaret yazılmaz. Bu durumda da hiçbir sonuç yüklenmez:
+lease kaybından sonra dispatcher yükleme yapmaz, VPS de süresi dolmuş lease'e sonuç
+kabul etmez.
+
 Yeniden başlatmada `staging/` silinir, `trash/` süpürülür, `jobs/` altındaki her
 iş için lease yenilenir: yanıt 200 ise iş devralınır, 409 ise `cancel` bırakılıp
 atılır. Çözülmemiş yerel iş varken yeni iş alınmaz.

@@ -303,6 +303,30 @@ class LiveControlTests(unittest.IsolatedAsyncioTestCase):
             content=bundle)
         self.assertEqual(right.status_code, 200)
 
+    async def test_the_vps_accepts_no_result_once_the_lease_has_expired(self):
+        csrf = await self.create_session()
+        created = await self.public.post(
+            "/api/live/jobs", headers={**csrf, "Content-Type": "application/zip"},
+            content=imaging_input(),
+        )
+        job_id = created.json()["jobId"]
+        await self.control.post("/internal/jobs/claim", headers=self.worker_headers,
+                                json={"capabilities": ["imaging"]})
+        with self.store.connect() as db:
+            db.execute("UPDATE jobs SET lease_until=0 WHERE id=?", (job_id,))
+        bundle = imaging_result(job_id)
+        answer = await self.control.post(
+            f"/internal/jobs/{job_id}/result",
+            headers={**self.worker_headers, "Content-Type": "application/zip",
+                     "X-Mergen-Result-Sha256": hashlib.sha256(bundle).hexdigest()},
+            content=bundle)
+        self.assertEqual(answer.status_code, 409)
+        session = self.store.get_session(self.public.cookies.get("mergen_session"))
+        self.assertNotEqual(self.store.job_for_session(job_id, session["id"])["status"], "completed")
+        self.assertFalse((self.store.job_directory(session["id"], job_id) / "result.zip").exists())
+        renewal = await self.control.post(f"/internal/jobs/{job_id}/lease", headers=self.worker_headers)
+        self.assertEqual(renewal.status_code, 409)
+
 
 class LiveSettingsEnvironmentTests(unittest.IsolatedAsyncioTestCase):
     """systemd must never fall back to the checkout-relative runtime default."""

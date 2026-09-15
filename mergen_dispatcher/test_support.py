@@ -20,6 +20,7 @@ from mergen_dispatcher.config import DispatcherConfig
 from mergen_dispatcher.runtime import Dispatcher
 from mergen_spool import contract
 from mergen_spool.fs import lock_directory, read_json, write_json_atomic
+from mergen_spool.gate import create_gate
 
 # Fixture identity only; the first literal stays short so it never looks like a credential.
 TOKEN = "fake-" + "k" * 40
@@ -107,6 +108,7 @@ def publish_job(root: Path, job_id: str = JOB_ID, input_bytes: bytes | None = No
     payload = imaging_input() if input_bytes is None else input_bytes
     directory = root / contract.JOBS_DIR / job_id
     directory.mkdir(parents=True)
+    create_gate(directory)
     (directory / contract.INPUT_FILE).write_bytes(payload)
     write_json_atomic(directory / contract.JOB_FILE, {
         "schemaVersion": 1, "kind": "mergen-spool-job", "jobId": job_id, "module": "imaging",
