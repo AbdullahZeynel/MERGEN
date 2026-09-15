@@ -57,6 +57,9 @@ jobs:
         run: python -m unittest discover -s mergen_spool -t .
       - name: GPU dispatcher testleri
         run: python -m unittest discover -s mergen_dispatcher -t .
+      # GPU, model, ağ veya alt süreç gerektirmez; sahte adaptörle çalışır.
+      - name: GPU executor testleri
+        run: python -m unittest discover -s mergen_executor -t .
       - name: Kurulum betikleri sözdizimi
         run: |
           bash -n infra/vps/package-frontend.sh

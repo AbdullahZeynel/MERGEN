@@ -1,0 +1,5 @@
+# GPU host executor venv. Shipped next to it in the same release:
+# backend/archive_io.py, backend/live_contracts.py and mergen_spool/.
+# No HTTP client: the executor has no network leg. The imaging model's own
+# environment (MERGEN_IMAGING_VENV) is separate and arrives with G4.
+pydantic==2.13.5

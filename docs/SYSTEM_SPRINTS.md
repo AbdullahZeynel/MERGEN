@@ -150,7 +150,7 @@ istekte doğrulanır.
 | G1 — `chore/native-gpu-host-bootstrap` | `mergen` bakım hesabı, ayrı yetkisiz servis hesapları, dizin/izin standardı, Tailscale ACL, sürücü ve CUDA'lı PyTorch doğrulaması | Servisler sudo/login olmadan çalışır; sırlar ayrılır; yeniden başlatma sonrası Tailscale ve GPU smoke testi geçer |
 | G2 — `feat/gpu-dispatcher` | Eski pull-worker çekirdeğini dispatcher'a uyarla; claim, lease, checksum, indirme, sonuç yükleme, yeniden deneme ve temizlik | Sahte executor ile uçtan uca iş tamamlanır; ağ kesintisi/yeniden başlatmada iş kaybolmaz veya iki kez yayımlanmaz |
 | G3 — `feat/gpu-executor` | Yerel iş sözleşmesi, manifest doğrulama, adaptör registry, `flock`, GPU boşluk eşiği, pause/resume ve systemd sınırları | Meşgul GPU'da iş ertelenir ve kullanıcı süreci öldürülmez; tek inference sınırı ile sahte adaptör testi geçer |
-| G4 — `feat/gpu-model-adapter` | Kilitli görüntü ortamı, sürümlü model dizini, gerçek adaptör ve başlangıç preflight'ı | Görüntü fixture'ı gerçek modelle çalışır; eksik ağırlık/şema capability olarak ilan edilmez |
+| G4 — `feat/gpu-model-adapter` | Kilitli görüntü ortamı, sürümlü model dizini, gerçek adaptör, başlangıç preflight'ı ve adaptörün süreç yalıtımı | Görüntü fixture'ı gerçek modelle çalışır; eksik ağırlık/şema capability olarak ilan edilmez; adaptör ayrı süreç ve venv'de, kendi süreç grubunda çalışır; zaman aşımı ve cancel bu grubu sonlandırır; yazma alanı OS düzeyinde işin `work/output`'una daraltılır ve dışına yazma denemesinin başarısız olduğu test edilir |
 | G5 — `feat/live-end-to-end` | Mevcut VPS oturum/kuyruk katmanını dispatcher'a bağla; canlı UI, ilerleme, sonuç varlıkları ve ZIP indirme | Kullanıcı yalnız kendi işini görür/indirir; 3 dk idle/logout GPU+VPS kopyalarını siler; bağlantı kopması demo sonucu gibi görünmez |
 | G6 — `chore/resilience-privacy-drill` | Yedek host, servis boot, disk sınırı, log denetimi, veri yaşam döngüsü ve sunum provası | GPU kapalıyken demo çalışır; yedek elle devreye alınır; 10 oturum/1 GPU işi ve temizlik kanıtı kaydedilir |
 
@@ -189,6 +189,35 @@ bilinen süre dolarsa `cancel` işareti bırakır, sonucu yüklemez ve hata bild
 Başlangıçta `staging/` silinir, yayımlanmış işler lease yenilemesiyle devralınır ya
 da atılır. Sahte kontrol API'si ve sahte executor ile test edildi; gerçek hostta,
 Tailscale üzerinden ve G3 executor'la uçtan uca denenmedi.
+
+### G3 güncel durum
+
+`mergen_executor` spool'dan başka kanalı olmayan, ağ istemcisi, VPS adresi veya
+token'ı bulunmayan ayrı bir süreçtir ve yalnız `imaging` yeteneğini ilan eder.
+Başlarken spool'un ve kendi durum dizininin izin, sahiplik ve grup üyeliğini
+doğrular, bayat `executor.json`'u `acceptingJobs: false` ile değiştirir ve yarım
+kalan işleri `failed/internal-error` yapar. Pause dosyası, enjekte edilen GPU
+probe'u veya başka bir sürecin tuttuğu `gpu.lock` varken iş başlatmaz. İşi dizin
+tanımlayıcısı üzerinden kilitler; `job.json`'u ve girdinin boyutunu/SHA-256'sını
+yeniden doğrular, arşivi `backend.archive_io` ile denetleyip `work/input`'a açar ve
+adaptöre işe özel giriş/çıkış dizinleri verir. Sonucu geçici adla kopyalar, fsync
+eder, doğrular ve `rename` ile yayımlar; `completed` ancak bundan sonra yazılır.
+Sonuç manifesti adaptörün başlarken doğrulanan `modelId`/`modelVersion`'ını
+taşımalıdır; kimliği geçersiz adaptör hiçbir yetenek ilan etmez. Terminal kararı dispatcher'ın `cancel` işaretiyle aynı `gate` kilidi altında yazar;
+`rename`'den sonra ama karardan önce gelen `cancel` sonucu geri çektirir ve iş
+`failed/cancelled` olur.
+G3'te gerçek model yoktur: üretim kaydında adaptör bulunmadığı için hiçbir yetenek
+ilan edilmez, testler sahte adaptörle koşar. Gerçek görüntü adaptörü, NVML/CUDA
+preflight'ı ve NVIDIA cihaz izinleri G4'tedir.
+
+G3'te adaptör bir güvenlik sınırı değil, güvenilir koddur: executor sürecinin
+içinde, onun kullanıcısı, açık dosyaları ve belleğiyle çalışır. Adaptöre yalnız
+`work/input` ve `work/output` yollarının verilmesi onu bu dizinlere kapatmaz;
+executor'ın yazabildiği her yere yazabilir, `cancel`'ı yok sayabilir ve
+executor'ın onu tek başına durdurma yolu yoktur. Unit'teki `ProtectSystem=strict`,
+`ReadWritePaths` ve ağ kısıtları bütün servisi sınırlar, adaptörü executor'dan
+ayırmaz. G4 gerçek adaptörü etkinleştirmeden önce bunu kapatmalıdır (G4 satırı ve
+[`mergen_executor/README.md`](../mergen_executor/README.md)).
 
 ## Git ve ekip çalışma düzeni
 

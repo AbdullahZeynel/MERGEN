@@ -61,6 +61,52 @@ def read_json(path: Path, limit: int = MAX_CONTROL_BYTES) -> object:
     return json.loads(data)
 
 
+def write_json_atomic_at(dir_fd: int, name: str, document: dict) -> None:
+    """write_json_atomic relative to an open directory descriptor.
+
+    The write lands in the directory the caller holds even if its path has
+    changed since, which is how the executor works inside a job directory.
+    """
+    data = json.dumps(document, separators=(",", ":"), sort_keys=True).encode()
+    temporary = f".{name}.{secrets.token_hex(4)}.tmp"
+    fd = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, FILE_MODE,
+                 dir_fd=dir_fd)
+    try:
+        with os.fdopen(fd, "wb") as handle:
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, name, src_dir_fd=dir_fd, dst_dir_fd=dir_fd)
+    except BaseException:
+        try:
+            os.unlink(temporary, dir_fd=dir_fd)
+        except FileNotFoundError:
+            pass
+        raise
+    os.fsync(dir_fd)
+
+
+def read_json_at(dir_fd: int, name: str, limit: int = MAX_CONTROL_BYTES) -> object:
+    """read_json relative to an open directory descriptor."""
+    fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=dir_fd)
+    with os.fdopen(fd, "rb") as handle:
+        if not stat.S_ISREG(os.fstat(handle.fileno()).st_mode):
+            raise ValueError("control file is not a regular file")
+        data = handle.read(limit + 1)
+    if len(data) > limit:
+        raise ValueError("control file is too large")
+    return json.loads(data)
+
+
+def exists_at(dir_fd: int, name: str) -> bool:
+    """Whether `name` exists in the directory, without following a link."""
+    try:
+        os.stat(name, dir_fd=dir_fd, follow_symlinks=False)
+    except FileNotFoundError:
+        return False
+    return True
+
+
 def create_marker(path: Path) -> bool:
     """Create an empty marker file once. False when it already exists."""
     try:

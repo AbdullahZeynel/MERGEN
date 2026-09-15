@@ -362,20 +362,26 @@ manifest'i şimdi üret ki o doğrulamanın karşılaştıracağı bir referans 
 ### 16. Hangi servisler henüz başlatılmaz
 
 `infra/gpu-host/systemd/` altındaki iki unit **`.example`** uzantılıdır ve
-`install-base.sh` onları kurmaz. Dispatcher kodu (`mergen_dispatcher`, G2) repoda
-hazırdır; unit örneği şu sürüm düzenini bekler:
+`install-base.sh` onları kurmaz. Dispatcher (`mergen_dispatcher`, G2) ve executor
+(`mergen_executor`, G3) kodu repoda hazırdır; unit örnekleri şu sürüm düzenini
+bekler:
 
 ```
 /opt/mergen/releases/<sürüm>/src/         backend/archive_io.py, backend/live_contracts.py,
-                                          mergen_spool/, mergen_dispatcher/
+                                          mergen_spool/, mergen_dispatcher/, mergen_executor/
 /opt/mergen/releases/<sürüm>/dispatcher/  mergen_dispatcher/requirements.txt ile venv
+/opt/mergen/releases/<sürüm>/executor/    mergen_executor/requirements.txt ile venv
 /opt/mergen/current -> releases/<sürüm>
 ```
 
-Executor (G3) gelmeden dispatcher de `enable` edilmez: geçerli ve taze bir
-`executor.json` olmadan VPS'e hiçbir yetenek bildirmez ve iş almaz.
-`mergen-executor.service` G3'e kadar kurulmaz. Şu an başlatılması gereken tek
-servis `tailscaled`.
+İkisi de G4'ten önce `enable` edilmez. G3 sürümünde gerçek görüntü adaptörü yoktur:
+executor `executor.json`'a hiçbir yetenek yazmaz, dispatcher da bu yüzden VPS'e
+yetenek bildirmez ve iş almaz. Executor unit'i ağ ve GPU cihazı açmaz; NVIDIA cihaz
+izinleri G4 adaptörüyle eklenir. G3'te adaptör executor sürecinin içinde çalışır ve
+unit onu executor'dan ayırmaz; gerçek adaptör, ayrı süreç/venv, süreç grubu
+sonlandırma ve yalnız `work/output`'a yazma sınırı
+([`mergen_executor/README.md`](../mergen_executor/README.md)) sağlanmadan
+etkinleştirilmez. Şu an başlatılması gereken tek servis `tailscaled`.
 
 ### 17. Pause, bakım ve rollback
 
@@ -385,9 +391,10 @@ servis `tailscaled`.
 sudo -u mergen-executor touch /var/lib/mergen/executor/pause
 ```
 
-Dosya varken çalışan iş bitirilir, yenisi başlatılmaz. Devam için dosyayı sil.
-Alternatif `sudo systemctl stop mergen-executor.service`; fark şu ki pause
-dosyası devam eden işi yarıda kesmez.
+Dosya varken çalışan iş bitirilir, yenisi başlatılmaz ve `executor.json`
+`acceptingJobs=false` der; dispatcher da yeni iş almaz. Devam için dosyayı sil.
+Alternatif `sudo systemctl stop mergen-executor.service`; fark şu ki durdurma
+çalışan işi `failed/internal-error` ile bitirir, pause dosyası ise yarıda kesmez.
 
 **Bakım.** Sürücü güncellemesi, çekirdek güncellemesi veya ağır oyun
 oturumundan önce pause koy. Güncelleme sonrası 14. adımı tekrar çalıştır.

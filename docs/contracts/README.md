@@ -34,8 +34,10 @@ tek yazarı vardır, bu yüzden iki süreç aynı dosyada yarışmaz:
 | `jobs/<jobId>/job.json` | dispatcher | — | Bir kez, yayından önce yazılır |
 | `jobs/<jobId>/input.zip` | dispatcher | — | Checksum'ı doğrulanmış girdi |
 | `jobs/<jobId>/cancel` | dispatcher | — | Boş işaret: lease kaybedildi, sonuç yayımlanmayacak |
+| `jobs/<jobId>/gate` | dispatcher | — | `mergen-spool-gate 1`; `cancel` ile terminal durumu `flock` altında sıralar |
 | `jobs/<jobId>/status.json` | executor | — | `accepted → running → completed/failed`; atomik değiştirilir |
 | `jobs/<jobId>/result.zip` | executor | — | `completed` yazılmadan önce tamamlanır |
+| `jobs/<jobId>/work/` | executor | 2770 | Adaptörün işe özel giriş/çıkış dizinleri; karardan önce silinir |
 | `trash/` | dispatcher | 2700 | Kilit serbest kalınca silinir |
 
 Kök dizin tmpfiles'tan 2770 gelir. Dispatcher başlarken `staging/`, `jobs/` ve
@@ -48,6 +50,41 @@ iş dizininde çalışırken dizine `flock(LOCK_EX)` alır; dispatcher dizini ya
 kilidi kendisi alabildiğinde siler. Şemalar `mergen_spool/contract.py` içindedir;
 örnekler `gpu-spool-job.v1.example.json`, `gpu-spool-status.v1.example.json` ve
 `gpu-executor-ready.v1.example.json` dosyalarındadır.
+
+Executor da başlarken kökü (2770, sahibi `MERGEN_SPOOL_OWNER`, grubuna üyelik) ve
+`jobs/` dizinini (2750) doğrular. İşe yalnız kilitlediği dizin tanımlayıcısı
+üzerinden erişir; `job.json`, `input.zip` ve `cancel` dosyalarını yalnız okur,
+`gate`'i yalnız kilitler. Executor durumu birer adım ilerletir: başlangıç →
+`accepted` ya da `failed`, `accepted` → `running` ya da `failed`, `running` →
+`completed` ya da `failed`. Adım atlanmaz, terminal durum yeniden yazılmaz. Durumu
+okuyan dispatcher ara adımları kaçırabilir; bu yüzden yalnız geri gitmeyi ve
+terminal durumdan çıkmayı reddeder. Sonuç `.result.zip.<rastgele>.tmp` adıyla
+yazılıp fsync edilir, doğrulanır ve tek `rename` ile `result.zip` olur; `completed`
+ancak bundan sonra yazılır. Sonucun `manifest.json`'ındaki `modelId` ve
+`modelVersion`, adaptörün başlarken doğrulanan kimliğiyle aynı olmalıdır; değilse
+iş `failed/inference-failed` olur. `cancel` varsa iş başlamaz.
+
+### `cancel` ile kararın sırası
+
+`cancel`'a bakıp sonra `completed` yazmak, arada `cancel`'ın gelebileceği bir boşluk
+bırakır; ikinci bir bakış bu boşluğu yalnız daraltır, kapatmaz. Boşluğu `gate`
+kapatır:
+
+- Dispatcher `cancel`'ı yalnız `gate` üzerinde `flock(LOCK_EX)` tutarken oluşturur.
+- Executor her terminal durumu (`completed` ve `failed`) aynı kilidi tutarken ve
+  `cancel`'a son kez baktıktan sonra yazar. Bu bakış ile yazma karşı taraf için tek
+  adımdır.
+- Kilidi önce alan sırayı belirler. `cancel` önceyse executor `result.zip`'i geri
+  çeker ve `failed/cancelled` yazar. Karar önceyse `cancel` kararı değiştirmez:
+  dispatcher `cancel`'ı yalnız sonucunu yüklemeyeceği bir iş için yazar (lease kaybı
+  ya da VPS'e bildirilen hata) ve ardından dizini atar; VPS de süresi dolmuş lease
+  için sonuç kabul etmez.
+- Kilit adaptör çalışırken tutulmaz; `cancel` çalışan işe hemen görünür. `flock`
+  sahibi ölünce bırakılır, çöken bir süreç kilidi tutulu bırakamaz.
+- `gate`'i olmayan, bağlantı olan ya da başka sürümde `gate`'i olan iş çalıştırılmaz
+  (`failed/internal-error`). Executor kilidi 10 sn içinde alamazsa `completed`
+  yazmaz, iş `failed/internal-error` olur; dispatcher alamazsa işareti yazmaz ve yine
+  hiçbir şey yüklemez.
 
 ## Hazır demo paketleri
 

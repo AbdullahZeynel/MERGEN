@@ -10,12 +10,19 @@ never race on the same file:
         job.json                     dispatcher  written once, before rename
         input.zip                    dispatcher  written once, before rename
         cancel                       dispatcher  empty marker: lease is gone
+        gate                         dispatcher  written once; orders cancel and verdict
         status.json                  executor    replaced atomically
         result.zip                   executor    complete before `completed`
+        work/                        executor    scratch, gone before a verdict
     <runtime>/trash/<jobId>-<rand>/  dispatcher  removed once unlocked
 
 The executor holds an exclusive flock on a job directory while it works in
 it; the dispatcher deletes a directory only while holding that lock itself.
+The executor reaches a job only through the descriptor it locked, because the
+dispatcher may rename the directory into trash/ at any time.
+
+A cancel marker is created, and a terminal status written, only while holding
+the job's gate (mergen_spool.gate), so the two are always ordered.
 """
 from __future__ import annotations
 
@@ -33,8 +40,15 @@ READY_FILE = "executor.json"
 JOB_FILE = "job.json"
 INPUT_FILE = "input.zip"
 CANCEL_FILE = "cancel"
+GATE_FILE = "gate"
 STATUS_FILE = "status.json"
 RESULT_FILE = "result.zip"
+WORK_DIR = "work"
+
+# The gate's content names its protocol version; a gate of another version is
+# not used, because the ordering rule it stands for may differ.
+GATE_VERSION = 1
+GATE_CONTENT = f"mergen-spool-gate {GATE_VERSION}\n".encode()
 
 # Directory modes. The runtime root is 2770 from tmpfiles. staging/ and trash/
 # are the dispatcher's alone; jobs/ lets the service group list and enter

@@ -75,9 +75,11 @@ def _safe_members(archive: zipfile.ZipFile, max_expanded: int, max_members: int)
     return members
 
 
-def validate_input_archive(path: Path, max_expanded: int) -> InputManifest:
+def validate_input_archive(source: Path | BinaryIO, max_expanded: int) -> InputManifest:
+    """`source` is a path or an open binary file. The GPU executor passes the
+    descriptor whose size and digest it just checked."""
     try:
-        with zipfile.ZipFile(path) as archive:
+        with zipfile.ZipFile(source) as archive:
             members = _safe_members(archive, max_expanded, 4096)
             names = {item.filename for item in members}
             if "input.json" not in names:
