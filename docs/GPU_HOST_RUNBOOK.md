@@ -359,22 +359,74 @@ Dizin `mergen:mergen-svc` 0750'dir: servisler okur, yalnız bakım hesabı yazar
 Executor bir ağırlığı kullanmadan önce checksum'ı doğrulamalıdır (G4 işi);
 manifest'i şimdi üret ki o doğrulamanın karşılaştıracağı bir referans olsun.
 
-### 16. Hangi servisler henüz başlatılmaz
+### 16. Servis staging'i ve release geçişi (başlatmadan)
 
-`infra/gpu-host/systemd/` altındaki iki unit **`.example`** uzantılıdır ve
-`install-base.sh` onları kurmaz. Dispatcher (`mergen_dispatcher`, G2) ve executor
-(`mergen_executor`, G3) kodu repoda hazırdır; unit örnekleri şu sürüm düzenini
-bekler:
+`install-base.sh` hesapları, dizinleri ve env dosyalarını kurduktan sonra dispatcher
+(`mergen_dispatcher`, G2) ve executor (`mergen_executor`, G3) tek bir sürümlü
+release olarak kurulur. Unit örnekleri bu düzeni bekler:
 
 ```
 /opt/mergen/releases/<sürüm>/src/         backend/archive_io.py, backend/live_contracts.py,
                                           mergen_spool/, mergen_dispatcher/, mergen_executor/
-/opt/mergen/releases/<sürüm>/dispatcher/  mergen_dispatcher/requirements.txt ile venv
-/opt/mergen/releases/<sürüm>/executor/    mergen_executor/requirements.txt ile venv
+/opt/mergen/releases/<sürüm>/units/       bu release'in iki unit dosyası
+/opt/mergen/releases/<sürüm>/dispatcher/  venv: yalnız mergen_dispatcher/requirements.txt
+/opt/mergen/releases/<sürüm>/executor/    venv: yalnız mergen_executor/requirements.txt
+/opt/mergen/releases/<sürüm>/*.freeze     pip'in her venv'e gerçekten kurduğu paketler
+/opt/mergen/releases/<sürüm>/MANIFEST.sha256, RELEASE (en son yazılır)
 /opt/mergen/current -> releases/<sürüm>
 ```
 
-İkisi de G4'ten önce `enable` edilmez. G3 sürümünde gerçek görüntü adaptörü yoktur:
+Release `root:root`'tur ve servis hesapları onu değiştiremez. Görüntü model ortamı
+(`MERGEN_IMAGING_VENV`, 12. adım) bu ağacın dışındadır; iki servis venv'ine model
+paketi kurulmaz ve executor venv'inde HTTP istemcisi bulunmaz.
+
+Bakım hesabıyla, incelenmiş bir depo kopyasından:
+
+```bash
+bash infra/gpu-host/verify-services.sh --before                       # salt okunur
+bash infra/gpu-host/stage-services.sh --version "$(git rev-parse --short=12 HEAD)"   # plan
+sudo bash infra/gpu-host/stage-services.sh --version <sürüm> --apply
+sudo bash infra/gpu-host/verify-services.sh --after                   # salt okunur
+```
+
+Plan hiçbir dosyayı değiştirmez. `--apply` yalnız root ile çalışır ve sırayla:
+önkoşulları doğrular (hesaplar, gruplar, dizin modları, env dosyaları, çalışan servis
+yok), release'i kendi adıyla kurar, iki venv'i ayrı ayrı oluşturur, release'i
+doğrular (importlar, bağımlılık ayrımı, gate sürümü, `systemd-analyze verify`),
+eksik env dosyasını örnekten tohumlar, eksik unit'i kurar ve en sonda `current`'ı
+geçici bir link ve tek `rename` ile yeni release'e çevirir. Bu adımdan önceki her
+hata yarım release'i siler; `current` değişmez. Aynı sürümle ikinci çalıştırma
+hiçbir şeyi değiştirmez.
+
+Hiçbir zaman: mevcut bir release'i, env dosyasını veya farklı içerikli bir unit'i
+ezer; servis `enable`/`start`/`restart` eder ya da `daemon-reload` çalıştırır;
+sürücü, CUDA, Tailscale veya model paketi kurar; bir release'i siler; env değeri
+yazdırır. Farklı bir unit bulunursa betik durur; unit elle incelenip kenara alınır.
+
+Env dosyalarında elle doldurulacak alanlar yalnız adlarıyla: `dispatcher.env`
+içinde `MERGEN_CONTROL_URL`, `MERGEN_WORKER_TOKEN`, `MERGEN_WORKER_ID`. Executor
+env'i G3 için örnekteki değerlerle çalışır; GPU eşikleri ve `MERGEN_IMAGING_VENV`
+G4'tedir. `verify-services.sh --after` doğrulanmayan ayarı yalnız adıyla gösterir.
+
+Dispatcher ile executor aynı `current/src`'den aynı `mergen_spool` gate sürümünü
+yükler; biri tek başına güncellenemez. Gate sürümü release'ler arasında değişirse
+iki servis birlikte yeniden başlatılır; eski dispatcher'ın spool'da bıraktığı işleri
+yeni executor `failed/internal-error` yapar. Betik bu değişimi ve etkilenen iş
+sayısını raporlar.
+
+**Rollback** yalnız `current` bağlantısını önceki release'e çevirmektir; hiçbir
+release veya veri silinmez:
+
+```bash
+sudo ln -s releases/<önceki-sürüm> /opt/mergen/.current.rollback
+sudo mv -T /opt/mergen/.current.rollback /opt/mergen/current
+sudo bash infra/gpu-host/verify-services.sh --after
+```
+
+`ln -sfn` kullanma: eski bağlantıyı silip yenisini yazar, arada `current` yoktur.
+Servisler çalışıyorsa önce durdurulur, geçişten sonra birlikte başlatılır.
+
+İki servis de G4'ten önce `enable` edilmez. G3 sürümünde gerçek görüntü adaptörü yoktur:
 executor `executor.json`'a hiçbir yetenek yazmaz, dispatcher da bu yüzden VPS'e
 yetenek bildirmez ve iş almaz. Executor unit'i ağ ve GPU cihazı açmaz; NVIDIA cihaz
 izinleri G4 adaptörüyle eklenir. G3'te adaptör executor sürecinin içinde çalışır ve
