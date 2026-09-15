@@ -389,6 +389,16 @@ sudo bash infra/gpu-host/stage-services.sh --version <sürüm> --apply
 sudo bash infra/gpu-host/verify-services.sh --after                   # salt okunur
 ```
 
+Bakım hesabı `executor.env`'yi okuyamaz (`root:mergen-executor` 0640) ve bu
+kasıtlıdır; hesap `mergen-executor` grubuna eklenmez. Bu yüzden bakım hesabıyla
+çalışan `--before` ve plan, bu dosyadaki `MERGEN_CONTROL_*`, `MERGEN_WORKER_*`,
+`MERGEN_VPS_*` taramasını yapamaz; hata vermek yerine WARN ile root'a bırakır ve
+dosyanın içeriğini hiçbir durumda yazdırmaz. `dispatcher.env`'nin executor
+tarafından okunamadığı ve spool alt dizinleri de yalnız root ile denetlenir. Tam
+denetim için `sudo bash infra/gpu-host/verify-services.sh --before` çalıştır.
+`--apply` her zaman root'tur: okunamayan bir `executor.env`'yi temiz saymaz,
+yasak bir anahtar bulursa hiçbir şeyi değiştirmeden durur.
+
 Plan hiçbir dosyayı değiştirmez. `--apply` yalnız root ile çalışır ve sırayla:
 önkoşulları doğrular (hesaplar, gruplar, dizin modları, env dosyaları, çalışan servis
 yok), release'i kendi adıyla kurar, iki venv'i ayrı ayrı oluşturur, release'i

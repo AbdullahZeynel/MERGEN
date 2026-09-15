@@ -117,9 +117,9 @@ class FakeHost:
                    "--python", str(self.python), "--source", str(self.source), *args]
         return subprocess.run(command, capture_output=True, text=True, env=self.environ(fake_root))
 
-    def verify(self, phase: str) -> subprocess.CompletedProcess:
+    def verify(self, phase: str, fake_root: bool = True) -> subprocess.CompletedProcess:
         command = ["bash", str(HERE / "verify-services.sh"), f"--{phase}", "--root", str(self.root)]
-        return subprocess.run(command, capture_output=True, text=True, env=self.environ())
+        return subprocess.run(command, capture_output=True, text=True, env=self.environ(fake_root))
 
     def snapshot(self) -> dict:
         found = {}
@@ -129,7 +129,10 @@ class FakeHost:
                 if stat.S_ISLNK(info.st_mode):
                     detail = os.readlink(path)
                 elif stat.S_ISREG(info.st_mode):
-                    detail = path.read_bytes()
+                    try:
+                        detail = path.read_bytes()
+                    except PermissionError:
+                        detail = "unreadable"  # still compared by mode and mtime
                 else:
                     detail = None
                 found[str(path)] = (stat.S_IMODE(info.st_mode), info.st_mtime_ns, detail)
