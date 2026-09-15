@@ -19,7 +19,8 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SHELL_SCRIPTS = sorted(HERE.glob("*.sh")) + sorted(HERE.glob("lib/*.sh"))
-READ_ONLY_SCRIPTS = ("audit-host.sh", "check-snapshot-layout.sh", "verify-gpu-runtime.sh")
+READ_ONLY_SCRIPTS = ("audit-host.sh", "check-snapshot-layout.sh", "verify-gpu-runtime.sh",
+                     "verify-services.sh")
 
 # Commands that would change the host. Matched as invocations, not as words:
 # a read-only script may legitimately name `apt-get` while probing which
@@ -471,9 +472,10 @@ class EnvExamples(unittest.TestCase):
 
     def test_executor_never_learns_the_vps_or_the_token(self):
         pairs = self._pairs("executor.env.example")
-        for key in self.SECRET_KEYS:
-            self.assertNotIn(key, pairs,
-                             f"{key} must not exist in the executor environment")
+        for key in pairs:
+            # The same prefix rule verify-services.sh applies on the host.
+            self.assertNotRegex(key, r"(?i)^MERGEN_(CONTROL|WORKER|VPS)_",
+                                f"{key} must not exist in the executor environment")
         text = read(HERE / "executor.env.example")
         self.assertNotIn("9100", text)
         self.assertNotIn("tailscale", text.lower())
@@ -484,6 +486,18 @@ class EnvExamples(unittest.TestCase):
             self.assertIn(key, pairs)
             self.assertEqual(pairs[key], "",
                              f"{key} must be an explicit deploy-time decision")
+
+    def test_examples_carry_only_blanks_placeholders_or_local_defaults(self):
+        # stage-services.sh seeds a missing env file from these. Secrets and
+        # infrastructure stay blank; what remains is a path from the directory
+        # contract or a plain number, never an address or a guessed credential.
+        local_default = re.compile(r"\d+|/(var/lib/mergen|srv/mergen-models)(/[a-z.-]+)*")
+        for name in ("dispatcher.env.example", "executor.env.example"):
+            for key, value in self._pairs(name).items():
+                with self.subTest(file=name, key=key):
+                    self.assertTrue(value == "" or re.fullmatch(r"<[^<>]+>", value)
+                                    or local_default.fullmatch(value),
+                                    f"{key} is neither blank, a placeholder nor a local default")
 
     def test_both_examples_agree_with_the_directory_contract(self):
         common = read(HERE / "lib" / "common.sh")
