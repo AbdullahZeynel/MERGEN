@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import secrets
 import shutil
 import sqlite3
@@ -57,6 +58,7 @@ class LiveSettings:
     max_upload_bytes: int = 2 * 1024**3
     max_expanded_bytes: int = 8 * 1024**3
     max_result_bytes: int = 2 * 1024**3
+    orphan_grace_seconds: int = 3600
     cookie_secure: bool = True
 
     def __post_init__(self):
@@ -70,6 +72,8 @@ class LiveSettings:
             raise ValueError("MERGEN_MAX_CLAIMED_JOBS must be between 1 and 10")
         if min(self.max_upload_bytes, self.max_expanded_bytes, self.max_result_bytes) <= 0:
             raise ValueError("file size limits must be positive")
+        if not 60 <= self.orphan_grace_seconds <= 86400:
+            raise ValueError("MERGEN_ORPHAN_GRACE_SECONDS must be between 60 and 86400")
 
     @classmethod
     def from_env(cls) -> "LiveSettings":
@@ -97,6 +101,7 @@ class LiveSettings:
             max_upload_bytes=env_int("MERGEN_MAX_UPLOAD_BYTES", 2 * 1024**3),
             max_expanded_bytes=env_int("MERGEN_MAX_EXPANDED_BYTES", 8 * 1024**3),
             max_result_bytes=env_int("MERGEN_MAX_RESULT_BYTES", 2 * 1024**3),
+            orphan_grace_seconds=env_int("MERGEN_ORPHAN_GRACE_SECONDS", 3600),
             cookie_secure=env_bool("MERGEN_COOKIE_SECURE", "true"),
         )
 
@@ -109,12 +114,18 @@ class CapacityError(Exception):
     pass
 
 
+SESSION_ID = re.compile(r"^[0-9a-f]{32}$")
+UPLOAD_PART = re.compile(r"^upload-[0-9a-f]{16}\.part$")
+
+
 class LiveStore:
     def __init__(self, settings: LiveSettings):
         self.settings = settings
         settings.runtime_root.mkdir(parents=True, exist_ok=True, mode=0o700)
         settings.database_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
         self._initialize()
+        self._recover_session_deletions()
+        self._quarantine_orphans()
 
     @contextmanager
     def connect(self):
@@ -184,6 +195,105 @@ class LiveStore:
     def job_directory(self, session_id: str, job_id: str) -> Path:
         return self.session_directory(session_id) / "jobs" / job_id
 
+    @property
+    def session_trash(self) -> Path:
+        return self.settings.runtime_root / ".trash" / "sessions"
+
+    @staticmethod
+    def _fsync_directory(path: Path) -> None:
+        descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+    def _recover_session_deletions(self) -> None:
+        """Finish or roll back only tombstones created by delete_session()."""
+        self.session_trash.mkdir(parents=True, exist_ok=True, mode=0o700)
+        sessions_root = self.settings.runtime_root / "sessions"
+        sessions_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with self.connect() as db:
+            existing = {row[0] for row in db.execute("SELECT id FROM sessions")}
+        for tombstone in self.session_trash.iterdir():
+            try:
+                is_directory = tombstone.is_dir() and not tombstone.is_symlink()
+            except OSError:
+                continue
+            if not SESSION_ID.fullmatch(tombstone.name) or not is_directory:
+                continue
+            live = self.session_directory(tombstone.name)
+            if tombstone.name in existing:
+                if not live.exists() and not live.is_symlink():
+                    tombstone.replace(live)
+                    self._fsync_directory(sessions_root)
+                    self._fsync_directory(self.session_trash)
+            else:
+                try:
+                    shutil.rmtree(tombstone)
+                    self._fsync_directory(self.session_trash)
+                except OSError:
+                    # The next process start or cleanup run can retry. The
+                    # payload remains outside the live session namespace.
+                    pass
+
+    def _quarantine_orphans(self) -> None:
+        """Move protocol-owned leftovers out of the live namespace.
+
+        Quarantine is intentionally recoverable: unknown names are untouched
+        and this routine never deletes quarantined payloads.
+        """
+        sessions_root = self.settings.runtime_root / "sessions"
+        quarantine = self.settings.runtime_root / ".quarantine"
+        targets = {kind: quarantine / kind for kind in ("sessions", "uploads", "jobs")}
+        for target in targets.values():
+            target.mkdir(parents=True, exist_ok=True, mode=0o700)
+        with self.connect() as db:
+            session_ids = {row[0] for row in db.execute("SELECT id FROM sessions")}
+            job_ids = {(row[0], row[1]) for row in db.execute("SELECT session_id,id FROM jobs")}
+        cutoff = self.now() - self.settings.orphan_grace_seconds
+
+        def old_enough(path: Path) -> bool:
+            try:
+                return path.stat(follow_symlinks=False).st_mtime <= cutoff
+            except OSError:
+                return False
+
+        for session_entry in sessions_root.iterdir():
+            if (not SESSION_ID.fullmatch(session_entry.name) or session_entry.is_symlink()
+                    or not session_entry.is_dir()):
+                continue
+            session_id = session_entry.name
+            if session_id not in session_ids:
+                target = targets["sessions"] / session_id
+                if old_enough(session_entry) and not target.exists() and not target.is_symlink():
+                    session_entry.replace(target)
+                    self._fsync_directory(sessions_root)
+                    self._fsync_directory(targets["sessions"])
+                continue
+
+            for partial in session_entry.iterdir():
+                if not UPLOAD_PART.fullmatch(partial.name) or not old_enough(partial):
+                    continue
+                target = targets["uploads"] / f"{session_id}-{partial.name[7:-5]}"
+                if not target.exists() and not target.is_symlink():
+                    partial.replace(target)
+                    self._fsync_directory(session_entry)
+                    self._fsync_directory(targets["uploads"])
+
+            jobs_root = session_entry / "jobs"
+            if not jobs_root.is_dir() or jobs_root.is_symlink():
+                continue
+            for job_entry in jobs_root.iterdir():
+                if (not SESSION_ID.fullmatch(job_entry.name) or job_entry.is_symlink()
+                        or not job_entry.is_dir() or (session_id, job_entry.name) in job_ids
+                        or not old_enough(job_entry)):
+                    continue
+                target = targets["jobs"] / f"{session_id}-{job_entry.name}"
+                if not target.exists() and not target.is_symlink():
+                    job_entry.replace(target)
+                    self._fsync_directory(jobs_root)
+                    self._fsync_directory(targets["jobs"])
+
     def create_session(self):
         now = self.now()
         session_id, token, csrf = secrets.token_hex(16), secrets.token_urlsafe(32), secrets.token_urlsafe(32)
@@ -210,8 +320,9 @@ class LiveStore:
         with self.connect() as db:
             row = db.execute("SELECT * FROM sessions WHERE token_hash=?", (digest(token),)).fetchone()
         if not row or row["last_seen"] <= now - self.settings.idle_seconds or row["absolute_expires"] <= now:
-            if row:
-                self.delete_session(row["id"])
+            # The minute timer owns filesystem deletion. Authentication stays
+            # read-only so an expired-cookie request cannot block the API event
+            # loop while a potentially large session tree is removed.
             return None
         return dict(row)
 
@@ -222,14 +333,51 @@ class LiveStore:
     def heartbeat(self, session_id: str):
         now = self.now()
         with self.connect() as db:
-            db.execute("UPDATE sessions SET last_seen=? WHERE id=?", (now, session_id))
-        return now
+            changed = db.execute(
+                "UPDATE sessions SET last_seen=? WHERE id=? AND absolute_expires>?",
+                (now, session_id, now),
+            ).rowcount
+        return now if changed == 1 else None
 
-    def delete_session(self, session_id: str):
+    def delete_session(self, session_id: str, *, expired_before: int | None = None) -> bool:
         directory = self.session_directory(session_id)
-        with self.connect() as db:
-            db.execute("DELETE FROM sessions WHERE id=?", (session_id,))
-        shutil.rmtree(directory, ignore_errors=True)
+        self.session_trash.mkdir(parents=True, exist_ok=True, mode=0o700)
+        tombstone = self.session_trash / session_id
+        moved = False
+        try:
+            with self.connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                row = db.execute(
+                    "SELECT last_seen,absolute_expires FROM sessions WHERE id=?", (session_id,)
+                ).fetchone()
+                if not row:
+                    return False
+                if expired_before is not None and not (
+                    row["last_seen"] <= expired_before - self.settings.idle_seconds
+                    or row["absolute_expires"] <= expired_before
+                ):
+                    return False
+                if tombstone.exists() or tombstone.is_symlink():
+                    raise OSError("session deletion is already pending recovery")
+                if directory.exists() and not directory.is_symlink():
+                    directory.replace(tombstone)
+                    moved = True
+                    self._fsync_directory(directory.parent)
+                    self._fsync_directory(self.session_trash)
+                db.execute("DELETE FROM sessions WHERE id=?", (session_id,))
+        except BaseException:
+            if moved and not directory.exists() and not directory.is_symlink():
+                tombstone.replace(directory)
+                self._fsync_directory(directory.parent)
+                self._fsync_directory(self.session_trash)
+            raise
+        if moved:
+            try:
+                shutil.rmtree(tombstone)
+                self._fsync_directory(self.session_trash)
+            except OSError:
+                pass
+        return True
 
     def create_job(self, session_id: str, module: str, disease: str, input_sha256: str,
                    job_id: str | None = None):
@@ -245,6 +393,45 @@ class LiveStore:
                 )
             except sqlite3.IntegrityError as exc:
                 raise CapacityError from exc
+        return job_id
+
+    def publish_job_input(self, session_id: str, module: str, disease: str,
+                          input_sha256: str, staging: Path, job_id: str) -> str:
+        """Publish input.zip and its queue row under one SQLite write lock.
+
+        A claimant cannot observe the row until the input rename is durable. If
+        a normal exception occurs, the upload is moved back for the caller's
+        finally cleanup; a process crash is handled by orphan quarantine.
+        """
+        if module != "imaging" or disease != "glioma":
+            raise ValueError("unsupported live analysis profile")
+        now = self.now()
+        job_directory = self.job_directory(session_id, job_id)
+        destination = job_directory / "input.zip"
+        moved = False
+        try:
+            with self.connect() as db:
+                db.execute("BEGIN IMMEDIATE")
+                try:
+                    db.execute(
+                        "INSERT INTO jobs(id,session_id,module,disease,status,created_at,updated_at,input_sha256) "
+                        "VALUES(?,?,?,?,?,?,?,?)",
+                        (job_id, session_id, module, disease, "queued", now, now, input_sha256),
+                    )
+                except sqlite3.IntegrityError as exc:
+                    raise CapacityError from exc
+                destination.parent.mkdir(parents=True, exist_ok=False, mode=0o700)
+                staging.replace(destination)
+                moved = True
+                with destination.open("rb") as uploaded:
+                    os.fsync(uploaded.fileno())
+                self._fsync_directory(job_directory)
+                self._fsync_directory(job_directory.parent)
+        except BaseException:
+            if moved and destination.exists() and not staging.exists():
+                destination.replace(staging)
+            shutil.rmtree(job_directory, ignore_errors=True)
+            raise
         return job_id
 
     def job_for_session(self, job_id: str, session_id: str):
@@ -332,11 +519,14 @@ class LiveStore:
         return changed == 1
 
     def fail(self, job_id: str, worker_id: str, error_code: str):
+        now = self.now()
         with self.connect() as db:
             changed = db.execute(
                 "UPDATE jobs SET status='failed',error_code=?,lease_until=NULL,updated_at=? "
-                "WHERE id=? AND claimed_by=? AND status IN ('claimed','running')",
-                (error_code, self.now(), job_id, worker_id),
+                "WHERE id=? AND claimed_by=? AND status IN ('claimed','running') AND lease_until>? "
+                "AND EXISTS(SELECT 1 FROM sessions s WHERE s.id=jobs.session_id AND s.last_seen>? AND s.absolute_expires>?)",
+                (error_code, now, job_id, worker_id, now,
+                 now - self.settings.idle_seconds, now),
             ).rowcount
         return changed == 1
 
@@ -357,9 +547,11 @@ class LiveStore:
                 else:
                     db.execute("UPDATE jobs SET status='queued',claimed_by=NULL,lease_until=NULL,updated_at=? WHERE id=?",
                                (now, row["id"]))
+                # A new claim cannot create another result.part while this
+                # write transaction is held.
+                (self.job_directory(row["session_id"], row["id"]) / "result.part").unlink(missing_ok=True)
             db.execute("DELETE FROM workers WHERE last_seen<=?", (now - 86400,))
+        removed = 0
         for session_id in expired:
-            self.delete_session(session_id)
-        for row in stale:
-            (self.job_directory(row["session_id"], row["id"]) / "result.part").unlink(missing_ok=True)
-        return {"expiredSessions": len(expired), "staleJobs": len(stale)}
+            removed += self.delete_session(session_id, expired_before=now)
+        return {"expiredSessions": removed, "staleJobs": len(stale)}

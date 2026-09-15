@@ -7,7 +7,6 @@ import hashlib
 import logging
 import os
 import secrets
-import shutil
 import zipfile
 from pathlib import Path
 
@@ -90,17 +89,17 @@ async def create_session(
     if existing:
         if not store.validate_csrf(existing, csrf_cookie, csrf_cookie):
             raise HTTPException(409, "Existing live session cannot be resumed")
-        store.heartbeat(existing["id"])
-        return {"status": "active", "csrfToken": csrf_cookie,
-                "idleTimeoutSeconds": store.settings.idle_seconds,
-                "absoluteExpiresAt": existing["absolute_expires"]}
+        if store.heartbeat(existing["id"]) is not None:
+            return {"status": "active", "csrfToken": csrf_cookie,
+                    "idleTimeoutSeconds": store.settings.idle_seconds,
+                    "absoluteExpiresAt": existing["absolute_expires"]}
     expected_access = os.environ.get("MERGEN_LIVE_ACCESS_HASH", "")
     if len(expected_access) != 64:
         raise HTTPException(503, "Live sessions are not configured")
     supplied_hash = hashlib.sha256((access_code or "").encode()).hexdigest()
     if not secrets.compare_digest(supplied_hash, expected_access):
         raise HTTPException(401, "Live access code is invalid")
-    store.cleanup()
+    await asyncio.to_thread(store.cleanup)
     try:
         session = store.create_session()
     except CapacityError:
@@ -121,13 +120,16 @@ async def session_status(response: Response, session: dict = Depends(current_ses
 @router.post("/session/heartbeat")
 async def heartbeat(response: Response, session: dict = Depends(mutation_session), store: LiveStore = Depends(get_live_store)):
     response.headers["Cache-Control"] = "no-store"
-    return {"status": "active", "lastSeen": store.heartbeat(session["id"])}
+    last_seen = store.heartbeat(session["id"])
+    if last_seen is None:
+        raise HTTPException(401, "Live session is missing or expired")
+    return {"status": "active", "lastSeen": last_seen}
 
 
 @router.delete("/session", status_code=204)
 async def close_session(response: Response, session: dict = Depends(mutation_session),
                   store: LiveStore = Depends(get_live_store)):
-    store.delete_session(session["id"])
+    await asyncio.to_thread(store.delete_session, session["id"])
     response.delete_cookie(SESSION_COOKIE, path="/api/live")
     response.delete_cookie(CSRF_COOKIE, path="/")
 
@@ -136,6 +138,21 @@ async def _zip_chunks(path: Path, member: str):
     with zipfile.ZipFile(path) as archive, archive.open(member) as handle:
         while chunk := handle.read(1024 * 1024):
             yield chunk
+
+
+def _asset_matches(path: Path, member: str, expected_size: int, expected_sha256: str) -> bool:
+    try:
+        size, digest = 0, hashlib.sha256()
+        with zipfile.ZipFile(path) as archive:
+            if archive.getinfo(member).file_size != expected_size:
+                return False
+            with archive.open(member) as handle:
+                for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                    size += len(chunk)
+                    digest.update(chunk)
+        return size == expected_size and secrets.compare_digest(digest.hexdigest(), expected_sha256)
+    except (OSError, KeyError, zipfile.BadZipFile):
+        return False
 
 
 def _validate_input(path: Path, max_expanded: int):
@@ -155,21 +172,18 @@ async def create_job(
     }:
         raise HTTPException(415, "A ZIP input bundle is required")
     staging = store.session_directory(session["id"]) / f"upload-{secrets.token_hex(8)}.part"
-    job_directory = None
     try:
         await write_stream(request.stream(), staging, store.settings.max_upload_bytes)
         manifest, checksum = await asyncio.to_thread(
             _validate_input, staging, store.settings.max_expanded_bytes
         )
         job_id = secrets.token_hex(16)
-        job_directory = store.job_directory(session["id"], job_id)
-        destination = job_directory / "input.zip"
-        destination.parent.mkdir(parents=True, exist_ok=False, mode=0o700)
-        staging.replace(destination)
         try:
-            store.create_job(session["id"], manifest.module, manifest.disease, checksum, job_id)
+            await asyncio.to_thread(
+                store.publish_job_input,
+                session["id"], manifest.module, manifest.disease, checksum, staging, job_id
+            )
         except CapacityError:
-            shutil.rmtree(job_directory, ignore_errors=True)
             raise HTTPException(409, "This session already has an active job") from None
         return {"jobId": job_id, "status": "queued", "module": manifest.module,
                 "disease": manifest.disease}
@@ -229,8 +243,10 @@ async def result_asset(job_id: str, asset_path: str, session: dict = Depends(cur
     if not asset:
         raise HTTPException(404, "Result asset not found")
     path = store.job_directory(session["id"], job_id) / "result.zip"
-    if not path.is_file():
-        raise HTTPException(503, "Result is unavailable")
+    if not path.is_file() or not await asyncio.to_thread(
+        _asset_matches, path, asset_path, asset["size"], asset["sha256"]
+    ):
+        raise HTTPException(503, "Result integrity check failed")
     mime = {
         "report-json": "application/json",
         "report-pdf": "application/pdf",
