@@ -5,9 +5,6 @@ import { ViewerFrame } from '../components/ViewerFrame';
 import { renderWithLanguage } from './render';
 
 it('opens an accessible dialog and closes on Escape without closing the assistant', async () => {
-  HTMLDialogElement.prototype.showModal = function () {
-    this.setAttribute('open', '');
-  };
   const onEscape = vi.fn();
   document.addEventListener('keydown', onEscape);
   const user = userEvent.setup();

@@ -14,7 +14,9 @@ afterEach(() => {
   document.documentElement.style.removeProperty('color-scheme');
 });
 const cases = [makeCase('TEST-0001'), makeCase('TEST-0002')];
-function mount(payload: unknown = { version: 2, cases }) {
+function mount(payload: unknown = { version: 2, cases }, { firstVisit = false } = {}) {
+  // Ilk ziyaret tanitimi bir modal; cogu test onu gormemis bir ziyaretci varsayar.
+  if (!firstVisit) window.localStorage.setItem('mergen-guide', 'answered');
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(
@@ -131,6 +133,46 @@ describe('case workspace', () => {
     });
     expect(slider).toHaveValue('154');
   });
+  it('asks once whether the visitor wants the tour and remembers the answer', async () => {
+    const user = mount(undefined, { firstVisit: true });
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Kısa bir tanıtım ister misiniz?');
+    await user.click(screen.getByRole('button', { name: 'Evet, göster' }));
+    expect(screen.getByRole('heading', { name: 'Vaka listesi' })).toBeVisible();
+    // Dort adim, sonuncusunda bitis dugmesi.
+    for (const next of ['2D kesit görüntüleyici', '3D segmentasyon', 'Veri ve sınırlar']) {
+      await user.click(screen.getByRole('button', { name: 'İleri' }));
+      expect(screen.getByRole('heading', { name: next })).toBeVisible();
+    }
+    await user.click(screen.getByRole('button', { name: 'Başla' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
+  });
+
+  it('takes no for an answer and does not ask again', async () => {
+    const user = mount(undefined, { firstVisit: true });
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: 'Hayır, doğrudan başla' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
+  });
+
+  it('names the dataset, its licence and the de-identification in one place', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Veri kaynakları ve gizlilik' }));
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('UCSF-PDGM');
+    expect(dialog).toHaveTextContent('CC BY 4.0');
+    expect(dialog).toHaveTextContent('kimliksizleştirilmiştir');
+    expect(dialog).toHaveTextContent('klinik kararda kullanılamaz');
+    // Atif bir DOI'ye gitmeli; metin olarak kalan bir alinti atif sayilmaz.
+    expect(screen.getByRole('link', { name: /10\.7937/ })).toHaveAttribute(
+      'href',
+      'https://doi.org/10.7937/tcia.bdgf-8v37',
+    );
+  });
+
   it('switches the interface language and remembers it', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });

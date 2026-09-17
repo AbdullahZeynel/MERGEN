@@ -22,6 +22,8 @@ import { useLanguage } from './i18n';
 import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
+import { AboutDialog } from './components/AboutDialog';
+import { WelcomeGuide, shouldAskForGuide } from './components/WelcomeGuide';
 
 // Deferred until chatbot integration; keep the component for the next sprint.
 const assistantEnabled = false;
@@ -46,6 +48,11 @@ export default function App() {
   // Vaka listesi genis ekranda acik, dar ekranda kapali baslar. Raydaki dugme
   // her iki genislikte de ayni durumu cevirir.
   const [casesOpen, setCasesOpen] = useState(() => window.innerWidth > DAR_EKRAN);
+  const [aboutOpen, setAboutOpen] = useState(false);
+  // Ilk ziyarette sorar; cevap verildikten sonra yalnizca alt bilgiden acilir.
+  const [guide, setGuide] = useState<'ask' | 'tour' | null>(() =>
+    shouldAskForGuide() ? 'ask' : null,
+  );
   const closeAssistant = useCallback(() => setAssistantOpen(false), []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -345,10 +352,20 @@ export default function App() {
                 MERGEN <span className="muted">/</span> ERGENEKON
               </span>
               <span>{t('footer.purpose')}</span>
+              <span className="footer-links">
+                <button className="link-button" onClick={() => setAboutOpen(true)}>
+                  {t('about.open')}
+                </button>
+                <button className="link-button" onClick={() => setGuide('tour')}>
+                  {t('guide.reopen')}
+                </button>
+              </span>
             </footer>
           </main>
         </div>
       </div>
+      {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {guide && <WelcomeGuide mode={guide} onClose={() => setGuide(null)} />}
     </div>
   );
 }

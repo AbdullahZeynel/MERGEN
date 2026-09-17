@@ -122,6 +122,63 @@ export const tr = {
   'case.brainNotice':
     'Dış yüzey MR sinyalinden yaklaşık üretilmiştir; anatomik segmentasyon değildir.',
 
+  'guide.askTitle': 'Kısa bir tanıtım ister misiniz?',
+  'guide.askBody':
+    'Çalışma alanının bölümlerini yaklaşık bir dakikada gezelim. İstediğiniz an kapatabilir, sonra alt bilgiden tekrar açabilirsiniz.',
+  'guide.accept': 'Evet, göster',
+  'guide.decline': 'Hayır, doğrudan başla',
+  'guide.reopen': 'Tanıtımı aç',
+  'guide.step': 'Adım {index} / {count}',
+  'guide.back': 'Geri',
+  'guide.next': 'İleri',
+  'guide.finish': 'Başla',
+  'guide.close': 'Tanıtımı kapat',
+  'guide.cases.title': 'Vaka listesi',
+  'guide.cases.body':
+    'Soldaki listeden bir vaka seçersiniz. "Hazır demo" önceden hazırlanmış örnek vakaları, "Canlı analiz" ise kendi verinizle çalıştırılacak yolu gösterir.',
+  'guide.slices.title': '2D kesit görüntüleyici',
+  'guide.slices.body':
+    'Aksiyel, koronal ve sagittal düzlemler arasında geçiş yapar, kesitleri kaydırıcıyla veya ok tuşlarıyla gezersiniz. "Tahmin" ve "Referans" katmanlarını ayrı ayrı açıp kapatabilirsiniz.',
+  'guide.mesh.title': '3D segmentasyon',
+  'guide.mesh.body':
+    'Tümör bölgeleri döndürülebilir bir yüzey modeline dönüşür. Her bölgeyi tek tek gizleyip gösterebilir, opaklığı değiştirebilirsiniz.',
+  'guide.limits.title': 'Veri ve sınırlar',
+  'guide.limits.body':
+    'Görüntüler kamuya açık, kimliksizleştirilmiş bir araştırma veri kümesinden gelir ve çıktılar klinik kararda kullanılamaz. Ayrıntı ve atıflar için alt bilgideki veri kaynakları bağlantısına bakın.',
+
+  'about.open': 'Veri kaynakları ve gizlilik',
+  'about.title': 'Veri, gizlilik ve kaynaklar',
+  'about.close': 'Kapat',
+
+  'privacy.heading': 'Veri ve gizlilik',
+  'privacy.lead':
+    'Bu çalışma alanındaki bütün MR görüntüleri kamuya açık bir araştırma veri kümesinden gelir.',
+  'privacy.deidentified':
+    'Görüntüler insan katılımcılardan gelir ve veri kümesini yayımlayan The Cancer Imaging Archive tarafından kimliksizleştirilmiştir: hasta adı, kimlik numarası ve tarih gibi tanımlayıcılar kaldırılmış, yüz hatlarını taşıyan kafatası dokusu çıkarılmıştır.',
+  'privacy.noUpload':
+    'Bu gösterimde hasta verisi yüklenmez ve saklanmaz. Ekranda gördüğünüz vakalar önceden hazırlanmış, kimliksizleştirilmiş örneklerdir.',
+  'privacy.licence':
+    'Veri kümesi CC BY 4.0 ile yayımlanır; kullanımı atıf ister. Atıflar aşağıdaki kaynaklar bölümündedir.',
+  'privacy.clinical':
+    'Çıktılar araştırma ve geliştirme amaçlıdır. Tanı, tedavi veya herhangi bir klinik kararda kullanılamaz; bağımsız bir test kümesinde raporlanmış performans metriği bulunmamaktadır.',
+
+  'credits.heading': 'Kaynaklar ve atıflar',
+  'credits.datasetTitle': 'UCSF-PDGM — MR görüntüleri',
+  'credits.datasetBody':
+    'Çalışma alanındaki kesitler, segmentasyon katmanları ve 3B yüzeyler bu koleksiyondan türetilmiştir.',
+  'credits.datasetCitation':
+    'Calabrese, E., Villanueva-Meyer, J., Rudie, J., Rauschecker, A., Baid, U., Bakas, S., Cha, S., Mongan, J., Hess, C. (2022). The University of California San Francisco Preoperative Diffuse Glioma MRI (UCSF-PDGM) (Version 5) [dataset]. The Cancer Imaging Archive.',
+  'credits.paperCitation':
+    'Calabrese, E. ve ark. (2022). The UCSF Preoperative Diffuse Glioma MRI (UCSF-PDGM) Dataset. Radiology: Artificial Intelligence.',
+  'credits.collection': 'Koleksiyon kaydı',
+  'credits.modelsTitle': 'Modeller ve kütüphaneler',
+  'credits.modelsBody':
+    'Segmentasyon, MONAI Swin UNETR ve nnU-Net referans uygulamalarına dayanır; ikisi de Apache-2.0 ile dağıtılır. BraTS ön eğitim verisi kendi veri kullanım sözleşmesine tabidir.',
+  'credits.licenceTitle': 'Bu yazılım',
+  'credits.licenceBody':
+    'MERGEN kaynak kodu Apache-2.0 ile yayımlanır. Depoya alınmış üçüncü taraf kaynak kodu kendi lisans bildirimleriyle dağıtılır.',
+  'credits.full': 'Tam atıf listesi depodaki ATTRIBUTIONS.md dosyasındadır.',
+
   'footer.purpose': 'Onkolojide 3T · Araştırma amaçlıdır, klinik kararda kullanılamaz',
 } as const;
 
@@ -250,6 +307,63 @@ export const en: Record<MessageKey, string> = {
     'Example case — UCSF-PDGM. The prediction layer comes from an nnU-Net and Swin UNETR ensemble.',
   'case.brainNotice':
     'The outer surface is approximated from the MR signal; it is not an anatomical segmentation.',
+
+  'guide.askTitle': 'Would you like a short tour?',
+  'guide.askBody':
+    'A walk through the parts of the workspace, in about a minute. You can close it at any point and reopen it from the footer later.',
+  'guide.accept': 'Yes, show me',
+  'guide.decline': 'No, go straight in',
+  'guide.reopen': 'Open the tour',
+  'guide.step': 'Step {index} of {count}',
+  'guide.back': 'Back',
+  'guide.next': 'Next',
+  'guide.finish': 'Start',
+  'guide.close': 'Close the tour',
+  'guide.cases.title': 'Case list',
+  'guide.cases.body':
+    'You pick a case from the list on the left. "Prepared demo" holds ready-made example cases; "Live analysis" is the path that runs on your own data.',
+  'guide.slices.title': '2D slice viewer',
+  'guide.slices.body':
+    'Switch between the axial, coronal and sagittal planes and move through slices with the slider or the arrow keys. The "Prediction" and "Reference" layers toggle independently.',
+  'guide.mesh.title': '3D segmentation',
+  'guide.mesh.body':
+    'The tumour regions become a surface model you can rotate. Each region can be hidden or shown on its own, and the opacity is adjustable.',
+  'guide.limits.title': 'Data and limits',
+  'guide.limits.body':
+    'The images come from a publicly released, de-identified research dataset, and the outputs cannot be used for clinical decisions. The data sources link in the footer has the detail and the citations.',
+
+  'about.open': 'Data sources and privacy',
+  'about.title': 'Data, privacy and credits',
+  'about.close': 'Close',
+
+  'privacy.heading': 'Data and privacy',
+  'privacy.lead':
+    'Every MR image in this workspace comes from a publicly released research dataset.',
+  'privacy.deidentified':
+    'The images come from human participants and were de-identified by The Cancer Imaging Archive, which publishes the dataset: identifiers such as name, record number and dates were removed, and the skull tissue that carries facial features was stripped.',
+  'privacy.noUpload':
+    'No patient data is uploaded or stored in this demonstration. The cases on screen are prepared, de-identified examples.',
+  'privacy.licence':
+    'The dataset is published under CC BY 4.0 and its use requires attribution. The citations are in the credits below.',
+  'privacy.clinical':
+    'The outputs are for research and development. They cannot be used for diagnosis, treatment or any clinical decision, and no performance metric on an independent test set has been reported.',
+
+  'credits.heading': 'Credits and attribution',
+  'credits.datasetTitle': 'UCSF-PDGM — MR images',
+  'credits.datasetBody':
+    'The slices, segmentation layers and 3D surfaces in this workspace are derived from this collection.',
+  'credits.datasetCitation':
+    'Calabrese, E., Villanueva-Meyer, J., Rudie, J., Rauschecker, A., Baid, U., Bakas, S., Cha, S., Mongan, J., Hess, C. (2022). The University of California San Francisco Preoperative Diffuse Glioma MRI (UCSF-PDGM) (Version 5) [dataset]. The Cancer Imaging Archive.',
+  'credits.paperCitation':
+    'Calabrese, E. et al. (2022). The UCSF Preoperative Diffuse Glioma MRI (UCSF-PDGM) Dataset. Radiology: Artificial Intelligence.',
+  'credits.collection': 'Collection record',
+  'credits.modelsTitle': 'Models and libraries',
+  'credits.modelsBody':
+    'The segmentation builds on the MONAI Swin UNETR and nnU-Net reference implementations, both distributed under Apache-2.0. The BraTS pre-training data is subject to its own data use agreement.',
+  'credits.licenceTitle': 'This software',
+  'credits.licenceBody':
+    'The MERGEN source code is released under Apache-2.0. Third-party source code vendored into the repository is distributed with its own licence notices.',
+  'credits.full': 'The full attribution list is in ATTRIBUTIONS.md in the repository.',
 
   'footer.purpose': 'Onkolojide 3T · Research use only, not for clinical decisions',
 };
