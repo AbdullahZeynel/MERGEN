@@ -144,7 +144,7 @@ export const tr = {
     'Tümör bölgeleri döndürülebilir bir yüzey modeline dönüşür. Her bölgeyi tek tek gizleyip gösterebilir, opaklığı değiştirebilirsiniz.',
   'guide.limits.title': 'Veri ve sınırlar',
   'guide.limits.body':
-    'Görüntüler kamuya açık, kimliksizleştirilmiş bir araştırma veri kümesinden gelir ve çıktılar klinik kararda kullanılamaz. Ayrıntı ve atıflar için alt bilgideki veri kaynakları bağlantısına bakın.',
+    'Görüntüler kamuya açık, kimliksizleştirilmiş bir araştırma veri kümesinden gelir ve çıktılar klinik kararda kullanılamaz. Ayrıntı ve atıflar için üst çubuktaki “Veri kaynakları ve gizlilik” bölümüne bakın.',
 
   'about.open': 'Veri kaynakları ve gizlilik',
   'about.title': 'Veri, gizlilik ve kaynaklar',
@@ -330,7 +330,7 @@ export const en: Record<MessageKey, string> = {
     'The tumour regions become a surface model you can rotate. Each region can be hidden or shown on its own, and the opacity is adjustable.',
   'guide.limits.title': 'Data and limits',
   'guide.limits.body':
-    'The images come from a publicly released, de-identified research dataset, and the outputs cannot be used for clinical decisions. The data sources link in the footer has the detail and the citations.',
+    'The images come from a publicly released, de-identified research dataset, and the outputs cannot be used for clinical decisions. The “Data sources and privacy” panel in the top bar has the detail and the citations.',
 
   'about.open': 'Data sources and privacy',
   'about.title': 'Data, privacy and credits',

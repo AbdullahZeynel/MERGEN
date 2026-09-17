@@ -13,6 +13,7 @@ import {
   Moon,
   RefreshCw,
   Search,
+  ShieldCheck,
   Sun,
   X,
 } from 'lucide-react';
@@ -118,6 +119,14 @@ export default function App() {
             MERGEN<span>{t('app.wordmarkSub')}</span>
           </div>
           <div className="topbar-right">
+            <button
+              className="theme-toggle source-toggle"
+              type="button"
+              onClick={() => setAboutOpen(true)}
+            >
+              <ShieldCheck size={16} />
+              <span>{t('about.open')}</span>
+            </button>
             <button
               className="theme-toggle"
               type="button"

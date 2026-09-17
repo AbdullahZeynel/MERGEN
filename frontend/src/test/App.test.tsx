@@ -160,7 +160,11 @@ describe('case workspace', () => {
   it('names the dataset, its licence and the de-identification in one place', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
-    await user.click(screen.getByRole('button', { name: 'Veri kaynakları ve gizlilik' }));
+    // Aciklama kaydirmadan ulasilabilir olmali: ust cubukta ve alt bilgide.
+    const entries = screen.getAllByRole('button', { name: 'Veri kaynakları ve gizlilik' });
+    expect(entries).toHaveLength(2);
+    expect(entries[0].closest('.topbar')).not.toBeNull();
+    await user.click(entries[0]);
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('UCSF-PDGM');
     expect(dialog).toHaveTextContent('CC BY 4.0');

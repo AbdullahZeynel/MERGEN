@@ -216,6 +216,21 @@ svg {
   font-size: 0.75rem;
   font-weight: 700;
 }
+.source-toggle {
+  /* Veri kaynagi aciklamasi gorunur bir yerde durmali; dar ekranda metni
+     dusur, dugmeyi degil. */
+  max-width: 260px;
+}
+.source-toggle span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 900px) {
+  .source-toggle span {
+    display: none;
+  }
+}
 .theme-toggle:hover {
   border-color: #d9293b;
   color: var(--text);
