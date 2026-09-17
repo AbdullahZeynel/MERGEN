@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import errno
 import json
+import re
 import struct
 import tempfile
 import unittest
@@ -10,7 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from backend.archive_io import validate_result_archive
-from mergen_imaging.glb import mesh_glb_bytes
+from mergen_imaging.glb import COLORS, REGIONS, mesh_glb_bytes
 from mergen_imaging.runner import (CHANNEL_ORDER, OVERLAP, ROI, THRESHOLD, InputRejected,
                                    ResourceLimit, _checkpoint, _failure_code,
                                    _locked_distributions, _package_result,
@@ -39,6 +40,36 @@ class GlbTests(unittest.TestCase):
         self.assertEqual(document["nodes"][0]["name"], "ET")
         with self.assertRaisesRegex(ValueError, "invalid mesh faces"):
             mesh_glb_bytes({"ET": {"vertices": [[0, 0, 0]], "faces": [[0, 1, 0]]}})
+
+
+class RegionTableTests(unittest.TestCase):
+    """The viewer keeps its own copy of the region table; hold it to this one.
+
+    Nothing at runtime connects the two, so a colour or a name changed on one
+    side would simply draw a live result and a prepared demo differently.
+    """
+
+    REPO = Path(__file__).resolve().parent.parent
+
+    def test_the_viewer_lists_the_same_regions(self):
+        source = (self.REPO / "frontend/src/data/mesh.ts").read_text(encoding="utf-8")
+        listed = re.search(r"export const regions = \[(.*?)\]", source, re.S)
+        self.assertIsNotNone(listed, "regions listesi bulunamadı")
+        names = tuple(re.findall(r"'([A-Z_]+)'", listed.group(1)))
+        self.assertEqual(names, REGIONS)
+
+    def test_the_viewer_draws_them_in_the_same_colours(self):
+        source = (self.REPO / "frontend/src/components/VolumeViewer.tsx").read_text(
+            encoding="utf-8")
+        declared = re.search(r"const colors = \{(.*?)\}", source, re.S)
+        self.assertIsNotNone(declared, "colors tablosu bulunamadı")
+        hexes = dict(re.findall(r"(\w+): 0x([0-9a-fA-F]{6})", declared.group(1)))
+        self.assertEqual(set(hexes), set(REGIONS))
+        for region, value in hexes.items():
+            channels = [int(value[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+            for drawn, packaged in zip(channels, COLORS[region][:3]):
+                # Arayüz 8 bit, paket üç ondalık; fark bir adımdan küçük olmalı.
+                self.assertAlmostEqual(drawn, packaged, delta=1 / 255, msg=region)
 
 
 class RunnerContractTests(unittest.TestCase):

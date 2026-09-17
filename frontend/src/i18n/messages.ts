@@ -102,6 +102,9 @@ export const tr = {
   'mesh.canvas': 'Etkileşimli 3D tümör modeli',
   'mesh.loading': '3D model yükleniyor…',
   'mesh.missing': '3D sonuç paketi bulunamadı',
+  'mesh.noRegions': 'Bu vakada segmentasyon bulunmadı',
+  'mesh.noRegionsHint':
+    'Model bu vakada gösterilecek bir tümör bölgesi bildirmedi. 2D kesitleri incelemeye devam edebilirsiniz.',
   'mesh.webglFailed': '3D görüntüleme başlatılamadı',
   'mesh.failed': '3D model yüklenemedi',
   'mesh.webglHint': 'Tarayıcının WebGL desteğini ve donanım hızlandırmasını kontrol edin.',
@@ -121,6 +124,19 @@ export const tr = {
   'case.notice': 'Örnek vaka — UCSF-PDGM. Tahmin katmanı nnU-Net ve Swin UNETR topluluğundan.',
   'case.brainNotice':
     'Dış yüzey MR sinyalinden yaklaşık üretilmiştir; anatomik segmentasyon değildir.',
+
+  'assistant.name': 'MERGEN Asistan',
+  'assistant.open': 'Asistanı aç',
+  'assistant.close': 'Asistanı kapat',
+  'assistant.contextEyebrow': 'VAKA BAĞLAMI',
+  'assistant.noCase': 'Vaka seçilmedi',
+  'assistant.title': 'Birlikte incelemek için',
+  'assistant.body':
+    'Vaka odaklı soru ve yanıtlar bu alanda yer alacak. Asistan servisi henüz bağlı değil.',
+  'assistant.offline': 'Bağlantı kurulmadı',
+  'assistant.inputLabel': 'Asistana soru',
+  'assistant.placeholder': 'Asistan bağlandığında soru sorabilirsiniz…',
+  'assistant.send': 'Mesaj gönder',
 
   'guide.askTitle': 'Kısa bir tanıtım ister misiniz?',
   'guide.askBody':
@@ -288,6 +304,9 @@ export const en: Record<MessageKey, string> = {
   'mesh.canvas': 'Interactive 3D tumour model',
   'mesh.loading': 'Loading the 3D model…',
   'mesh.missing': 'No 3D result package found',
+  'mesh.noRegions': 'No segmentation in this case',
+  'mesh.noRegionsHint':
+    'The model reported no tumour region to display for this case. You can carry on reviewing the 2D slices.',
   'mesh.webglFailed': 'The 3D view could not start',
   'mesh.failed': 'The 3D model could not be loaded',
   'mesh.webglHint': "Check the browser's WebGL support and hardware acceleration.",
@@ -309,6 +328,19 @@ export const en: Record<MessageKey, string> = {
     'Example case — UCSF-PDGM. The prediction layer comes from an nnU-Net and Swin UNETR ensemble.',
   'case.brainNotice':
     'The outer surface is approximated from the MR signal; it is not an anatomical segmentation.',
+
+  'assistant.name': 'MERGEN Assistant',
+  'assistant.open': 'Open the assistant',
+  'assistant.close': 'Close the assistant',
+  'assistant.contextEyebrow': 'CASE CONTEXT',
+  'assistant.noCase': 'No case selected',
+  'assistant.title': 'To review together',
+  'assistant.body':
+    'Case-specific questions and answers will appear here. The assistant service is not connected yet.',
+  'assistant.offline': 'Not connected',
+  'assistant.inputLabel': 'Question for the assistant',
+  'assistant.placeholder': 'You can ask a question once the assistant is connected…',
+  'assistant.send': 'Send message',
 
   'guide.askTitle': 'Would you like a short tour?',
   'guide.askBody':
