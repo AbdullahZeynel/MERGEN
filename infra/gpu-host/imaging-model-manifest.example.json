@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "modelId": "swin-unetr-brats21",
+  "modelVersion": "fold0-f48-ep300",
+  "runnerModule": "mergen_imaging.runner",
+  "checkpoints": [
+    {
+      "path": "pretrained_models/model.pt",
+      "size": 256368326,
+      "sha256": "1083e1585263a73919a5ecfee9403989ca4bfd2ec70308679667bd23b53714b4"
+    }
+  ]
+}

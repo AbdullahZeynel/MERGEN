@@ -7,9 +7,22 @@ import unittest
 from unittest.mock import patch
 
 from mergen_executor.adapter import AdapterFailure
-from mergen_executor.test_support import (ExecutorCase, FakeImagingAdapter, publish_job, ready_of,
-                                          status_of)
+from mergen_executor.runtime import Executor
+from mergen_executor.test_support import (ExecutorCase, FakeImagingAdapter, make_config,
+                                          publish_job, ready_of, status_of)
 from mergen_spool.fs import write_json_atomic
+
+
+class CountingAdapter(FakeImagingAdapter):
+    """Records how often the executor asked the model whether it can run."""
+
+    def __init__(self, **options):
+        super().__init__(**options)
+        self.preflights = 0
+
+    def preflight(self) -> None:
+        self.preflights += 1
+        super().preflight()
 
 
 class Readiness(ExecutorCase):
@@ -33,6 +46,42 @@ class Readiness(ExecutorCase):
                 ready = ready_of(self.root)
                 self.assertEqual((ready["capabilities"], ready["acceptingJobs"]), ([], False))
         self.assertEqual(self.adapter.runs, [])
+
+    def at(self, now: list, adapter, **overrides) -> Executor:
+        executor = Executor(make_config(self.root, self.state, **overrides), adapter,
+                            gpu=self.gpu, clock=lambda: now[0])
+        executor.start()
+        return executor
+
+    def test_a_model_that_failed_at_start_is_retried_on_a_slow_cadence(self):
+        publish_job(self.root)
+        adapter = CountingAdapter(preflight_error=RuntimeError("the desktop held the GPU"))
+        now = [1000.0]
+        executor = self.at(now, adapter, preflight_retry_seconds=300)
+        self.assertEqual(executor.tick(), "no-adapter")
+        self.assertEqual(adapter.preflights, 1, "a retry ran before its cadence was due")
+        # The condition clears on its own. Nothing is advertised until the
+        # cadence is due, because each retry loads the checkpoint.
+        adapter.preflight_error = None
+        now[0] += 299
+        self.assertEqual(executor.tick(), "no-adapter")
+        self.assertEqual(ready_of(self.root)["capabilities"], [])
+        now[0] += 2
+        self.assertEqual(executor.tick(), "completed")
+        self.assertEqual(ready_of(self.root)["capabilities"], ["imaging"])
+
+    def test_a_retry_never_opens_a_gpu_that_belongs_to_someone_else(self):
+        adapter = CountingAdapter(preflight_error=RuntimeError("the desktop held the GPU"))
+        now = [1000.0]
+        executor = self.at(now, adapter, preflight_retry_seconds=300)
+        self.gpu.available = False
+        now[0] += 3600
+        self.assertEqual(executor.tick(), "gpu-busy")
+        self.assertEqual(adapter.preflights, 1,
+                         "a retry loaded the model while the GPU was someone else's")
+        self.gpu.available = True
+        self.assertEqual(executor.tick(), "no-adapter")
+        self.assertEqual(adapter.preflights, 2)
 
     def test_a_stale_accepting_document_is_withdrawn_at_start(self):
         write_json_atomic(self.root / "executor.json", {

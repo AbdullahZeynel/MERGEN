@@ -8,6 +8,7 @@ from collections.abc import Mapping
 
 from mergen_executor.adapter import default_imaging_adapter
 from mergen_executor.config import ConfigError, ExecutorConfig
+from mergen_executor.gpu import NvmlGpu
 from mergen_executor.layout import LayoutError
 from mergen_executor.logs import configure_logging
 from mergen_executor.runtime import Executor
@@ -24,7 +25,10 @@ def main(environ: Mapping[str, str] | None = None) -> int:
         print(f"mergen-executor: {exc}", file=sys.stderr)
         return OPERATOR_ACTION
     configure_logging()
-    executor = Executor(config, default_imaging_adapter(config))
+    adapter = default_imaging_adapter(config)
+    gpu = (NvmlGpu(config.gpu_max_memory_used_mb, config.gpu_max_utilization_percent)
+           if adapter is not None else None)
+    executor = Executor(config, adapter, gpu=gpu)
     try:
         executor.start()
     except LayoutError as exc:

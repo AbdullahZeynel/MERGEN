@@ -46,6 +46,7 @@ class Executor:
         self._last_ready: tuple | None = None
         self._last_ready_at = float("-inf")
         self._last_admission: str | None = None
+        self._last_preflight_at = float("-inf")
         # Terminal, cancelled or unreadable jobs: never opened again.
         self._settled: set[str] = set()
 
@@ -59,6 +60,7 @@ class Executor:
         verify_state(self.config.state_root)
         verify_spool(self.config.runtime_root, self.config.spool_owner_uid)
         self.capabilities = self._preflight()
+        self._last_preflight_at = self._clock()
         for entry in os.scandir(self.config.runtime_root):
             if (READY_TEMPORARY.fullmatch(entry.name)
                     and entry.stat(follow_symlinks=False).st_uid == os.geteuid()):
@@ -136,18 +138,36 @@ class Executor:
         return [CAPABILITY]
 
     def _admission(self) -> str | None:
-        if not self.capabilities:
-            reason = NO_ADAPTER
-        elif os.path.lexists(self.config.pause_file):
+        # Pause and the GPU come first so a preflight retry, which opens the
+        # GPU itself, never competes with the work this host is waiting on.
+        if os.path.lexists(self.config.pause_file):
             reason = PAUSED
         elif not self.gpu.check().available:
             reason = GPU_BUSY
+        elif not self._model_ready():
+            reason = NO_ADAPTER
         else:
             reason = None
         if reason != self._last_admission:
             LOG.info("admission: %s", reason or "open")
             self._last_admission = reason
         return reason
+
+    def _model_ready(self) -> bool:
+        """Whether a model is advertised, retrying preflight on a slow cadence.
+
+        A model that failed at start is not written off: preflight touches the
+        GPU, so it can fail for a condition that passes. Retries are rate
+        limited because each one loads the checkpoint.
+        """
+        if self.capabilities:
+            return True
+        now = self._clock()
+        if now - self._last_preflight_at < self.config.preflight_retry_seconds:
+            return False
+        self._last_preflight_at = now
+        self.capabilities = self._preflight()
+        return bool(self.capabilities)
 
     @contextmanager
     def _gpu_lock(self) -> Iterator[bool]:

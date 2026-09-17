@@ -94,13 +94,26 @@ class Configuration(unittest.TestCase):
         self.assertLess(config.ready_refresh_seconds, 90)
         self.assertEqual(config.model_root, Path("/srv/mergen-models"))
         self.assertIsNone(config.imaging_venv)
+        self.assertIsNone(config.gpu_max_memory_used_mb)
+        self.assertIsNone(config.gpu_max_utilization_percent)
+        # A failed preflight is retried, so a GPU that was busy at start does
+        # not silence this executor until an operator notices.
+        self.assertEqual(config.preflight_retry_seconds, 300)
 
     def test_model_root_and_venv_are_configurable(self):
         config = ExecutorConfig.from_env(self.env(
             MERGEN_MODEL_ROOT="/srv/mergen-models/imaging/v1",
-            MERGEN_IMAGING_VENV="/srv/mergen-models/venv/imaging"))
+            MERGEN_IMAGING_VENV="/srv/mergen-models/venv/imaging",
+            MERGEN_GPU_MAX_MEMORY_USED_MB="2000",
+            MERGEN_GPU_MAX_UTILIZATION_PERCENT="20"))
         self.assertEqual(config.model_root, Path("/srv/mergen-models/imaging/v1"))
         self.assertEqual(config.imaging_venv, Path("/srv/mergen-models/venv/imaging"))
+        self.assertEqual((config.gpu_max_memory_used_mb, config.gpu_max_utilization_percent),
+                         (2000, 20))
+
+    def test_a_model_environment_requires_explicit_gpu_thresholds(self):
+        with self.assertRaisesRegex(ConfigError, "MERGEN_GPU_MAX_MEMORY_USED_MB"):
+            ExecutorConfig.from_env(self.env(MERGEN_IMAGING_VENV="/srv/model-venv"))
 
     def test_invalid_values_name_the_variable(self):
         cases = {"MERGEN_RUNTIME_ROOT": "relative/runtime",
@@ -114,7 +127,10 @@ class Configuration(unittest.TestCase):
         cases.update({"MERGEN_MODEL_ROOT": "relative/model",
                       "MERGEN_IMAGING_VENV": "relative/venv",
                       "MERGEN_ADAPTER_TIMEOUT_SECONDS": "5",
-                      "MERGEN_ADAPTER_TERM_GRACE_SECONDS": "0"})
+                      "MERGEN_ADAPTER_TERM_GRACE_SECONDS": "0",
+                      "MERGEN_GPU_MAX_MEMORY_USED_MB": "-1",
+                      "MERGEN_GPU_MAX_UTILIZATION_PERCENT": "101",
+                      "MERGEN_PREFLIGHT_RETRY_SECONDS": "30"})
         for name, value in cases.items():
             with self.subTest(name=name), self.assertRaisesRegex(ConfigError, name):
                 ExecutorConfig.from_env(self.env(**{name: value}))

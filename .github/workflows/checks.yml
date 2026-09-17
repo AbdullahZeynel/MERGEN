@@ -60,6 +60,10 @@ jobs:
       # GPU, model, ağ veya alt süreç gerektirmez; sahte adaptörle çalışır.
       - name: GPU executor testleri
         run: python -m unittest discover -s mergen_executor -t .
+      # Ağırlık, torch veya görüntü bağımlılığı yüklemeden runner protokolü,
+      # GLB ve sonuç ZIP sözleşmesini sınar.
+      - name: Hafif model runner sözleşme testleri
+        run: python -m unittest discover -s mergen_imaging -t .
       - name: Kurulum betikleri sözdizimi
         run: |
           bash -n infra/vps/package-frontend.sh

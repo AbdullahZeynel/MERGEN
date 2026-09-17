@@ -34,6 +34,12 @@ class ExecutorConfig:
     imaging_venv: Path | None = None
     adapter_timeout_seconds: float = 3600.0
     adapter_term_grace_seconds: float = 10.0
+    gpu_max_memory_used_mb: int | None = None
+    gpu_max_utilization_percent: int | None = None
+    # Preflight opens the GPU, so it can fail for a reason that passes: a
+    # desktop that was busy at start. Without a retry the executor would
+    # advertise nothing until an operator noticed and restarted it.
+    preflight_retry_seconds: float = 300.0
     # Fixed: the dispatcher ignores a readiness document older than 90 s.
     ready_refresh_seconds: float = 30.0
 
@@ -44,7 +50,7 @@ class ExecutorConfig:
                           env.get("MERGEN_EXECUTOR_STATE", "/var/lib/mergen/executor"))
         model_root = _absolute("MERGEN_MODEL_ROOT", env.get("MERGEN_MODEL_ROOT", "/srv/mergen-models"))
         imaging_venv = _optional_absolute("MERGEN_IMAGING_VENV", env.get("MERGEN_IMAGING_VENV", ""))
-        return cls(
+        config = cls(
             runtime_root=_absolute("MERGEN_RUNTIME_ROOT",
                                    env.get("MERGEN_RUNTIME_ROOT", "/var/lib/mergen/runtime")),
             state_root=state,
@@ -64,7 +70,19 @@ class ExecutorConfig:
             imaging_venv=imaging_venv,
             adapter_timeout_seconds=_number(env, "MERGEN_ADAPTER_TIMEOUT_SECONDS", 3600, 10, 86400),
             adapter_term_grace_seconds=_number(env, "MERGEN_ADAPTER_TERM_GRACE_SECONDS", 10, 1, 60),
+            preflight_retry_seconds=_number(env, "MERGEN_PREFLIGHT_RETRY_SECONDS", 300, 60, 3600),
+            gpu_max_memory_used_mb=_optional_integer(
+                env, "MERGEN_GPU_MAX_MEMORY_USED_MB", 0, 65536),
+            gpu_max_utilization_percent=_optional_integer(
+                env, "MERGEN_GPU_MAX_UTILIZATION_PERCENT", 0, 100),
         )
+        if config.imaging_venv is not None and (
+                config.gpu_max_memory_used_mb is None
+                or config.gpu_max_utilization_percent is None):
+            raise ConfigError("MERGEN_GPU_MAX_MEMORY_USED_MB and "
+                              "MERGEN_GPU_MAX_UTILIZATION_PERCENT are required with "
+                              "MERGEN_IMAGING_VENV")
+        return config
 
 
 def _absolute(name: str, raw: str) -> Path:
@@ -118,3 +136,10 @@ def _integer(env: Mapping[str, str], name: str, default: int, low: int, high: in
     if not low <= value <= high:
         raise ConfigError(f"{name} must be between {low} and {high}")
     return value
+
+
+def _optional_integer(env: Mapping[str, str], name: str, low: int, high: int) -> int | None:
+    raw = env.get(name, "")
+    if not raw:
+        return None
+    return _integer(env, name, low, low, high)

@@ -3,7 +3,8 @@
 # Release layout under /opt/mergen (root:root, nothing writable by a service):
 #
 #   releases/<version>/src/          backend/archive_io.py, backend/live_contracts.py,
-#                                    mergen_spool/, mergen_dispatcher/, mergen_executor/
+#                                    mergen_spool/, mergen_dispatcher/, mergen_executor/,
+#                                    mergen_imaging/
 #   releases/<version>/units/        the two unit files this release was staged with
 #   releases/<version>/dispatcher/   venv: mergen_dispatcher/requirements.txt only
 #   releases/<version>/executor/     venv: mergen_executor/requirements.txt only
@@ -18,7 +19,7 @@
 MERGEN_LIB_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 SERVICES=(dispatcher executor)
 SOURCE_FILES=(backend/archive_io.py backend/live_contracts.py)
-SOURCE_PACKAGES=(mergen_spool mergen_dispatcher mergen_executor)
+SOURCE_PACKAGES=(mergen_spool mergen_dispatcher mergen_executor mergen_imaging)
 # Names that must never appear in either service venv: the model stack is G4's
 # own environment, and the executor has no network client at all.
 MODEL_DISTRIBUTIONS='torch torchvision torchaudio monai nnunet nnunetv2 tensorflow jax jaxlib onnxruntime onnxruntime-gpu cupy triton'
@@ -90,7 +91,8 @@ release_files() {
         while IFS= read -r file; do
             printf '%s src/%s\n' "$file" "$file"
         done < <(cd -- "$source" && find "$package" -maxdepth 1 -type f \
-            \( -name '*.py' ! -name 'test_*.py' -o -name requirements.txt \) | LC_ALL=C sort)
+            \( -name '*.py' ! -name 'test_*.py' -o -name requirements.txt \
+               -o -name requirements.lock \) | LC_ALL=C sort)
     done
     for service in "${SERVICES[@]}"; do
         printf 'infra/gpu-host/systemd/%s.example units/%s\n' "$(unit_name "$service")" "$(unit_name "$service")"
