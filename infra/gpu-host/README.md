@@ -39,7 +39,7 @@ birlikte hasta girdisi kök snapshot'ına girer. Tam sıra runbook'ta.
 Testler:
 
 ```bash
-python -m unittest discover -s infra/gpu-host -p 'test_*.py'
+cd infra/gpu-host && python -m unittest discover -p 'test_*.py'
 bash -n infra/gpu-host/*.sh infra/gpu-host/lib/*.sh
 ```
 

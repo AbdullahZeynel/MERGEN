@@ -30,8 +30,12 @@ jobs:
         run: python -m unittest discover -s infra/ci -p 'test_*.py'
       # GPU host katmanı: bağımlılık gerektirmez, geçici dizinde çalışır ve
       # hiçbir sistem aracını çağırmaz. Bu yüzden guard job'una eklendi.
+      # `discover -s infra/gpu-host` Python 3.13+'te reddediliyor: dizin adındaki
+      # tire geçerli bir modül adı değil. Dizinin içinden çağırınca sürümden
+      # bağımsız çalışıyor.
       - name: GPU host sözleşme testleri
-        run: python -m unittest discover -s infra/gpu-host -p 'test_*.py'
+        working-directory: infra/gpu-host
+        run: python -m unittest discover -p 'test_*.py'
       - name: GPU host betikleri sözdizimi
         run: bash -n infra/gpu-host/*.sh infra/gpu-host/lib/*.sh
 
