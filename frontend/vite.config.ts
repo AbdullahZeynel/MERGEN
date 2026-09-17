@@ -7,7 +7,13 @@ export default defineConfig(({ mode }) => {
 
   return {
   plugins: [react()],
-  server: { proxy: { '/api': apiUrl } },
+  server: {
+    proxy: { '/api': apiUrl },
+    // Tailnet uzerinden gosterim: MagicDNS adiyla gelen istek de kabul edilsin.
+    // Joker yeterli, gercek tailnet adi depoya yazilmaz. API ve MCP 127.0.0.1'de
+    // kalir; ziyaretci onlara yalnizca bu vekil uzerinden erisir.
+    allowedHosts: ['.ts.net'],
+  },
   preview: { proxy: { '/api': apiUrl } },
   optimizeDeps: { entries: ['index.html'] },
   test: { environment: 'jsdom', setupFiles: './src/test/setup.ts', css: false },

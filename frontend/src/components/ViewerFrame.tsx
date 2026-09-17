@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Expand, Minimize } from 'lucide-react';
+import { useT } from '../i18n';
 
 export function ViewerFrame({
   title,
@@ -11,6 +12,7 @@ export function ViewerFrame({
   icon: ReactNode;
   children: ReactNode;
 }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
   const toggle = useRef<HTMLButtonElement>(null);
@@ -47,7 +49,7 @@ export function ViewerFrame({
           ref={toggle}
           className="icon-button"
           onClick={() => setExpanded(!expanded)}
-          aria-label={`${title} ${expanded ? 'küçült' : 'büyüt'}`}
+          aria-label={`${title} ${expanded ? t('viewer.collapse') : t('viewer.expand')}`}
           aria-expanded={expanded}
         >
           {expanded ? <Minimize size={18} /> : <Expand size={18} />}
@@ -61,7 +63,7 @@ export function ViewerFrame({
         <dialog
           ref={dialog}
           className="viewer-dialog"
-          aria-label={`${title} geniş görünüm`}
+          aria-label={`${title} ${t('viewer.wideView')}`}
           onCancel={() => setExpanded(false)}
         >
           {content}

@@ -190,8 +190,10 @@ Bu depo, ölçmediği hiçbir şeyi iddia etmemeye çalışır.
   bağımsız bir test kümesinde raporlanana kadar Dice, AUC ve benzeri sayılar
   README'de yer almayacak.
 - **Demo görselleri kimliksizleştirilmiş insan araştırma verisidir.** Görüntü
-  vakaları UCSF-PDGM koleksiyonundan gelir: TCIA tarafından kimliksizleştirilmiş
-  ve kafatası çıkarılmış, CC BY 4.0 ile yayımlanmış MR verisi. Kişisel
+  vakaları UCSF-PDGM koleksiyonundan gelir: UCSF etik kurulu onayı ve onam
+  muafiyetiyle toplanmış, TCIA üzerinden kimliksizleştirilmiş olarak ve
+  CC BY 4.0 ile yayımlanmış MR verisi. Hacimler kafatası çıkarılmış biçimdedir;
+  bunu veriyi hazırlayan ekip ön işleme adımı olarak yapmıştır. Kişisel
   tanımlayıcı içermez.
 - **Canlı hata sessizce demoya düşmez.** Servis yanıt vermezse arayüz bunu
   açıkça söyler, hazır sonucu canlı sonuç gibi göstermez.

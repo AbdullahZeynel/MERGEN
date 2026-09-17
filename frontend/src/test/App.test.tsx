@@ -4,21 +4,27 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { makeCase } from './fixtures';
+import { withLanguage } from './render';
 
 afterEach(() => {
   vi.unstubAllGlobals();
   window.localStorage.clear();
+  document.documentElement.removeAttribute('lang');
   delete document.documentElement.dataset.theme;
   document.documentElement.style.removeProperty('color-scheme');
 });
 const cases = [makeCase('TEST-0001'), makeCase('TEST-0002')];
-function mount(payload: unknown = { version: 2, cases }) {
+function mount(payload: unknown = { version: 2, cases }, { firstVisit = false } = {}) {
+  // Ilk ziyaret tanitimi bir modal; cogu test onu gormemis bir ziyaretci varsayar.
+  if (!firstVisit) window.localStorage.setItem('mergen-guide', 'answered');
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(
-    <QueryClientProvider client={client}>
-      <App />
-    </QueryClientProvider>,
+    withLanguage(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>,
+    ),
   );
   return userEvent.setup();
 }
@@ -127,6 +133,76 @@ describe('case workspace', () => {
     });
     expect(slider).toHaveValue('154');
   });
+  it('asks once whether the visitor wants the tour and remembers the answer', async () => {
+    const user = mount(undefined, { firstVisit: true });
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('Kısa bir tanıtım ister misiniz?');
+    await user.click(screen.getByRole('button', { name: 'Evet, göster' }));
+    expect(screen.getByRole('heading', { name: 'Vaka listesi' })).toBeVisible();
+    // Dort adim, sonuncusunda bitis dugmesi.
+    for (const next of ['2D kesit görüntüleyici', '3D segmentasyon', 'Veri ve sınırlar']) {
+      await user.click(screen.getByRole('button', { name: 'İleri' }));
+      expect(screen.getByRole('heading', { name: next })).toBeVisible();
+    }
+    await user.click(screen.getByRole('button', { name: 'Başla' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
+  });
+
+  it('takes no for an answer and does not ask again', async () => {
+    const user = mount(undefined, { firstVisit: true });
+    await screen.findByRole('dialog');
+    await user.click(screen.getByRole('button', { name: 'Hayır, doğrudan başla' }));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
+  });
+
+  it('names the dataset, its licence and the de-identification in one place', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    // Aciklama kaydirmadan ulasilabilir olmali: ust cubukta ve alt bilgide.
+    const entries = screen.getAllByRole('button', { name: 'Veri kaynakları ve gizlilik' });
+    expect(entries).toHaveLength(2);
+    expect(entries[0].closest('.topbar')).not.toBeNull();
+    await user.click(entries[0]);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('UCSF-PDGM');
+    expect(dialog).toHaveTextContent('CC BY 4.0');
+    expect(dialog).toHaveTextContent('etik kurulunca onaylanmış');
+    expect(dialog).toHaveTextContent('skull-stripped');
+    // Kafatasi cikarma TCIA'nin isi degil; yanlis atif geri gelmesin.
+    expect(dialog.textContent).not.toMatch(/Archive tarafından kimliksizleştir/);
+    expect(dialog).toHaveTextContent('klinik kararda kullanılamaz');
+    // Atif bir DOI'ye gitmeli; metin olarak kalan bir alinti atif sayilmaz.
+    expect(screen.getByRole('link', { name: /10\.7937/ })).toHaveAttribute(
+      'href',
+      'https://doi.org/10.7937/tcia.bdgf-8v37',
+    );
+  });
+
+  it('switches the interface language and remembers it', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    expect(document.documentElement).toHaveAttribute('lang', 'tr');
+    await user.click(screen.getByRole('button', { name: 'Switch interface language to English' }));
+    expect(document.documentElement).toHaveAttribute('lang', 'en');
+    expect(window.localStorage.getItem('mergen-language')).toBe('en');
+    // Ceviri yalnizca dugmeyi degil, calisma alaninin metnini de degistirmeli.
+    expect(screen.getByRole('button', { name: 'Prediction' })).toBeVisible();
+    expect(screen.getByText('Research use only, not for clinical decisions', { exact: false }))
+      .toBeVisible();
+    expect(screen.queryByText('Tahmin')).not.toBeInTheDocument();
+  });
+
+  it('never shows the reader where the data is served from', async () => {
+    mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    // Hekime gore metin: ic mimari ekranda yer almaz.
+    for (const leak of ['MCP', 'VPS', 'spool', 'dispatcher']) {
+      expect(document.body.textContent).not.toContain(leak);
+    }
+  });
+
   it('keeps prediction and reference overlays explicitly separate', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
@@ -134,11 +210,11 @@ describe('case workspace', () => {
     const reference = screen.getByRole('button', { name: 'Referans' });
     expect(prediction).toHaveAttribute('aria-pressed', 'true');
     expect(reference).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByAltText('Ensemble tahmin maskesi')).toBeVisible();
+    expect(screen.getByAltText('Model tahmini segmentasyon maskesi')).toBeVisible();
     expect(screen.queryByAltText('Referans segmentasyon maskesi')).not.toBeInTheDocument();
     await user.click(prediction);
     await user.click(reference);
-    expect(screen.queryByAltText('Ensemble tahmin maskesi')).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Model tahmini segmentasyon maskesi')).not.toBeInTheDocument();
     expect(screen.getByAltText('Referans segmentasyon maskesi')).toBeVisible();
   });
 });

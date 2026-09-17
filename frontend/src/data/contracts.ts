@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import type { MessageKey } from '../i18n/messages';
 
 export const caseStatus = z.enum([
   'demo_ready',
@@ -10,20 +11,20 @@ export const caseStatus = z.enum([
 ]);
 export type CaseStatus = z.infer<typeof caseStatus>;
 export type SourceMode = 'demo' | 'live';
-export const statusLabels: Record<CaseStatus, string> = {
-  demo_ready: 'Hazır demo',
-  draft: 'Girdi bekliyor',
-  queued: 'Kuyrukta',
-  processing: 'İşleniyor',
-  completed: 'Tamamlandı',
-  failed: 'Başarısız',
+export const statusKeys: Record<CaseStatus, MessageKey> = {
+  demo_ready: 'status.demo_ready',
+  draft: 'status.draft',
+  queued: 'status.queued',
+  processing: 'status.processing',
+  completed: 'status.completed',
+  failed: 'status.failed',
 };
 export const axes = ['axial', 'coronal', 'sagittal'] as const;
 export type Axis = (typeof axes)[number];
-export const axisLabels: Record<Axis, string> = {
-  axial: 'Aksiyel',
-  coronal: 'Koronal',
-  sagittal: 'Sagittal',
+export const axisKeys: Record<Axis, MessageKey> = {
+  axial: 'axis.axial',
+  coronal: 'axis.coronal',
+  sagittal: 'axis.sagittal',
 };
 const assetPath = z
   .string()
