@@ -1,22 +1,23 @@
-"""Create compact, dependency-free GLB 2.0 files from reviewed mesh arrays."""
+"""Create compact GLB 2.0 files from reviewed mesh arrays.
+
+Region names, colours and materials come from `mergen_imaging.glb`, which the
+live runner also uses: the prepared demo and a live result must not end up
+drawn differently. Only the numpy input handling and the content-addressed
+file name live here.
+"""
 
 from __future__ import annotations
 
 import hashlib
 import json
 import struct
+import sys
 from pathlib import Path
 
 import numpy as np
 
-
-REGIONS = ('ET', 'TC_NCR', 'ED', 'BRAIN')
-COLORS = {
-    'ET': (1.0, 0.349, 0.424, 0.75),
-    'TC_NCR': (0.341, 0.808, 0.635, 0.75),
-    'ED': (0.349, 0.620, 0.933, 0.75),
-    'BRAIN': (0.886, 0.910, 0.941, 0.12),
-}
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+from mergen_imaging.glb import REGIONS, material  # noqa: E402
 
 
 def _pad(data: bytes, fill: bytes) -> bytes:
@@ -85,16 +86,7 @@ def mesh_glb_bytes(meshes: dict) -> bytes:
         })
         index_accessor = len(accessors) - 1
 
-        materials.append({
-            'name': region,
-            'pbrMetallicRoughness': {
-                'baseColorFactor': list(COLORS[region]),
-                'metallicFactor': 0,
-                'roughnessFactor': 0.65,
-            },
-            'alphaMode': 'BLEND',
-            'doubleSided': True,
-        })
+        materials.append(material(region))
         gltf_meshes.append({
             'name': region,
             'extras': {'region': region},

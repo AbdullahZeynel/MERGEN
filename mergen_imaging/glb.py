@@ -1,16 +1,34 @@
-"""Small dependency-free GLB 2.0 writer for labelled tumour surfaces."""
+"""GLB 2.0 writer for labelled tumour surfaces, and the region table itself.
+
+The table below is the one source for what a region is called and how it is
+coloured. The demo package writer (frontend/scripts/mesh_glb.py) imports it
+rather than keeping its own copy, so a live result and a prepared demo cannot
+end up drawn differently. The viewer's own copy is checked against this one by
+mergen_imaging/test_runner.py.
+"""
 from __future__ import annotations
 
 import json
 import math
 import struct
 
-REGIONS = ("ET", "TC_NCR", "ED")
+# BRAIN only ever appears in the prepared demo package: the live runner
+# segments tumour regions and never produces an outer surface. It is listed
+# here so both writers order and colour the four regions identically.
+REGIONS = ("ET", "TC_NCR", "ED", "BRAIN")
 COLORS = {
     "ET": (1.0, 0.349, 0.424, 0.75),
     "TC_NCR": (0.341, 0.808, 0.635, 0.75),
     "ED": (0.349, 0.620, 0.933, 0.75),
+    "BRAIN": (0.886, 0.910, 0.941, 0.12),
 }
+
+
+def material(region: str) -> dict:
+    """The glTF material a region is drawn with, shared by both writers."""
+    return {"name": region, "pbrMetallicRoughness": {
+        "baseColorFactor": list(COLORS[region]), "metallicFactor": 0,
+        "roughnessFactor": 0.65}, "alphaMode": "BLEND", "doubleSided": True}
 
 
 def _pad(data: bytes, fill: bytes) -> bytes:
@@ -63,9 +81,7 @@ def mesh_glb_bytes(meshes: dict) -> bytes:
                           "count": len(indices), "type": "SCALAR",
                           "min": [min(indices)], "max": [max(indices)]})
         index_accessor = len(accessors) - 1
-        materials.append({"name": region, "pbrMetallicRoughness": {
-            "baseColorFactor": list(COLORS[region]), "metallicFactor": 0,
-            "roughnessFactor": 0.65}, "alphaMode": "BLEND", "doubleSided": True})
+        materials.append(material(region))
         gltf_meshes.append({"name": region, "extras": {"region": region}, "primitives": [{
             "attributes": {"POSITION": position_accessor}, "indices": index_accessor,
             "material": len(materials) - 1, "mode": 4}]})
