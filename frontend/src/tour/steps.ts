@@ -31,6 +31,14 @@ export const steps: TourStep[] = [
     placement: 'right',
   },
   {
+    id: 'module',
+    target: 'module-switch',
+    title: 'tour.module.title',
+    body: 'tour.module.body',
+    enter: (a) => a.openCases(),
+    placement: 'right',
+  },
+  {
     id: 'source',
     target: 'source-switch',
     title: 'tour.source.title',
@@ -72,6 +80,13 @@ export const steps: TourStep[] = [
     target: 'region-controls',
     title: 'tour.regions.title',
     body: 'tour.regions.body',
+    placement: 'top',
+  },
+  {
+    id: 'slide',
+    target: 'slide-prediction',
+    title: 'tour.slide.title',
+    body: 'tour.slide.body',
     placement: 'top',
   },
   {

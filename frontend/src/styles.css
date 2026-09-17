@@ -1730,3 +1730,218 @@ svg {
     transition: none;
   }
 }
+
+/* ── Modul secici ───────────────────────────────────────────────────────── */
+.module-switch {
+  margin-top: 20px;
+}
+.module-switch button {
+  font-size: 0.8rem;
+  padding: 5px 6px;
+}
+
+/* ── Inceleme bayragi: gerekce ve sayilariyla ───────────────────────────── */
+.flag-band {
+  border: 1px solid var(--selected-line);
+  background: var(--selected);
+  border-radius: 9px;
+  padding: 16px 18px;
+  margin: 0 0 18px;
+}
+.prediction-panel .flag-band {
+  margin: 18px 0 0;
+}
+.flag-band h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--red);
+}
+.flag-band p {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.7;
+  color: var(--secondary-text);
+}
+.flag-item + .flag-item {
+  margin-top: 14px;
+}
+.flag-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 26px;
+  margin: 10px 0 0;
+}
+.flag-evidence > div {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.flag-evidence dt {
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.flag-evidence dd {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Slayt sonucu: olasiliklar, referans, attention yogunlugu ───────────── */
+.prediction-panel {
+  padding: 22px;
+  margin-bottom: 18px;
+}
+.prediction-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px 44px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.prediction-head strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+}
+.prediction-reference strong {
+  font-weight: 600;
+  color: var(--secondary-text);
+}
+.agreement-pill {
+  display: inline-block;
+  margin-top: 9px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 650;
+  border: 1px solid var(--line);
+  background: var(--surface-subtle);
+  color: var(--secondary-text);
+}
+.agreement-pill.disagrees {
+  border-color: var(--selected-line);
+  background: var(--selected);
+  color: var(--red);
+}
+.prediction-note {
+  margin: 14px 0 0;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  color: var(--secondary-text);
+}
+.probability-list {
+  list-style: none;
+  margin: 20px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.probability-list li {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(90px, 2fr) auto;
+  align-items: center;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: var(--secondary-text);
+}
+.probability-list li.predicted {
+  color: var(--text);
+  font-weight: 650;
+}
+.probability-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--control);
+  overflow: hidden;
+}
+.probability-bar i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--muted);
+}
+.probability-list li.predicted .probability-bar i {
+  background: var(--red);
+}
+.probability-list strong {
+  font-variant-numeric: tabular-nums;
+  min-width: 56px;
+  text-align: right;
+}
+.attention-stats {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+}
+.attention-stats dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 34px;
+  margin: 12px 0 0;
+}
+.attention-stats dt {
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.attention-stats dd {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.pathology-details {
+  grid-template-columns: repeat(5, 1fr);
+}
+.model-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 14px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.75;
+  color: #7b8798;
+}
+.model-note a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+@media (max-width: 1200px) {
+  .pathology-details {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px 0;
+  }
+}
+
+/* Eyebrow etiketleri sozlukte buyuk harfle yazili; patoloji ekraninin yeni
+   etiketleri de ayni goruntuyu CSS ile aliyor. */
+.prediction-panel .eyebrow,
+.pathology-details .eyebrow {
+  text-transform: uppercase;
+}
+.model-note .eyebrow {
+  text-transform: uppercase;
+  display: inline;
+}
+.pathology-details strong {
+  white-space: normal;
+}
+/* Turkce buyuk harf kurali yabanci kelimeyi bozuyor ("attention" → "ATTENTİON");
+   bu baslik oldugu gibi kalir. */
+.attention-stats > .eyebrow {
+  text-transform: none;
+}

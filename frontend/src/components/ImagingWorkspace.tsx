@@ -4,6 +4,7 @@ import { axes, axisKeys, type Axis, type CaseRecord } from '../data/contracts';
 import { useT } from '../i18n';
 import { EmptyState } from './EmptyState';
 import { LazyVolumeViewer } from './LazyVolumeViewer';
+import { ReviewFlagBand } from './ReviewFlagBand';
 import { ViewerFrame } from './ViewerFrame';
 
 export function ImagingWorkspace({
@@ -186,6 +187,7 @@ export function ImagingWorkspace({
           {record.brainContext && ` ${t('case.brainNotice')}`}
         </span>
       </div>
+      <ReviewFlagBand flags={record.reviewFlags ?? []} />
       <section className="case-details panel">
         <div>
           <span className="eyebrow">{t('case.sourceEyebrow')}</span>
