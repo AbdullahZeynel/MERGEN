@@ -20,12 +20,18 @@
   --icon: #8792a2;
   --secondary-text: #526075;
   --panel-shadow: 0 12px 30px rgb(17 26 44 / 0.05);
+  --class-A: #2f6f9f;
+  --class-O: #b5761b;
+  --class-G: #b02a37;
   transition:
     color 160ms ease,
     background-color 160ms ease;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
+  --class-A: #5b9dd0;
+  --class-O: #d59a3a;
+  --class-G: #e2606f;
   --page: #090f1d;
   --surface: #121a2a;
   --surface-subtle: #1b2435;
@@ -1801,9 +1807,6 @@ svg {
   --slide-field: #edeae6;
   --slide-line: #dcd6cf;
   --slide-label: #7d7871;
-  --class-A: #2f6f9f;
-  --class-O: #b5761b;
-  --class-G: #b02a37;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1812,9 +1815,6 @@ svg {
   --slide-field: #11151b;
   --slide-line: #232a33;
   --slide-label: #8b95a3;
-  --class-A: #5b9dd0;
-  --class-O: #d59a3a;
-  --class-G: #e2606f;
 }
 .class-dot {
   display: inline-block;
@@ -1836,6 +1836,13 @@ svg {
 .class-dot.class-G,
 .class-fill.class-G {
   background: var(--class-G);
+}
+
+.per-class-table th[scope='row'] {
+  white-space: nowrap;
+}
+.per-class-table td {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Karar paneli. */

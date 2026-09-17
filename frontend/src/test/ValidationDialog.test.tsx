@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ValidationDialog } from '../components/ValidationDialog';
@@ -10,6 +10,8 @@ afterEach(() => vi.unstubAllGlobals());
 
 const score = (value: number) =>
   new Intl.NumberFormat('tr', { minimumFractionDigits: 3, maximumFractionDigits: 3 }).format(value);
+const percent = (value: number) =>
+  new Intl.NumberFormat('tr', { style: 'percent', maximumFractionDigits: 1 }).format(value);
 
 function show(payload: unknown = { schemaVersion: 4, examples: [makeFigure('TEST-FIGURE-1')] }, ok = true) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, json: async () => payload }));
@@ -26,7 +28,8 @@ function show(payload: unknown = { schemaVersion: 4, examples: [makeFigure('TEST
 describe('validation and limits', () => {
   it('shows the locked-test numbers the registry extract carries', () => {
     show();
-    const [segmentation, pathology] = screen.getAllByRole('table');
+    const segmentation = screen.getByRole('table', { name: /UWCSE v3/ });
+    const pathology = screen.getByRole('table', { name: /5-fold topluluk/ });
     const dice = lockedTest.segmentation.dice.Mean;
     expect(segmentation).toHaveTextContent(score(dice.value));
     expect(segmentation).toHaveTextContent(`${score(dice.low)} – ${score(dice.high)}`);
@@ -54,6 +57,36 @@ describe('validation and limits', () => {
     expect(dialog).toHaveTextContent(score(lockedTest.pathology.metrics.auroc.value));
   });
 
+  it('shows the three classes behind the macro average, with their case counts', () => {
+    show();
+    // Makro-F1 tek basina hangi sinifin zorlandigini soylemez; ekran raporun
+    // sinif tablosunu tasimali ve sayilari kayit defterinden almalidir.
+    const table = screen.getByRole('table', { name: /Sınıf bazlı/ });
+    for (const row of lockedTest.pathology.perClass) {
+      const cells = within(table).getByRole('row', { name: new RegExp(`\\(${row.class}\\)`) });
+      expect(cells).toHaveTextContent(String(row.n));
+      expect(cells).toHaveTextContent(score(row.precision));
+      expect(cells).toHaveTextContent(score(row.recall));
+      expect(cells).toHaveTextContent(score(row.f1));
+    }
+    // Sinif sayilari bolme buyuklugunu tutmali: 38 + 25 + 50 = 113.
+    const total = lockedTest.pathology.perClass.reduce((sum, row) => sum + row.n, 0);
+    expect(total).toBe(lockedTest.pathology.n);
+  });
+
+  it('states what the abstention threshold caught and what it missed', () => {
+    show();
+    const dialog = screen.getByRole('dialog');
+    const { threshold, coverage, accuracyKept, errorsCaught, errorsTotal } =
+      lockedTest.pathology.abstention;
+    expect(dialog).toHaveTextContent(`(${threshold.toString().replace('.', ',')})`);
+    expect(dialog).toHaveTextContent(percent(coverage));
+    expect(dialog).toHaveTextContent(score(accuracyKept));
+    // Bayragin sinirini yazmayan bir ekran onu guvenlik agi diye okutur.
+    expect(dialog).toHaveTextContent(`${errorsTotal} hatanın ${errorsCaught} tanesi`);
+    expect(dialog).toHaveTextContent('güvenlik ağı değil');
+  });
+
   it('lists a measured figure with its volumes, its scores and its rule', async () => {
     show();
     const figure = await screen.findByRole('img', { name: /TEST-FIGURE-1/ });
@@ -61,7 +94,7 @@ describe('validation and limits', () => {
       'src',
       '/api/demo/modules/imaging/diseases/glioma/examples/TEST-FIGURE-1/figure',
     );
-    const table = screen.getAllByRole('table')[2];
+    const table = screen.getByRole('table', { name: 'TEST-FIGURE-1' });
     expect(table).toHaveTextContent('1.000');
     expect(table).toHaveTextContent('1.100');
     expect(table).toHaveTextContent('0,910');
@@ -86,6 +119,8 @@ describe('validation and limits', () => {
     show(undefined, false);
     expect(await screen.findByRole('alert')).toHaveTextContent('Doğrulama figürleri alınamadı.');
     // Kilitli test sayilari figurlerden bagimsiz: ekranda kalir.
-    expect(screen.getAllByRole('table')).toHaveLength(2);
+    expect(screen.getByRole('table', { name: /UWCSE v3/ })).toBeVisible();
+    expect(screen.getByRole('table', { name: /5-fold topluluk/ })).toBeVisible();
+    expect(screen.getByRole('table', { name: /Sınıf bazlı/ })).toBeVisible();
   });
 });

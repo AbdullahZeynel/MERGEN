@@ -28,6 +28,8 @@ REGIONS = ('TC', 'WT', 'ET', 'Mean')
 # on the locked test split. `mil_v1` is the single network the demo slides come
 # from and is reported beside it, not instead of it.
 PATHOLOGY = 'models/registry/mergen-wsi-attention-mil/results/ensemble_cv_v1/eval_test.json'
+CALIBRATION = 'models/registry/mergen-wsi-attention-mil/results/ensemble_cv_v1/calibration.json'
+CLASSES = ('A', 'O', 'G')
 PATHOLOGY_METRICS = {
     'macroF1': 'macro_f1',
     'balancedAccuracy': 'balanced_accuracy',
@@ -91,11 +93,44 @@ def pathology() -> dict:
     }
 
 
+def per_class() -> list:
+    """Per-class precision, recall and F1 with the case count behind each one."""
+    metrics = _load(PATHOLOGY)['metrics']
+    matrix = metrics['confusion_matrix']
+    rows = []
+    for index, name in enumerate(CLASSES):
+        rows.append({
+            'class': name,
+            'n': int(sum(matrix[index])),
+            'precision': round(float(metrics['per_class_precision'][name]), PLACES),
+            'recall': round(float(metrics['per_class_recall'][name]), PLACES),
+            'f1': round(float(metrics['per_class_f1'][name]), PLACES),
+        })
+    if sum(row['n'] for row in rows) != int(metrics['n']):
+        raise ValueError('Per-class counts do not add up to the split size')
+    return rows
+
+
+def abstention() -> dict:
+    """What the abstention threshold did when it was read out on the locked test."""
+    raw = _load(CALIBRATION)['abstention']
+    readout = raw['test_readout']
+    return {
+        'source': CALIBRATION,
+        'threshold': round(float(raw['chosen_threshold']), PLACES),
+        'coverage': round(float(readout['coverage']), PLACES),
+        'accuracyKept': round(float(readout['accuracy_kept']), PLACES),
+        'accuracyAbstained': round(float(readout['accuracy_abstained']), PLACES),
+        'errorsCaught': int(readout['errors_caught']),
+        'errorsTotal': int(readout['errors_total']),
+    }
+
+
 def derive() -> dict:
     return {
         'split': 'locked test',
         'segmentation': segmentation(),
-        'pathology': pathology(),
+        'pathology': pathology() | {'perClass': per_class(), 'abstention': abstention()},
     }
 
 

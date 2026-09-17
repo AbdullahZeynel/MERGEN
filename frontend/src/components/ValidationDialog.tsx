@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { BarChart3, RefreshCw, X } from 'lucide-react';
 import { regions, regionKeys, type FigureRecord } from '../data/contracts';
-import { lockedTest, type Interval } from '../data/metrics';
+import { lockedTest, type Interval, type LockedTest } from '../data/metrics';
 import { listValidationFigures } from '../data/source';
 import { useT, type Translate } from '../i18n';
 import { useFormat } from '../format';
@@ -24,16 +24,18 @@ function IntervalCells({ interval, format }: { interval: Interval; format: Forma
 }
 
 function MetricTable({
+  label,
   rows,
   t,
   format,
 }: {
+  label: string;
   rows: { key: string; label: string; interval: Interval }[];
   t: Translate;
   format: Format;
 }) {
   return (
-    <table className="metric-table">
+    <table className="metric-table" aria-label={label}>
       <thead>
         <tr>
           <th scope="col">{t('validation.metric')}</th>
@@ -46,6 +48,53 @@ function MetricTable({
           <tr key={row.key}>
             <th scope="row">{row.label}</th>
             <IntervalCells interval={row.interval} format={format} />
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}
+
+/** Raporun sinif bazli tablosu: ortalamanin arkasindaki uc satir. Makro-F1
+ *  tek basina hangi sinifin zorlandigini soylemez; bu tablo soyler. */
+function PerClassTable({
+  rows,
+  t,
+  format,
+}: {
+  rows: LockedTest['pathology']['perClass'];
+  t: Translate;
+  format: Format;
+}) {
+  const names = {
+    A: 'validation.classShortA',
+    O: 'validation.classShortO',
+    G: 'validation.classShortG',
+  } as const;
+  return (
+    <table className="metric-table per-class-table" aria-label={t('validation.perClassHeading')}>
+      <thead>
+        <tr>
+          <th scope="col">{t('validation.class')}</th>
+          <th scope="col">{t('validation.classCases')}</th>
+          <th scope="col">{t('validation.precision')}</th>
+          <th scope="col">{t('validation.recall')}</th>
+          <th scope="col">{t('validation.f1')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.class}>
+            <th scope="row">
+              <i className={`class-dot class-${row.class}`} aria-hidden="true" />
+              {t(names[row.class])}
+            </th>
+            <td>{format.count(row.n)}</td>
+            <td>{format.score(row.precision)}</td>
+            <td>{format.score(row.recall)}</td>
+            <td>
+              <strong>{format.score(row.f1)}</strong>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -66,7 +115,7 @@ function Figure({ figure, t, format }: { figure: FigureRecord; t: Translate; for
         <p>
           <span className="eyebrow">{t('validation.reason')}</span> {figure.selectionReason}
         </p>
-        <table className="metric-table">
+        <table className="metric-table" aria-label={figure.id}>
           <thead>
             <tr>
               <th scope="col">{t('validation.metric')}</th>
@@ -197,13 +246,38 @@ export function ValidationDialog({ onClose }: { onClose: () => void }) {
         <section aria-labelledby="validation-mri">
           <h3 id="validation-mri">{t('validation.mriHeading')}</h3>
           <p>{t('validation.mriBody')}</p>
-          <MetricTable rows={diceRows} t={t} format={format} />
+          <MetricTable label={t('validation.mriHeading')} rows={diceRows} t={t} format={format} />
         </section>
 
         <section aria-labelledby="validation-pathology">
           <h3 id="validation-pathology">{t('validation.pathologyHeading')}</h3>
           <p>{t('validation.pathologyBody')}</p>
-          <MetricTable rows={pathologyRows} t={t} format={format} />
+          <MetricTable
+            label={t('validation.pathologyHeading')}
+            rows={pathologyRows}
+            t={t}
+            format={format}
+          />
+          <h4>{t('validation.perClassHeading')}</h4>
+          <p>{t('validation.perClassBody')}</p>
+          <PerClassTable rows={pathology.perClass} t={t} format={format} />
+          {/* Esik bir ayar degil, olculmus bir davranistir: kapsam, iki
+              doguluk ve yakalanan hata payi birlikte yaziliyor. */}
+          <h4>{t('validation.abstentionHeading')}</h4>
+          <p>
+            {t('validation.abstentionBody', {
+              threshold: format.score(pathology.abstention.threshold, 2),
+              coverage: format.percent(pathology.abstention.coverage),
+              kept: format.score(pathology.abstention.accuracyKept),
+              abstained: format.score(pathology.abstention.accuracyAbstained),
+            })}
+          </p>
+          <p className="about-note">
+            {t('validation.abstentionLimit', {
+              caught: format.count(pathology.abstention.errorsCaught),
+              total: format.count(pathology.abstention.errorsTotal),
+            })}
+          </p>
         </section>
 
         {/* Uyarilar sayilarla ayni ekranda durur: ayri bir sayfaya tasinirsa
