@@ -230,9 +230,49 @@ süreç çıktısı servis loguna bağlanmaz. Ayrıntılı yerel protokol:
 
 G4-A okuma izolasyonu değildir: runner hâlâ `mergen-executor` kullanıcısıyla
 çalışır ve bu hesabın okuyabildiği dosyaları okuyabilir. Kod/venv/model ağacı bu
-nedenle güvenilir ve servis hesaplarınca yazılamaz olmalıdır. Gerçek Swin runner'ı, CUDA
-preflight'ı, fixture inference ve NVIDIA unit izinleri henüz yoktur; bunlar
-tamamlanmadan G4 ve G5 tamamlanmış sayılmaz.
+nedenle güvenilir ve servis hesaplarınca yazılamaz olmalıdır. Bu sınırın üzerine
+kurulan gerçek model davranışı G4-B'de izlenir.
+
+### G4-B güncel durum
+
+Swin UNETR fold-0 runner'ı, referans çıkarımdaki `FLAIR,T1CE,T1,T2` kanal sırası,
+nonzero/channel-wise normalizasyon, 128³ pencere, 0.6 overlap ve 0.5 eşikle
+uygulanmıştır. Modalitelerin şekil/affine uyuşmazlığı reddedilir; resample veya
+sahte modalite üretilmez. Runner canlı sözleşmeye uyan rapor, uint8 BraTS NIfTI,
+GLB ve checksummed `result.zip` üretir; ölçülmeyen Dice/klinik skor yazmaz.
+
+Girdi sözleşmesi voxel ızgarasını kapsar: referans hat resample ve reorient
+etmediğinden yalnız incelenen ızgara (1 mm izotropik, LPS, eksen hizalı) kabul
+edilir, başkası `input-invalid` ile reddedilir. Runner kendisi için yalnız bu
+kodu ve `resource-exhausted` kodunu bildirebilir.
+
+Model ortamı tam sürümlere kilitlidir. Preflight ortam sürümlerini, CUDA'yı,
+manifest kimliğini ve checkpoint `state_dict` uyumunu denetler. Executor GPU
+bellek/kullanımını `nvidia-smi` metni yerine NVML C API ile fail-closed ölçer;
+eşikler model venv'i etkinleştiğinde zorunludur. Unit yalnız dört NVIDIA compute
+cihazını açar ve ağ namespace'i kapalı kalır.
+
+### G4-A/G4-B arasındaki Landlock çakışması
+
+G4-A'nın yazma kapatması bütün `/dev` düğümlerini de kapatıyordu. CUDA sürücüsü
+`/dev/nvidiactl` ve kardeşlerini `O_RDWR` açmak zorunda olduğundan izole runner
+sürücüyü hiç başlatamıyor, `torch.cuda.is_available()` sandbox içinde `False`
+dönüyor ve preflight `model-unavailable` ile kapanıyordu. Belirti GPU'su olmayan
+bir hosttan ayırt edilemediği için ilk ölçümde "bu makinede CUDA yok" diye
+okunmuştu; oysa aynı venv sandbox dışında GPU'yu açıyor. Sandbox artık dört
+compute düğümünü tek tek, yalnız dosya haklarıyla açar; unit'in `DeviceAllow`
+listesiyle aynı olmak zorundadır ve `/dev` altında komşu düğüm, yeni giriş veya
+silme hâlâ reddedilir.
+
+### G4-B ölçümü
+
+Sentetik, kimliksiz dört-modalite fixture'ı (`mergen_imaging.make_fixture`) izole
+sınırdan uçtan uca geçti: RTX 5060 Laptop / 8151 MiB üzerinde çıkarım 41 s,
+preflight dahil 57 s, tepe VRAM 5794 MiB, sonuç canlı `ResultManifest`
+doğrulamasından geçti ve üç bölge de GLB'ye girdi. 2 mm'ye ölçeklenmiş aynı
+fixture `input-invalid` ile reddedildi. Checkpoint'in 159 anahtarı strict
+yüklendi. Kalan iş dispatcher/VPS kuyruğuyla uçtan uca kabuldür; o tamamlanmadan
+G4 bitmiş sayılmaz.
 
 ## Git ve ekip çalışma düzeni
 
