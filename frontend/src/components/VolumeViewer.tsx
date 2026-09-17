@@ -6,6 +6,7 @@ import { RotateCcw, Box } from 'lucide-react';
 import { parseMesh, regions, type Region } from '../data/mesh';
 import { EmptyState } from './EmptyState';
 import { useT } from '../i18n';
+import { TOUR_SPIN_EVENT } from '../tour/steps';
 import type { MessageKey } from '../i18n/messages';
 
 const colors = { ET: 0xff596c, TC_NCR: 0x57cea2, ED: 0x599eee, BRAIN: 0xe2e8f0 };
@@ -96,6 +97,27 @@ export function VolumeViewer({ url }: { url?: string }) {
       setState('webgl');
     };
     renderer.domElement.addEventListener('webglcontextlost', lost);
+    // Tanitim turu 3D adiminda modeli kendisi dondurur; hareket azaltma
+    // tercihi varsa dondurmez. Kullanici surukleyince kontrol ona gecer.
+    let spinFrame: number | null = null;
+    const stopSpin = () => {
+      if (spinFrame !== null) cancelAnimationFrame(spinFrame);
+      spinFrame = null;
+    };
+    const onSpin = (event: Event) => {
+      const on = Boolean((event as CustomEvent<{ on: boolean }>).detail?.on);
+      const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      if (!on || reduced) return stopSpin();
+      if (spinFrame !== null) return;
+      const tick = () => {
+        group.rotation.y += 0.012;
+        draw();
+        spinFrame = requestAnimationFrame(tick);
+      };
+      spinFrame = requestAnimationFrame(tick);
+    };
+    window.addEventListener(TOUR_SPIN_EVENT, onSpin);
+    controls.addEventListener('start', stopSpin);
     sceneControl.current = { group, draw, reset };
     const addGeometry = (region: Region, geometry: THREE.BufferGeometry) => {
       if (!geometry.getAttribute('normal')) geometry.computeVertexNormals();
@@ -168,6 +190,9 @@ export function VolumeViewer({ url }: { url?: string }) {
         if (!controller.signal.aborted) setState('error');
       });
     return () => {
+      stopSpin();
+      window.removeEventListener(TOUR_SPIN_EVENT, onSpin);
+      controls.removeEventListener('start', stopSpin);
       controller.abort();
       resize.disconnect();
       controls.dispose();
@@ -233,7 +258,7 @@ export function VolumeViewer({ url }: { url?: string }) {
         <span className="mesh-hint">{t('mesh.navHint')}</span>
       </div>
       <div className="mesh-controls">
-        <div className="region-buttons">
+        <div className="region-buttons" data-tour="region-controls">
           {regions.map((region) => (
             <button
               key={region}

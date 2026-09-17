@@ -139,28 +139,40 @@ export const tr = {
   'assistant.send': 'Mesaj gönder',
 
   'guide.askTitle': 'Kısa bir tanıtım ister misiniz?',
-  'guide.askBody':
-    'Çalışma alanının bölümlerini yaklaşık bir dakikada gezelim. İstediğiniz an kapatabilir, sonra alt bilgiden tekrar açabilirsiniz.',
-  'guide.accept': 'Evet, göster',
-  'guide.decline': 'Hayır, doğrudan başla',
   'guide.reopen': 'Tanıtımı aç',
   'guide.step': 'Adım {index} / {count}',
   'guide.back': 'Geri',
   'guide.next': 'İleri',
   'guide.finish': 'Başla',
-  'guide.close': 'Tanıtımı kapat',
-  'guide.cases.title': 'Vaka listesi',
-  'guide.cases.body':
-    'Soldaki listeden bir vaka seçersiniz. "Hazır demo" önceden hazırlanmış örnek vakaları, "Canlı analiz" ise kendi verinizle çalıştırılacak yolu gösterir.',
-  'guide.slices.title': '2D kesit görüntüleyici',
-  'guide.slices.body':
-    'Aksiyel, koronal ve sagittal düzlemler arasında geçiş yapar, kesitleri kaydırıcıyla veya ok tuşlarıyla gezersiniz. "Tahmin" ve "Referans" katmanlarını ayrı ayrı açıp kapatabilirsiniz.',
-  'guide.mesh.title': '3D segmentasyon',
-  'guide.mesh.body':
-    'Tümör bölgeleri döndürülebilir bir yüzey modeline dönüşür. Her bölgeyi tek tek gizleyip gösterebilir, opaklığı değiştirebilirsiniz.',
-  'guide.limits.title': 'Veri ve sınırlar',
-  'guide.limits.body':
-    'Görüntüler kamuya açık, kimliksizleştirilmiş bir araştırma veri kümesinden gelir ve çıktılar klinik kararda kullanılamaz. Ayrıntı ve atıflar için üst çubuktaki “Veri kaynakları ve gizlilik” bölümüne bakın.',
+  'tour.open': 'Tanıtımı başlat',
+  'tour.close': 'Tanıtımı kapat',
+  'tour.nudgeBody': 'Bir dakikada bölümleri sahnede gezelim.',
+  'tour.start': 'Başlat',
+  'tour.notNow': 'Şimdi değil',
+  'tour.cases.title': 'Vaka listesi',
+  'tour.cases.body':
+    'İncelenecek vaka buradan seçilir. Her kayıt vaka kimliğini, modaliteyi ve durumunu gösterir; arama kutusu kimliğe göre süzer.',
+  'tour.source.title': 'Veri kaynağı',
+  'tour.source.body':
+    '“Hazır demo” önceden hazırlanmış, kimliksiz örnek vakalardır. “Canlı analiz” kendi verinizle çalışacak yoldur; servis bağlı değilse bunu açıkça söyler, demoya sessizce düşmez.',
+  'tour.context.title': 'Vaka bağlamı',
+  'tour.context.body':
+    'Hangi kaynağa baktığınız ve servisin durumu her zaman burada yazar. Yenile düğmesi vaka listesini yeniden ister.',
+  'tour.slices.title': '2D kesit görüntüleyici',
+  'tour.slices.body':
+    'FLAIR kesitleri aksiyel, koronal ve sagittal düzlemde. Kaydırıcı ya da ok tuşlarıyla kesitler arasında gezin; “Merkez” en yoğun kesite döner. Büyüt düğmesi tam ekrana alır.',
+  'tour.layers.title': 'Segmentasyon katmanları',
+  'tour.layers.body':
+    '“Tahmin” modelin çıktısı, “Referans” uzman etiketi. İkisi birbirinin yerine geçmez; aynı anda açıp farkı görebilirsiniz.',
+  'tour.mesh.title': '3D segmentasyon',
+  'tour.mesh.body':
+    'Tümör bölgeleri döndürülebilir bir yüzey modeline dönüşür — şu an sizin için dönüyor. Sürükleyerek döndürün, tekerlekle yakınlaşın. Saydam dış yüzey MR sinyalinden yaklaşık üretilmiştir, anatomik segmentasyon değildir.',
+  'tour.regions.title': 'Bölgeler ve opaklık',
+  'tour.regions.body':
+    'Kontrast tutan tümör, nekrotik çekirdek ve ödem ayrı ayrı gizlenip gösterilebilir. Opaklık kaydırıcısı üçünü birden etkiler; kamera düğmesi görünümü sıfırlar.',
+  'tour.sources.title': 'Veri kaynakları ve gizlilik',
+  'tour.sources.body':
+    'Görüntülerin nereden geldiği, nasıl kimliksizleştirildiği ve atıflar burada. Çıktılar araştırma amaçlıdır, klinik kararda kullanılamaz.',
 
   'about.open': 'Veri kaynakları ve gizlilik',
   'about.title': 'Veri, gizlilik ve kaynaklar',
@@ -343,28 +355,40 @@ export const en: Record<MessageKey, string> = {
   'assistant.send': 'Send message',
 
   'guide.askTitle': 'Would you like a short tour?',
-  'guide.askBody':
-    'A walk through the parts of the workspace, in about a minute. You can close it at any point and reopen it from the footer later.',
-  'guide.accept': 'Yes, show me',
-  'guide.decline': 'No, go straight in',
   'guide.reopen': 'Open the tour',
   'guide.step': 'Step {index} of {count}',
   'guide.back': 'Back',
   'guide.next': 'Next',
   'guide.finish': 'Start',
-  'guide.close': 'Close the tour',
-  'guide.cases.title': 'Case list',
-  'guide.cases.body':
-    'You pick a case from the list on the left. "Prepared demo" holds ready-made example cases; "Live analysis" is the path that runs on your own data.',
-  'guide.slices.title': '2D slice viewer',
-  'guide.slices.body':
-    'Switch between the axial, coronal and sagittal planes and move through slices with the slider or the arrow keys. The "Prediction" and "Reference" layers toggle independently.',
-  'guide.mesh.title': '3D segmentation',
-  'guide.mesh.body':
-    'The tumour regions become a surface model you can rotate. Each region can be hidden or shown on its own, and the opacity is adjustable.',
-  'guide.limits.title': 'Data and limits',
-  'guide.limits.body':
-    'The images come from a publicly released, de-identified research dataset, and the outputs cannot be used for clinical decisions. The “Data sources and privacy” panel in the top bar has the detail and the citations.',
+  'tour.open': 'Start the tour',
+  'tour.close': 'Close the tour',
+  'tour.nudgeBody': 'A one-minute walk through the workspace, on the page itself.',
+  'tour.start': 'Start',
+  'tour.notNow': 'Not now',
+  'tour.cases.title': 'Case list',
+  'tour.cases.body':
+    'The case to review is chosen here. Each entry shows the case ID, the modality and its status; the search box filters by ID.',
+  'tour.source.title': 'Data source',
+  'tour.source.body':
+    '“Prepared demo” holds ready-made, de-identified example cases. “Live analysis” is the path that runs on your own data; when the service is not connected it says so, rather than quietly falling back to the demo.',
+  'tour.context.title': 'Case context',
+  'tour.context.body':
+    'Which source you are looking at and the state of the service are always shown here. The refresh button asks for the case list again.',
+  'tour.slices.title': '2D slice viewer',
+  'tour.slices.body':
+    'FLAIR slices in the axial, coronal and sagittal planes. Move between slices with the slider or the arrow keys; “Centre” returns to the densest slice. The expand button goes full screen.',
+  'tour.layers.title': 'Segmentation layers',
+  'tour.layers.body':
+    '“Prediction” is the model output, “Reference” the expert label. They never stand in for each other; turn both on to see the difference.',
+  'tour.mesh.title': '3D segmentation',
+  'tour.mesh.body':
+    'The tumour regions become a surface model you can rotate — it is turning for you right now. Drag to rotate, scroll to zoom. The translucent outer surface is approximated from the MR signal; it is not an anatomical segmentation.',
+  'tour.regions.title': 'Regions and opacity',
+  'tour.regions.body':
+    'Enhancing tumour, necrotic core and oedema can be hidden or shown one at a time. The opacity slider affects all three; the camera button resets the view.',
+  'tour.sources.title': 'Data sources and privacy',
+  'tour.sources.body':
+    'Where the images come from, how they were de-identified and the citations live here. The outputs are for research and cannot be used for clinical decisions.',
 
   'about.open': 'Data sources and privacy',
   'about.title': 'Data, privacy and credits',

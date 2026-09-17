@@ -24,7 +24,9 @@ import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 import { AboutDialog } from './components/AboutDialog';
-import { WelcomeGuide, shouldAskForGuide } from './components/WelcomeGuide';
+import { GuidedTour } from './tour/GuidedTour';
+import { GuideLauncher, rememberAnswered, shouldNudge } from './tour/GuideLauncher';
+import { TOUR_SPIN_EVENT } from './tour/steps';
 
 // Deferred until chatbot integration; keep the component for the next sprint.
 const assistantEnabled = false;
@@ -50,10 +52,24 @@ export default function App() {
   // her iki genislikte de ayni durumu cevirir.
   const [casesOpen, setCasesOpen] = useState(() => window.innerWidth > DAR_EKRAN);
   const [aboutOpen, setAboutOpen] = useState(false);
-  // Ilk ziyarette sorar; cevap verildikten sonra yalnizca alt bilgiden acilir.
-  const [guide, setGuide] = useState<'ask' | 'tour' | null>(() =>
-    shouldAskForGuide() ? 'ask' : null,
-  );
+  // Tur raydaki dugmeden her zaman acilir; ilk ziyarette dugmenin ustunde bir
+  // davet belirir ve verilen cevap (evet ya da simdi degil) hatirlanir.
+  const [tourOpen, setTourOpen] = useState(false);
+  const [nudge, setNudge] = useState(shouldNudge);
+  const startTour = useCallback(() => {
+    rememberAnswered();
+    setNudge(false);
+    setTourOpen(true);
+  }, []);
+  const dismissNudge = useCallback(() => {
+    rememberAnswered();
+    setNudge(false);
+  }, []);
+  const tourActions = {
+    openCases: () => setCasesOpen(true),
+    spin3d: (on: boolean) =>
+      window.dispatchEvent(new CustomEvent(TOUR_SPIN_EVENT, { detail: { on } })),
+  };
   const closeAssistant = useCallback(() => setAssistantOpen(false), []);
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -95,6 +111,7 @@ export default function App() {
         </a>
         <button
           className={`rail-button ${casesOpen ? 'active' : ''}`}
+          data-tour="cases-toggle"
           aria-label={casesOpen ? t('cases.hide') : t('cases.show')}
           aria-expanded={casesOpen}
           aria-controls="case-sidebar"
@@ -112,6 +129,7 @@ export default function App() {
             <MessageSquare size={21} />
           </button>
         )}
+        <GuideLauncher nudge={nudge} onStart={startTour} onDismiss={dismissNudge} />
       </nav>
       <div className="app-body">
         <header className="topbar">
@@ -122,6 +140,7 @@ export default function App() {
             <button
               className="theme-toggle source-toggle"
               type="button"
+              data-tour="data-sources"
               onClick={() => setAboutOpen(true)}
             >
               <ShieldCheck size={16} />
@@ -167,7 +186,7 @@ export default function App() {
               </button>
             </div>
             <p className="sidebar-description">{t('cases.pick')}</p>
-            <div className="source-switch segmented" aria-label={t('cases.sourceLabel')}>
+            <div className="source-switch segmented" data-tour="source-switch" aria-label={t('cases.sourceLabel')}>
               <button
                 className={mode === 'demo' ? 'selected' : ''}
                 aria-pressed={mode === 'demo'}
@@ -207,7 +226,7 @@ export default function App() {
                 ))}
               </select>
             </div>
-            <div className="case-list" aria-busy={query.isPending}>
+            <div className="case-list" data-tour="case-list" aria-busy={query.isPending}>
               {query.isPending ? (
                 <p role="status" className="list-message">
                   {t('cases.loading')}
@@ -276,7 +295,7 @@ export default function App() {
                 </button>
               )}
             </div>
-            <div className="context-bar">
+            <div className="context-bar" data-tour="context-bar">
               <span className={`mode-badge ${mode}`}>
                 <Database size={14} />
                 {t(mode === 'demo' ? 'workspace.modeDemo' : 'workspace.modeLive')}
@@ -365,7 +384,7 @@ export default function App() {
                 <button className="link-button" onClick={() => setAboutOpen(true)}>
                   {t('about.open')}
                 </button>
-                <button className="link-button" onClick={() => setGuide('tour')}>
+                <button className="link-button" onClick={startTour}>
                   {t('guide.reopen')}
                 </button>
               </span>
@@ -374,7 +393,7 @@ export default function App() {
         </div>
       </div>
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
-      {guide && <WelcomeGuide mode={guide} onClose={() => setGuide(null)} />}
+      {tourOpen && <GuidedTour actions={tourActions} onClose={() => setTourOpen(false)} />}
     </div>
   );
 }

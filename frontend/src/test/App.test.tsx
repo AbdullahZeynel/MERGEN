@@ -133,28 +133,60 @@ describe('case workspace', () => {
     });
     expect(slider).toHaveValue('154');
   });
-  it('asks once whether the visitor wants the tour and remembers the answer', async () => {
+  it('invites once from the rail and remembers either answer', async () => {
     const user = mount(undefined, { firstVisit: true });
-    const dialog = await screen.findByRole('dialog');
-    expect(dialog).toHaveTextContent('Kısa bir tanıtım ister misiniz?');
-    await user.click(screen.getByRole('button', { name: 'Evet, göster' }));
-    expect(screen.getByRole('heading', { name: 'Vaka listesi' })).toBeVisible();
-    // Dort adim, sonuncusunda bitis dugmesi.
-    for (const next of ['2D kesit görüntüleyici', '3D segmentasyon', 'Veri ve sınırlar']) {
-      await user.click(screen.getByRole('button', { name: 'İleri' }));
-      expect(screen.getByRole('heading', { name: next })).toBeVisible();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    // Davet bir modal degil: sayfa kullanilabilir kalir, baloncuk rayin yaninda durur.
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByText('Kısa bir tanıtım ister misiniz?')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Şimdi değil' }));
+    expect(screen.queryByText('Kısa bir tanıtım ister misiniz?')).not.toBeInTheDocument();
+    expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
+    // Dugme kalir; tur her zaman oradan acilir.
+    expect(screen.getByRole('button', { name: 'Tanıtımı başlat' })).toBeVisible();
+  });
+
+  it('walks the real page: spotlights each area, spins the model, ends at the data sources', async () => {
+    const user = mount(undefined, { firstVisit: true });
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const spins: boolean[] = [];
+    window.addEventListener('mergen:tour-spin', (e) => spins.push((e as CustomEvent).detail.on));
+    await user.click(screen.getByRole('button', { name: 'Başlat' }));
+    const seen: string[] = [];
+    for (let guard = 0; guard < 12; guard += 1) {
+      const dialog = screen.getByRole('dialog');
+      const title = dialog.querySelector('h2')!.textContent!;
+      seen.push(title);
+      // Spot gercek bir hedefe bagli: veri kaynaklari adiminda ust cubuktaki dugme.
+      if (title === 'Veri kaynakları ve gizlilik') {
+        expect(document.querySelector('[data-tour="data-sources"]')).not.toBeNull();
+      }
+      const next = screen.queryByRole('button', { name: 'İleri' });
+      if (!next) break;
+      await user.click(next);
     }
+    expect(seen[0]).toBe('Vaka listesi');
+    expect(seen).toEqual(expect.arrayContaining([
+      'Veri kaynağı', 'Vaka bağlamı', '2D kesit görüntüleyici', 'Segmentasyon katmanları',
+      '3D segmentasyon', 'Veri kaynakları ve gizlilik',
+    ]));
+    expect(seen[seen.length - 1]).toBe('Veri kaynakları ve gizlilik');
+    // 3D adimina girince model doner, cikinca durur.
+    expect(spins).toEqual([true, false]);
     await user.click(screen.getByRole('button', { name: 'Başla' }));
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
   });
 
-  it('takes no for an answer and does not ask again', async () => {
-    const user = mount(undefined, { firstVisit: true });
-    await screen.findByRole('dialog');
-    await user.click(screen.getByRole('button', { name: 'Hayır, doğrudan başla' }));
+  it('opens the case list for its first step even when it was collapsed', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Vaka listesini gizle' }));
+    expect(document.getElementById('case-sidebar')).toHaveClass('collapsed');
+    await user.click(screen.getByRole('button', { name: 'Tanıtımı başlat' }));
+    expect(document.getElementById('case-sidebar')).toHaveClass('open');
+    await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    expect(window.localStorage.getItem('mergen-guide')).toBe('answered');
   });
 
   it('names the dataset, its licence and the de-identification in one place', async () => {
