@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Link2Off } from 'lucide-react';
 import { EmptyState } from './EmptyState';
+import { useT } from '../i18n';
 
 export function AssistantPanel({ caseId, close }: { caseId: string | null; close: () => void }) {
+  const t = useT();
   const closeRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null;
@@ -17,31 +19,31 @@ export function AssistantPanel({ caseId, close }: { caseId: string | null; close
     };
   }, [close]);
   return (
-    <aside className="assistant panel" aria-label="MERGEN Asistan">
+    <aside className="assistant panel" aria-label={t('assistant.name')}>
       <div className="panel-heading">
         <span>
-          <MessageSquare size={18} /> MERGEN Asistan
+          <MessageSquare size={18} /> {t('assistant.name')}
         </span>
-        <button ref={closeRef} className="icon-button" aria-label="Asistanı kapat" onClick={close}>
+        <button ref={closeRef} className="icon-button" aria-label={t('assistant.close')} onClick={close}>
           <X size={18} />
         </button>
       </div>
       <div className="assistant-context">
-        <span className="eyebrow">VAKA BAĞLAMI</span>
-        <strong>{caseId ?? 'Vaka seçilmedi'}</strong>
+        <span className="eyebrow">{t('assistant.contextEyebrow')}</span>
+        <strong>{caseId ?? t('assistant.noCase')}</strong>
       </div>
-      <EmptyState icon={<MessageSquare size={28} />} title="Birlikte incelemek için">
-        Vaka odaklı soru ve yanıtlar bu alanda yer alacak. Asistan servisi henüz bağlı değil.
+      <EmptyState icon={<MessageSquare size={28} />} title={t('assistant.title')}>
+        {t('assistant.body')}
       </EmptyState>
       <div className="assistant-input">
         <div className="offline-line">
-          <Link2Off size={14} /> Bağlantı kurulmadı
+          <Link2Off size={14} /> {t('assistant.offline')}
         </div>
         <label className="sr-only" htmlFor="message">
-          Asistana soru
+          {t('assistant.inputLabel')}
         </label>
-        <textarea id="message" disabled placeholder="Asistan bağlandığında soru sorabilirsiniz…" />
-        <button className="send-button" disabled aria-label="Mesaj gönder">
+        <textarea id="message" disabled placeholder={t('assistant.placeholder')} />
+        <button className="send-button" disabled aria-label={t('assistant.send')}>
           <Send size={17} />
         </button>
       </div>

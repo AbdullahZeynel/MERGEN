@@ -105,7 +105,7 @@ export default function App() {
         {assistantEnabled && (
           <button
             className={`rail-button ${assistantOpen ? 'active' : ''}`}
-            aria-label="Asistanı aç"
+            aria-label={t('assistant.open')}
             aria-expanded={assistantOpen}
             onClick={() => setAssistantOpen(!assistantOpen)}
           >
