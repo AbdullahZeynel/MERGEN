@@ -177,6 +177,7 @@ betikleri değerlendirme yapar; bunlar servis komutu değildir.
 | `mergen_imaging/` | İzole model venv'inde çalışan canlı Swin UNETR runner'ı |
 | `models/registry/` | Model kayıt defteri: köken, lisans, veri dağılımı, kaynaklı metrikler, ürün/referans ayrımı |
 | `models/imaging/` | Görüntü algoritmaları, çıkarım ve değerlendirme betikleri |
+| `models/pathology/` | Patoloji algoritmaları: kare çıkarımı, DINOv2 gömme, Attention-MIL eğitimi ve slayt çıkarımı |
 | `infra/` | VPS, Caddy, Tailscale ve CI koruması |
 | `docs/PLAN.md` | Mimari kararlar ve çalışma sırası |
 | `docs/SYSTEM_SPRINTS.md` | Canlı oturum, worker ve entegrasyon sprintleri |
