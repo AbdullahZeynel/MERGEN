@@ -112,7 +112,7 @@ export function VolumeViewer({ url }: { url?: string }) {
     };
     fetch(url, { signal: controller.signal })
       .then(async (response) => {
-        if (!response.ok) throw new Error('Mesh yüklenemedi');
+        if (!response.ok) throw new Error('mesh-request-failed');
         const found = new Set<Region>();
         if (url.endsWith('.glb')) {
           const payload = await response.arrayBuffer();
@@ -146,11 +146,17 @@ export function VolumeViewer({ url }: { url?: string }) {
             addGeometry(region, geometry);
           }
         }
-        if (!found.size) throw new Error('Görüntülenecek segmentasyon bulunamadı');
         return [...found];
       })
       .then((found) => {
         if (controller.signal.aborted || !found) return;
+        if (!found.length) {
+          // Paket okundu ama gosterilecek bolge yok: modelin bu vakada bulgu
+          // bildirmedigi anlamina gelir. Yukleme hatasi gibi sunmak, basarili
+          // bir analizi basarisiz gostermek olurdu.
+          setState('none');
+          return;
+        }
         setAvailable(found);
         const { width, height } = element.getBoundingClientRect();
         renderer.setSize(width, height);
@@ -198,14 +204,16 @@ export function VolumeViewer({ url }: { url?: string }) {
               title={
                 state === 'loading'
                   ? t('mesh.loading')
-                  : state === 'missing'
-                    ? t('mesh.missing')
-                    : state === 'webgl'
-                      ? t('mesh.webglFailed')
-                      : t('mesh.failed')
+                  : state === 'none'
+                    ? t('mesh.noRegions')
+                    : state === 'missing'
+                      ? t('mesh.missing')
+                      : state === 'webgl'
+                        ? t('mesh.webglFailed')
+                        : t('mesh.failed')
               }
               action={
-                state !== 'loading' && state !== 'missing' ? (
+                state !== 'loading' && state !== 'missing' && state !== 'none' ? (
                   <button className="button" onClick={() => setAttempt((a) => a + 1)}>
                     {t('workspace.retry')}
                   </button>
@@ -216,7 +224,9 @@ export function VolumeViewer({ url }: { url?: string }) {
                 ? t('mesh.webglHint')
                 : state === 'loading'
                   ? t('mesh.loadingHint')
-                  : t('mesh.fallbackHint')}
+                  : state === 'none'
+                    ? t('mesh.noRegionsHint')
+                    : t('mesh.fallbackHint')}
             </EmptyState>
           </div>
         )}
