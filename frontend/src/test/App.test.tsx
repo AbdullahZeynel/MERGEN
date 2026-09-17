@@ -345,8 +345,19 @@ describe('modules', () => {
       await user.click(next);
     }
     // Patoloji ekranindaki adimlar gorunur, MR'a ozgu adimlar atlanir.
-    expect(seen).toEqual(expect.arrayContaining(['İki modül', 'Sınıf olasılıkları']));
+    expect(seen).toEqual(expect.arrayContaining(['İki modül', 'Sınıf olasılıkları', 'Doğrulama ve sınırlar']));
     expect(seen).not.toContain('Segmentasyon katmanları');
   });
 
+  it('opens the validation section from the top bar and from the footer', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const entries = screen.getAllByRole('button', { name: 'Doğrulama ve sınırlar' });
+    expect(entries).toHaveLength(2);
+    expect(entries[0].closest('.topbar')).not.toBeNull();
+    await user.click(entries[0]);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('kilitli test');
+    expect(dialog).toHaveTextContent('Üç uyarı bu sayılarla birlikte geçerlidir');
+  });
 });

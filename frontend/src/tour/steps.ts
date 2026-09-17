@@ -90,6 +90,13 @@ export const steps: TourStep[] = [
     placement: 'top',
   },
   {
+    id: 'validation',
+    target: 'validation',
+    title: 'tour.validation.title',
+    body: 'tour.validation.body',
+    placement: 'bottom',
+  },
+  {
     id: 'sources',
     target: 'data-sources',
     title: 'tour.sources.title',

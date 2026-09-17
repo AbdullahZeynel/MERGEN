@@ -1927,14 +1927,77 @@ svg {
   }
 }
 
+/* ── Dogrulama ve sinirlar ──────────────────────────────────────────────── */
+.validation-dialog .about-body {
+  max-width: 760px;
+}
+.metric-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 14px 0 6px;
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.metric-table th,
+.metric-table td {
+  text-align: right;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.metric-table thead th {
+  font-size: 0.6rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.metric-table th:first-child,
+.metric-table tbody th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--secondary-text);
+}
+.metric-table td {
+  color: var(--secondary-text);
+}
+.metric-table td strong {
+  color: var(--text);
+}
+.metric-table abbr {
+  text-decoration: none;
+  border-bottom: 1px dotted var(--line);
+}
+.validation-figure {
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 16px;
+  margin-top: 16px;
+}
+.validation-figure img {
+  width: 100%;
+  border-radius: 7px;
+  background: #000;
+}
+.validation-figure-body h4 {
+  margin: 14px 0 6px;
+}
+.validation-figure-body p {
+  margin: 0;
+}
+.validation-figure .flag-band {
+  margin: 14px 0 0;
+}
+
 /* Eyebrow etiketleri sozlukte buyuk harfle yazili; patoloji ekraninin yeni
    etiketleri de ayni goruntuyu CSS ile aliyor. */
 .prediction-panel .eyebrow,
-.pathology-details .eyebrow {
+.pathology-details .eyebrow,
+.model-note .eyebrow,
+.validation-figure .eyebrow {
   text-transform: uppercase;
 }
-.model-note .eyebrow {
-  text-transform: uppercase;
+.model-note .eyebrow,
+.validation-figure .eyebrow {
   display: inline;
 }
 .pathology-details strong {

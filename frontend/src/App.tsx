@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
+  BarChart3,
   ChevronRight,
   Database,
   FolderOpen,
@@ -33,6 +34,7 @@ import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { PathologyWorkspace } from './components/PathologyWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 import { AboutDialog } from './components/AboutDialog';
+import { ValidationDialog } from './components/ValidationDialog';
 import { GuidedTour } from './tour/GuidedTour';
 import { GuideLauncher, rememberAnswered, shouldNudge } from './tour/GuideLauncher';
 import { TOUR_SPIN_EVENT } from './tour/steps';
@@ -69,6 +71,7 @@ export default function App() {
   // her iki genislikte de ayni durumu cevirir.
   const [casesOpen, setCasesOpen] = useState(() => window.innerWidth > DAR_EKRAN);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [validationOpen, setValidationOpen] = useState(false);
   // Tur raydaki dugmeden her zaman acilir; ilk ziyarette dugmenin ustunde bir
   // davet belirir ve verilen cevap (evet ya da simdi degil) hatirlanir.
   const [tourOpen, setTourOpen] = useState(false);
@@ -174,6 +177,15 @@ export default function App() {
             MERGEN<span>{t('app.wordmarkSub')}</span>
           </div>
           <div className="topbar-right">
+            <button
+              className="theme-toggle source-toggle"
+              type="button"
+              data-tour="validation"
+              onClick={() => setValidationOpen(true)}
+            >
+              <BarChart3 size={16} />
+              <span>{t('validation.open')}</span>
+            </button>
             <button
               className="theme-toggle source-toggle"
               type="button"
@@ -459,6 +471,9 @@ export default function App() {
               </span>
               <span>{t('footer.purpose')}</span>
               <span className="footer-links">
+                <button className="link-button" onClick={() => setValidationOpen(true)}>
+                  {t('validation.open')}
+                </button>
                 <button className="link-button" onClick={() => setAboutOpen(true)}>
                   {t('about.open')}
                 </button>
@@ -471,6 +486,7 @@ export default function App() {
         </div>
       </div>
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {validationOpen && <ValidationDialog onClose={() => setValidationOpen(false)} />}
       {tourOpen && <GuidedTour actions={tourActions} onClose={() => setTourOpen(false)} />}
     </div>
   );
