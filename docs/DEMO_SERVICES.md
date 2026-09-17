@@ -59,11 +59,22 @@ backend/.venv/bin/python frontend/scripts/prepare_demo_v4.py \
   --imaging-package .local/demo-v3-glb-22 \
   --wsi-cases .local/evidence-2026-09-17/06_figures/wsi/cases \
   --mri-examples .local/evidence-2026-09-17/06_figures/mri/cases \
+  --slide-predictions \
+    models/registry/mergen-wsi-attention-mil/results/ensemble_cv_v1/predictions_test.csv \
+  --calibration \
+    models/registry/mergen-wsi-attention-mil/results/ensemble_cv_v1/calibration.json \
   --output .local/demo-v4
 ```
 
+`--calibration` zorunludur: her slayt kaydı bir çekimserlik bayrağı taşır ve o
+bayrağın eşiği kayıt defterinde ölçülmüş sayıdır, betikte sabit değil.
+`--slide-predictions` verildiğinde kararı ürün yapılandırması olan 5-fold
+topluluk verir; tek ağın (`mil_v1`) kendi kararı kaydın içinde `singleModel`
+olarak kalır ve ısı haritası her zaman o tek ağdan geldiği için manifest
+haritayı çizen ağı ayrıca adlandırır.
+
 17 Eylül 2026 arşiviyle çıktı 246 MB olur: 22 kopyalanmış görüntü vakası,
-12 slayt vakası (5'i referansla çelişiyor, 2'si çekimserlik eşiğinin altında,
+12 slayt vakası (5'i referansla çelişiyor, 3'ü çekimserlik eşiğinin altında,
 8 merkez) ve 5 MRI figürü. Kaynak pakette kalan `genomics` koleksiyonu kapsam
 dışı olduğu için kopyalanmaz.
 
