@@ -84,8 +84,11 @@ npm run dev
 | HTTP GET | MCP aracı | Sonuç |
 |---|---|---|
 | `/api/demo/catalog` | `list_catalog` | Modül/hastalık listesi; disk yolu içermez |
-| `/api/demo/modules/{module}/diseases/{disease}/cases` | `list_cases` | Filtreli v3 koleksiyon manifesti |
+| `/api/demo/modules/{module}/diseases/{disease}/cases` | `list_cases` | Filtreli koleksiyon manifesti (v3 ya da v4) |
 | `/api/demo/modules/{module}/diseases/{disease}/cases/{id}/...` | filtreli varlık aracı | Koleksiyona bağlı PNG/JSON varlığı |
+| `/api/demo/modules/{module}/diseases/{disease}/cases/{id}/images/{kind}` | `get_pathology_image` | Slayt attention/en yüksek kare/thumbnail JPEG'i |
+| `/api/demo/modules/{module}/diseases/{disease}/cases/{id}/report` | `get_case_report` | Vakanın hazır rapor JSON'u |
+| `/api/demo/modules/{module}/diseases/{disease}/examples/{id}/figure` | `get_example_figure` | Doğrulama figürü PNG'si; vaka değildir |
 | `/api/demo/cases` | `list_cases` | Mevcut arayüz için v2 uyumluluk yanıtı |
 | `/api/demo/cases/{id}/slices/{axis}/{index}` | `get_slice` | PNG, sıfır tabanlı indeks |
 | `/api/demo/cases/{id}/overlays/{layer}/{axis}/{index}` | `get_overlay` | Şeffaf tahmin veya referans PNG'si |

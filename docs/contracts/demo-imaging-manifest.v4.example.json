@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 4,
+  "module": "imaging",
+  "disease": "glioma",
+  "cases": [
+    {
+      "schemaVersion": 4,
+      "module": "imaging",
+      "disease": "glioma",
+      "caseId": "DEMO-CASE-001",
+      "id": "DEMO-CASE-001",
+      "mode": "demo",
+      "status": "demo_ready",
+      "modelId": "example-model",
+      "modelVersion": "example-version",
+      "inputKind": "prepared-mri-segmentation",
+      "hasPrediction": true,
+      "hasGroundTruth": true,
+      "shape": [240, 240, 155],
+      "modality": "FLAIR",
+      "previews": [
+        {
+          "axis": "axial",
+          "index": 77,
+          "src": "/api/demo/modules/imaging/diseases/glioma/cases/DEMO-CASE-001/slices/axial/77"
+        }
+      ],
+      "overlays": ["prediction", "ground_truth"],
+      "mesh": "/api/demo/modules/imaging/diseases/glioma/cases/DEMO-CASE-001/mesh"
+    }
+  ],
+  "examples": [
+    {
+      "id": "DEMO-EXAMPLE-001",
+      "kind": "figure",
+      "caseId": "DEMO-EXAMPLE-001",
+      "source": "example-cohort",
+      "split": "locked-test",
+      "ruleVersion": "example-rule-v3",
+      "modelId": "example-ensemble-rule",
+      "modelVersion": "example-version",
+      "selectionReason": "çekirdeksiz — model doğru sustu",
+      "whoGrade": "3",
+      "diagnosis": "Example diagnosis",
+      "idh": "example-status",
+      "regionVolumes": {
+        "reference": {"TC": 0, "WT": 40000, "ET": 0},
+        "prediction": {"TC": 0, "WT": 42000, "ET": 0}
+      },
+      "dice": {"TC": 1.0, "WT": 0.95, "ET": 1.0},
+      "hd95Mm": {"TC": null, "WT": 2.0, "ET": null},
+      "reviewFlags": [],
+      "sliceShown": 102,
+      "figure": "/api/demo/modules/imaging/diseases/glioma/examples/DEMO-EXAMPLE-001/figure",
+      "figureLayout": "FLAIR, T1c, referans ve tahmin yan yana; renkler BraTS etiketleri"
+    }
+  ]
+}

@@ -92,3 +92,37 @@ Hazır demo paketleri canlı iş ZIP'lerinden ayrıdır. Kök katalog örneği
 `demo-catalog.v3.example.json`, görüntü koleksiyonu örneği
 `demo-imaging-manifest.v3.example.json` dosyasındadır. Katalog yalnız modül,
 hastalık ve göreli manifest yolunu taşır; API bu disk yolunu tarayıcıya açmaz.
+
+### Paket v4 — patoloji koleksiyonu ve doğrulama figürleri
+
+v4 kök kataloğun şemasını değiştirmez (`schemaVersion: 3`; modül, hastalık ve
+göreli manifest yolu). Yeni olan iki şey koleksiyon manifestlerindedir.
+
+**`pathology/glioma`** (`demo-pathology-manifest.v4.example.json`,
+`schemaVersion: 4`): her vaka `prediction.class` ile üç sınıfın olasılığını,
+varsa `reference.class` ve `agreesWithReference`'ı, `needsExpertReview`,
+`attentionConcentration`, `split`, `whoGrade`, `sourceSite`, `tilesUsed` ve
+`assets` alanlarını taşır. `assets` bildirilen varlık türünü kanonik genel yola
+eşler (`attention`, `top_tiles`, `thumbnail`, `report`); store yalnız bildirilen
+türü okur. Manifest uyguladığı `reviewMargin`'i bildirmek zorundadır ve yükleme
+sırasında üç iddia yeniden hesaplanır: `needsExpertReview` ilk iki olasılığın
+farkı eşiğin altındaysa `true` olmalıdır, `agreesWithReference` tahmin ile
+referansın gerçek karşılaştırması olmalıdır (referans yoksa alan hiç bulunmaz) ve
+her `assets` yolu vakanın kendi yolu olmalıdır. Tutmayan manifest yüklenmez.
+
+**`imaging/glioma`** (`demo-imaging-manifest.v4.example.json`): isteğe bağlı ölçüm
+bloğu (`regionVolumes` → `reference`/`prediction` × TC/WT/ET voxel, `dice`,
+`hd95Mm`, `reviewFlags`) ve `examples` dizisi. **Referans hacmi bildirilmeden
+`dice` veya `hd95Mm` yazılamaz**; karşılaştıracak şeyi olmayan bölge `null`
+kalır. `examples` vaka değildir: her kayıt `kind: "figure"`, kendi
+`ruleVersion`'ı ve kanonik `figure` yolunu taşır, vaka listesinde ve vaka
+uçlarında görünmez. Hangi kuralın ürettiği vaka kaydından ayrı okunur; başka bir
+kuralla ölçülmüş figür vakanın kendi sayısı gibi sunulamaz.
+
+Hiçbir vaka kaydı başka bir vakanın ya da koleksiyonun varlığına işaret edemez:
+kayıttaki her `/api/...` yolu o vakanın kendi ön ekiyle başlamalıdır. Bu, iki
+modülün aynı hastayı paylaştığı izlenimini manifest düzeyinde engeller.
+
+Boş bölge okuması arayüzün işidir: hem referans hem tahmin sıfır voxel iken Dice
+1,0 olur. Bu sayı "mükemmel bölge" değil "iki tarafta da yok" demektir; arayüz
+hacimlere bakıp bölgenin yokluğunu söylemelidir.

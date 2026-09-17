@@ -171,3 +171,234 @@ class DemoTests(unittest.IsolatedAsyncioTestCase):
         async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url='https://test') as client:
             with patch('backend.api.call_tool', AsyncMock(return_value={'error': 'missing'})):
                 self.assertEqual((await client.get('/api/demo/cases/UNKNOWN/mesh')).status_code, 404)
+
+
+PATHOLOGY_CASES = '/api/demo/modules/pathology/diseases/glioma/cases'
+
+
+def slide(case_id, probabilities, predicted, reference, review):
+    """One prepared slide record; synthetic classes test the contract, not a model."""
+    case = {
+        'schemaVersion': 4, 'module': 'pathology', 'disease': 'glioma',
+        'caseId': case_id, 'id': case_id, 'patientId': f'PATIENT-{case_id}',
+        'mode': 'demo', 'status': 'demo_ready', 'split': 'test',
+        'prediction': {'class': predicted, 'probabilities': probabilities},
+        'needsExpertReview': review,
+        'assets': {
+            'attention': f'{PATHOLOGY_CASES}/{case_id}/images/attention',
+            'top_tiles': f'{PATHOLOGY_CASES}/{case_id}/images/top_tiles',
+            'report': f'{PATHOLOGY_CASES}/{case_id}/report',
+        },
+    }
+    if reference is not None:
+        case['reference'] = {'class': reference}
+        case['agreesWithReference'] = predicted == reference
+    return case
+
+
+class PathologyCollectionTests(unittest.IsolatedAsyncioTestCase):
+    """Demo v4: a second collection whose records carry classes, not slices."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.root = Path(self.tmp.name)
+        self.imaging = self.root / 'imaging/glioma'
+        self.pathology = self.root / 'pathology/glioma'
+        (self.root / 'catalog.json').write_text(json.dumps({
+            'schemaVersion': 3,
+            'collections': [
+                {'module': 'imaging', 'disease': 'glioma',
+                 'manifest': 'imaging/glioma/manifest.json'},
+                {'module': 'pathology', 'disease': 'glioma',
+                 'manifest': 'pathology/glioma/manifest.json'},
+            ],
+        }))
+        (self.imaging / 'cases/V4-TEST/slices/axial').mkdir(parents=True)
+        (self.imaging / 'cases/V4-TEST/slices/axial/0.png').write_bytes(b'v4-slice')
+        (self.imaging / 'examples/FIG-1').mkdir(parents=True)
+        (self.imaging / 'examples/FIG-1/figure.png').write_bytes(b'v4-figure')
+        for case_id in ('SLIDE-1', 'SLIDE-2'):
+            case_dir = self.pathology / 'cases' / case_id
+            case_dir.mkdir(parents=True)
+            (case_dir / 'attention.jpg').write_bytes(f'attention-{case_id}'.encode())
+            (case_dir / 'top_tiles.jpg').write_bytes(f'tiles-{case_id}'.encode())
+            (case_dir / 'report.json').write_text(json.dumps({'id': case_id}))
+        self.write_imaging()
+        self.write_pathology()
+        self.store = module.DemoStore(self.root)
+
+    def write_imaging(self, cases=None, example=None, **changes):
+        figure = {
+            'id': 'FIG-1', 'kind': 'figure', 'caseId': 'FIG-1', 'ruleVersion': 'test-rule',
+            'regionVolumes': {'reference': {'TC': 0, 'WT': 40, 'ET': 0},
+                              'prediction': {'TC': 0, 'WT': 42, 'ET': 0}},
+            'dice': {'TC': 1.0, 'WT': 0.95, 'ET': 1.0},
+            'hd95Mm': {'TC': None, 'WT': 2.0, 'ET': None},
+            'reviewFlags': [],
+            'figure': '/api/demo/modules/imaging/diseases/glioma/examples/FIG-1/figure',
+        }
+        manifest = {
+            'schemaVersion': 4, 'module': 'imaging', 'disease': 'glioma',
+            'cases': cases if cases is not None else [{'id': 'V4-TEST', 'shape': [2, 2, 2]}],
+            'examples': [figure if example is None else figure | example],
+        } | changes
+        (self.imaging / 'manifest.json').write_text(json.dumps(manifest))
+
+    def write_pathology(self, cases=None, **changes):
+        manifest = {
+            'schemaVersion': 4, 'module': 'pathology', 'disease': 'glioma',
+            'reviewMargin': 0.45,
+            'cases': cases if cases is not None else [
+                slide('SLIDE-1', {'A': 0.02, 'O': 0.96, 'G': 0.02}, 'O', 'O', False),
+                slide('SLIDE-2', {'A': 0.53, 'O': 0.46, 'G': 0.01}, 'A', 'O', True),
+            ],
+        } | changes
+        (self.pathology / 'manifest.json').write_text(json.dumps(manifest))
+
+    def reload(self):
+        return module.DemoStore(self.root)
+
+    async def test_catalog_lists_both_collections(self):
+        self.assertEqual(self.store.catalog()['collections'], [
+            {'module': 'imaging', 'disease': 'glioma', 'caseCount': 1},
+            {'module': 'pathology', 'disease': 'glioma', 'caseCount': 2},
+        ])
+        self.assertEqual(self.store.list_cases('pathology', 'glioma')['schemaVersion'], 4)
+        self.assertEqual(self.store.list_cases('pathology', 'unknown')['error'], 'missing')
+
+    async def test_only_declared_assets_are_served(self):
+        for kind, expected, mime in (('attention', b'attention-SLIDE-1', 'image/jpeg'),
+                                     ('top_tiles', b'tiles-SLIDE-1', 'image/jpeg'),
+                                     ('report', b'{"id": "SLIDE-1"}', 'application/json')):
+            asset = self.store.asset('SLIDE-1', kind, module='pathology', disease='glioma')
+            self.assertEqual((base64.b64decode(asset['base64']), asset['mime']), (expected, mime))
+        (self.pathology / 'cases/SLIDE-1/thumbnail.jpg').write_bytes(b'undeclared')
+        self.assertEqual(self.store.asset('SLIDE-1', 'thumbnail', module='pathology',
+                                          disease='glioma')['error'], 'invalid')
+        self.assertEqual(self.store.asset('SLIDE-1', 'mesh', module='pathology',
+                                          disease='glioma')['error'], 'missing')
+        self.assertEqual(self.store.asset('SLIDE-1', 'slice', 'axial', 0, module='pathology',
+                                          disease='glioma')['error'], 'invalid')
+        self.assertEqual(self.store.asset('../SLIDE-1', 'attention', module='pathology',
+                                          disease='glioma')['error'], 'missing')
+
+    async def test_review_flag_must_match_the_declared_margin(self):
+        certain = slide('SLIDE-1', {'A': 0.02, 'O': 0.96, 'G': 0.02}, 'O', 'O', True)
+        self.write_pathology([certain])
+        with self.assertRaisesRegex(ValueError, 'review flag'):
+            self.reload()
+        uncertain = slide('SLIDE-2', {'A': 0.53, 'O': 0.46, 'G': 0.01}, 'A', 'O', False)
+        self.write_pathology([uncertain])
+        with self.assertRaisesRegex(ValueError, 'review flag'):
+            self.reload()
+        uncertain['needsExpertReview'] = True
+        self.write_pathology([uncertain])
+        self.assertEqual(len(self.reload().collections[('pathology', 'glioma')]['cases']), 1)
+
+    async def test_agreement_is_checked_against_the_reference(self):
+        wrong = slide('SLIDE-2', {'A': 0.53, 'O': 0.46, 'G': 0.01}, 'A', 'O', True)
+        wrong['agreesWithReference'] = True
+        self.write_pathology([wrong])
+        with self.assertRaisesRegex(ValueError, 'disagrees with its own reference'):
+            self.reload()
+        unreferenced = slide('SLIDE-1', {'A': 0.02, 'O': 0.96, 'G': 0.02}, 'O', None, False)
+        unreferenced['agreesWithReference'] = True
+        self.write_pathology([unreferenced])
+        with self.assertRaisesRegex(ValueError, 'without a reference'):
+            self.reload()
+
+    async def test_a_case_cannot_borrow_another_case_asset(self):
+        borrowed = slide('SLIDE-1', {'A': 0.02, 'O': 0.96, 'G': 0.02}, 'O', 'O', False)
+        borrowed['assets']['attention'] = f'{PATHOLOGY_CASES}/SLIDE-2/images/attention'
+        self.write_pathology([borrowed])
+        with self.assertRaisesRegex(ValueError, 'Invalid pathology case record'):
+            self.reload()
+        self.write_pathology()
+        self.write_imaging(cases=[{
+            'id': 'V4-TEST', 'shape': [2, 2, 2],
+            'previews': [{'axis': 'axial', 'index': 0, 'src': ('/api/demo/modules/imaging/'
+                                                               'diseases/glioma/cases/OTHER/'
+                                                               'slices/axial/0')}],
+        }])
+        with self.assertRaisesRegex(ValueError, 'outside its own case'):
+            self.reload()
+
+    async def test_pathology_manifest_must_declare_v4_and_a_margin(self):
+        self.write_pathology(schemaVersion=3)
+        with self.assertRaisesRegex(ValueError, 'does not match catalog'):
+            self.reload()
+        self.write_pathology()
+        (self.pathology / 'manifest.json').write_text(json.dumps({
+            **json.loads((self.pathology / 'manifest.json').read_text()), 'reviewMargin': None}))
+        with self.assertRaisesRegex(ValueError, 'requires a review margin'):
+            self.reload()
+
+    async def test_a_score_without_a_reference_volume_is_refused(self):
+        self.write_imaging(example={'regionVolumes': {'prediction': {'TC': 0, 'WT': 42, 'ET': 0}}})
+        with self.assertRaisesRegex(ValueError, 'dice requires reference volumes'):
+            self.reload()
+        self.write_imaging(example={'regionVolumes': None, 'dice': None,
+                                    'hd95Mm': {'TC': None, 'WT': 2.0, 'ET': None}})
+        with self.assertRaisesRegex(ValueError, 'hd95Mm requires reference volumes'):
+            self.reload()
+
+    async def test_an_example_is_a_figure_not_a_case(self):
+        collection = self.store.collections[('imaging', 'glioma')]
+        self.assertNotIn('FIG-1', collection['cases'])
+        figure = self.store.example('FIG-1', module='imaging', disease='glioma')
+        self.assertEqual((base64.b64decode(figure['base64']), figure['mime']),
+                         (b'v4-figure', 'image/png'))
+        self.assertEqual(self.store.asset('FIG-1', 'slice', 'axial', 0, module='imaging',
+                                          disease='glioma')['error'], 'missing')
+        for example_id in ('../FIG-1', 'UNKNOWN'):
+            self.assertEqual(self.store.example(example_id, module='imaging',
+                                                disease='glioma')['error'], 'missing')
+        self.assertEqual(self.store.example('FIG-1', module='pathology',
+                                            disease='glioma')['error'], 'missing')
+        self.write_imaging(example={'figure': ('/api/demo/modules/imaging/diseases/glioma/'
+                                               'examples/FIG-2/figure')})
+        with self.assertRaisesRegex(ValueError, 'Invalid demo example'):
+            self.reload()
+
+    async def test_gateway_serves_the_collection_through_mcp(self):
+        manifest = self.store.list_cases('pathology', 'glioma')
+        image = self.store.asset('SLIDE-1', 'attention', module='pathology', disease='glioma')
+        report = self.store.asset('SLIDE-1', 'report', module='pathology', disease='glioma')
+        figure = self.store.example('FIG-1', module='imaging', disease='glioma')
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                     base_url='https://test') as client:
+            with patch('backend.api.call_tool', AsyncMock(return_value=manifest)) as call:
+                response = await client.get('/api/demo/modules/pathology/diseases/glioma/cases')
+                self.assertEqual(response.json(), manifest)
+                call.assert_awaited_once_with('list_cases', {'module': 'pathology',
+                                                             'disease': 'glioma'})
+            with patch('backend.api.call_tool', AsyncMock(return_value=image)) as call:
+                response = await client.get(f'{PATHOLOGY_CASES}/SLIDE-1/images/attention')
+                self.assertEqual(response.content, b'attention-SLIDE-1')
+                self.assertEqual(response.headers['content-type'], 'image/jpeg')
+                call.assert_awaited_once_with('get_pathology_image', {
+                    'module': 'pathology', 'disease': 'glioma', 'case_id': 'SLIDE-1',
+                    'kind': 'attention'})
+            with patch('backend.api.call_tool', AsyncMock(return_value=report)) as call:
+                response = await client.get(f'{PATHOLOGY_CASES}/SLIDE-1/report')
+                self.assertEqual(response.json(), {'id': 'SLIDE-1'})
+                call.assert_awaited_once_with('get_case_report', {
+                    'module': 'pathology', 'disease': 'glioma', 'case_id': 'SLIDE-1'})
+            with patch('backend.api.call_tool', AsyncMock(return_value=figure)) as call:
+                response = await client.get('/api/demo/modules/imaging/diseases/glioma/'
+                                            'examples/FIG-1/figure')
+                self.assertEqual(response.content, b'v4-figure')
+                call.assert_awaited_once_with('get_example_figure', {
+                    'module': 'imaging', 'disease': 'glioma', 'example_id': 'FIG-1'})
+            with patch('backend.api.call_tool', AsyncMock(return_value=image)):
+                self.assertEqual((await client.get(
+                    f'{PATHOLOGY_CASES}/SLIDE-1/images/heatmap')).status_code, 422)
+
+    async def test_legacy_route_still_normalizes_a_v4_imaging_manifest(self):
+        manifest = self.store.list_cases('imaging', 'glioma')
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app),
+                                     base_url='https://test') as client:
+            with patch('backend.api.call_tool', AsyncMock(return_value=manifest)):
+                response = await client.get('/api/demo/cases')
+        self.assertEqual(response.json(), {'version': 2, 'cases': manifest['cases']})

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 4,
+  "module": "pathology",
+  "disease": "glioma",
+  "reviewMargin": 0.45,
+  "classes": ["A", "O", "G"],
+  "model": {
+    "id": "example-mil-model",
+    "version": "example-version",
+    "ensemble": false,
+    "note": "Örnek: olasılıklar ve attention tek ağdan gelir; ürün 5-fold topluluğu ayrı kayıttadır"
+  },
+  "cases": [
+    {
+      "schemaVersion": 4,
+      "module": "pathology",
+      "disease": "glioma",
+      "caseId": "DEMO-SLIDE-001",
+      "id": "DEMO-SLIDE-001",
+      "patientId": "DEMO-PATIENT-001",
+      "source": "example-cohort",
+      "sourceSite": "Example Medical Center",
+      "mode": "demo",
+      "status": "demo_ready",
+      "modelId": "example-mil-model",
+      "modelVersion": "example-version",
+      "inputKind": "prepared-wsi-subtyping",
+      "split": "test",
+      "whoGrade": "G2",
+      "tilesUsed": 4096,
+      "prediction": {
+        "class": "O",
+        "probabilities": {"A": 0.026, "O": 0.96, "G": 0.014}
+      },
+      "reference": {"class": "O"},
+      "agreesWithReference": true,
+      "needsExpertReview": false,
+      "attentionConcentration": {
+        "top1Share": 0.2336,
+        "top10Share": 0.5824,
+        "entropyNormalised": 0.4683
+      },
+      "assets": {
+        "attention": "/api/demo/modules/pathology/diseases/glioma/cases/DEMO-SLIDE-001/images/attention",
+        "top_tiles": "/api/demo/modules/pathology/diseases/glioma/cases/DEMO-SLIDE-001/images/top_tiles",
+        "report": "/api/demo/modules/pathology/diseases/glioma/cases/DEMO-SLIDE-001/report"
+      }
+    },
+    {
+      "schemaVersion": 4,
+      "module": "pathology",
+      "disease": "glioma",
+      "caseId": "DEMO-SLIDE-002",
+      "id": "DEMO-SLIDE-002",
+      "patientId": "DEMO-PATIENT-002",
+      "source": "example-cohort",
+      "sourceSite": "Example University Hospital",
+      "mode": "demo",
+      "status": "demo_ready",
+      "modelId": "example-mil-model",
+      "modelVersion": "example-version",
+      "inputKind": "prepared-wsi-subtyping",
+      "split": "val",
+      "whoGrade": "G3",
+      "tilesUsed": 4096,
+      "prediction": {
+        "class": "A",
+        "probabilities": {"A": 0.527, "O": 0.465, "G": 0.008}
+      },
+      "reference": {"class": "O"},
+      "agreesWithReference": false,
+      "needsExpertReview": true,
+      "attentionConcentration": {
+        "top1Share": 0.1441,
+        "top10Share": 0.4342,
+        "entropyNormalised": 0.5734
+      },
+      "assets": {
+        "attention": "/api/demo/modules/pathology/diseases/glioma/cases/DEMO-SLIDE-002/images/attention",
+        "top_tiles": "/api/demo/modules/pathology/diseases/glioma/cases/DEMO-SLIDE-002/images/top_tiles",
+        "report": "/api/demo/modules/pathology/diseases/glioma/cases/DEMO-SLIDE-002/report"
+      }
+    }
+  ]
+}

@@ -60,14 +60,14 @@ async def asset_response(tool, arguments, expected_mime, *, expected_digest=None
 def collection_response(result: dict) -> dict:
     if result.get('error') == 'missing':
         raise HTTPException(404, 'Demo collection unavailable')
-    if result.get('schemaVersion') != 3:
+    if result.get('schemaVersion') not in (3, 4):
         raise HTTPException(502, 'Invalid demo collection')
     return result
 
 
 def legacy_manifest(result: dict) -> dict:
-    """Keep the deployed imaging UI working while demo packages move to v3."""
-    if result.get('schemaVersion') != 3:
+    """Keep the deployed imaging UI working while demo packages move on."""
+    if result.get('schemaVersion') not in (3, 4):
         return result
     cases = []
     for original in result.get('cases', []):
@@ -161,6 +161,28 @@ async def collection_overlay(module: str, disease: str, case_id: str,
     return await asset_response('get_overlay', {
         'module': module, 'disease': disease, 'case_id': case_id,
         'layer': layer, 'axis': axis, 'index': index,
+    }, 'image/png')
+
+
+@app.get('/api/demo/modules/{module}/diseases/{disease}/cases/{case_id}/images/{kind}')
+async def collection_pathology_image(module: str, disease: str, case_id: str,
+                                     kind: Literal['attention', 'top_tiles', 'thumbnail']):
+    return await asset_response('get_pathology_image', {
+        'module': module, 'disease': disease, 'case_id': case_id, 'kind': kind,
+    }, 'image/jpeg')
+
+
+@app.get('/api/demo/modules/{module}/diseases/{disease}/cases/{case_id}/report')
+async def collection_case_report(module: str, disease: str, case_id: str):
+    return await asset_response('get_case_report', {
+        'module': module, 'disease': disease, 'case_id': case_id,
+    }, 'application/json')
+
+
+@app.get('/api/demo/modules/{module}/diseases/{disease}/examples/{example_id}/figure')
+async def collection_example_figure(module: str, disease: str, example_id: str):
+    return await asset_response('get_example_figure', {
+        'module': module, 'disease': disease, 'example_id': example_id,
     }, 'image/png')
 
 
