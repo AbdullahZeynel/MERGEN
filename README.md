@@ -49,6 +49,19 @@ olarak üretilmiştir; korteks segmentasyonu değildir.
 </tr>
 </table>
 
+### Patoloji — H&E slaytında alt tip
+
+İkinci kol H&E tüm-slayt görüntüsünden alt tip önerir: kareleri donmuş DINOv2
+ViT-B/14 kodlar, ekibin eğittiği Gated Attention-MIL sınıflandırıcısı astrositom,
+oligodendrogliom ve glioblastom olasılıklarını verir ve hangi karelere baktığını
+attention ısı haritasıyla gösterir.
+
+Hazır demo paketinde TCGA kohortundan 12 slayt vakası vardır: 7'si referansla
+uyuşur, 5'i uyuşmaz ve **yanlış sınıflananlar da etikete sahip biçimde pakette
+kalır**. İlk iki olasılığın farkı 0,45'in altındaysa vaka "uzman incelemesi"
+bayrağı alır; bugünkü pakette iki vaka bu bayrağı taşır. Paket API ve MCP
+üzerinden sunulur; ekrandaki patoloji görünümü henüz yoktur (M4).
+
 ## Sistem mimarisi
 
 Hazır demo yolu uçtan uca çalışır: tarayıcı yalnızca genel API ile konuşur,
@@ -108,20 +121,27 @@ siler.
 | Oturum, iş kuyruğu, worker kontrol API'si, temizlik | Yazıldı, worker'sız |
 | GPU dispatcher, executor ve yerel spool sözleşmesi | Yazıldı ve hostta staged; servisler henüz açılmadı |
 | Canlı Swin UNETR model runner | Gerçek GPU'da sentetik fixture ile uçtan uca çalıştı; VPS kuyruğuyla kabul bekliyor |
+| Hazır patoloji koleksiyonu (12 slayt) | Paket üretiliyor; API/MCP sunuyor, arayüz M4'te |
 | Sohbet asistanı | Ertelendi |
 
 ### Hazır demo paketi
 
-Katalog modül ve hastalık kırılımına göre büyüyebilir; bugün yalnız görüntü
-koleksiyonu desteklenir.
+Katalog modül ve hastalık kırılımına göre büyür; bugün görüntü ve patoloji
+koleksiyonları desteklenir.
 
 ```
 catalog.json
 ├── imaging/glioma/manifest.json
-│   └── cases/UCSF-PDGM-0004/
-│       ├── slices/{axial,coronal,sagittal}/…   MR kesitleri
-│       ├── overlays/{prediction,ground_truth}/ segmentasyon katmanları
-│       └── mesh-<sha256>.glb                   3D tümör yüzeyleri
+│   ├── cases/UCSF-PDGM-0004/
+│   │   ├── slices/{axial,coronal,sagittal}/…   MR kesitleri
+│   │   ├── overlays/{prediction,ground_truth}/ segmentasyon katmanları
+│   │   └── mesh-<sha256>.glb                   3D tümör yüzeyleri
+│   └── examples/UCSF-PDGM-0231/figure.png      ölçülmüş doğrulama figürü (vaka değil)
+└── pathology/glioma/manifest.json
+    └── cases/test_TCGA-02-0037/
+        ├── attention.jpg                       attention ısı haritası
+        ├── top_tiles.jpg                       en yüksek attention'lı 12 kare
+        └── report.json                          vakanın sayıları ve kökeni
 ```
 
 Paketin kendisi Git dışıdır; nasıl üretildiği

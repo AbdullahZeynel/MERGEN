@@ -49,6 +49,33 @@ models/imaging/.venv/bin/python frontend/scripts/prepare_demo.py \
   --all-cases
 ```
 
+Patoloji koleksiyonunu ve ölçülmüş MRI figürlerini ekleyerek paket v4 üretilir.
+Betik model çalıştırmaz, bilimsel paket istemez: slayt görüntüleri, figürler ve
+yanlarındaki sayılar dondurulmuş kanıt arşivinden kopyalanır, görüntü koleksiyonu
+ise mevcut paketten alınır.
+
+```bash
+backend/.venv/bin/python frontend/scripts/prepare_demo_v4.py \
+  --imaging-package .local/demo-v3-glb-22 \
+  --wsi-cases .local/evidence-2026-09-17/06_figures/wsi/cases \
+  --mri-examples .local/evidence-2026-09-17/06_figures/mri/cases \
+  --output .local/demo-v4
+```
+
+17 Eylül 2026 arşiviyle çıktı 246 MB olur: 22 kopyalanmış görüntü vakası,
+12 slayt vakası (5'i referansla çelişiyor, 2'si çekimserlik eşiğinin altında,
+8 merkez) ve 5 MRI figürü. Kaynak pakette kalan `genomics` koleksiyonu kapsam
+dışı olduğu için kopyalanmaz.
+
+Betik arşivin kendisi hakkındaki iddialarını yeniden hesaplar: bildirilen sınıf
+en yüksek olasılık olmalı, `correct` bayrağı gerçek karşılaştırmayla uyuşmalı,
+klasör adı `<split>_<hasta>` kalıbıyla kaydın hastasını göstermeli ve bütün
+slaytlar aynı model notunu taşımalı. Tutmayan vaka paketi düşürür; çıktı ancak
+tamamlandığında tek `rename` ile yayımlanır. Yanlış sınıflanan vakalar
+`agreesWithReference: false` etiketiyle pakette kalır, atılmaz. `thumbnail.jpg`
+varsa alınır, yoksa o varlık hiç bildirilmez. MRI figürleri vaka değildir:
+`examples/` altına yazılır ve vaka uçlarında görünmez.
+
 Mevcut schema-v3 paketini kesitleri yeniden üretmeden GLB biçimine geçirmek için
 kaynak korunarak yeni bir çıktı dizini oluşturulur:
 
