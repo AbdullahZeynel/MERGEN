@@ -154,6 +154,7 @@ Testler:
 cd frontend && npm run check                    # vitest + typecheck + build
 python -m unittest backend.test_demo backend.test_live
 python -m unittest discover -s infra/ci -p 'test_*.py'
+cd frontend/scripts && python -m unittest discover -p 'test_*.py'   # demo paketi üreticisi
 python infra/ci/repo_guard.py                   # sır, adres ve büyük dosya taraması
 ```
 
