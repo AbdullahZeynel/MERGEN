@@ -33,9 +33,18 @@ katmanları ve 3D yüzeyler bu koleksiyondan türetilmiştir. Koleksiyon
 
 Koleksiyon kaydı: <https://www.cancerimagingarchive.net/collection/ucsf-pdgm/>
 
-Görüntüler insan katılımcılardan gelir; TCIA tarafından kimliksizleştirilmiş
-ve kafatası çıkarılmış (skull-stripped) biçimde yayımlanır. Depoya alınan
-türev görsellerde kişisel tanımlayıcı bulunmaz.
+Görüntüler insan katılımcılardan gelir. Veri toplama, UCSF kurumsal etik
+kurulunca onaylanmış ve onam muafiyeti verilmiştir; koleksiyon kimliksizleştirilmiş
+olarak TCIA üzerinden yayımlanır.
+
+Hacimler kafatası çıkarılmış (skull-stripped) biçimdedir. Bunu TCIA değil,
+veriyi hazırlayan ekip yapmıştır: eş kayıtlı veri, açık kaynak bir derin öğrenme
+aracıyla (<https://github.com/ecalabr/brain_mask>) işlenmiştir ve TCIA bu aracı
+"External Resources" altında, kendi barındırmadığı bir kaynak olarak listeler.
+Sonucu olarak görüntüden yüz hatları da yeniden oluşturulamaz.
+
+Depoya alınan türev görsellerde kişisel tanımlayıcı bulunmaz. Yukarıdaki
+bilgiler koleksiyon sayfasından doğrulanmıştır (son kontrol: 17 Eylül 2026).
 
 ### BraTS — eğitim/ön eğitim verisi
 

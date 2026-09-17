@@ -168,7 +168,10 @@ describe('case workspace', () => {
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toHaveTextContent('UCSF-PDGM');
     expect(dialog).toHaveTextContent('CC BY 4.0');
-    expect(dialog).toHaveTextContent('kimliksizleştirilmiştir');
+    expect(dialog).toHaveTextContent('etik kurulunca onaylanmış');
+    expect(dialog).toHaveTextContent('skull-stripped');
+    // Kafatasi cikarma TCIA'nin isi degil; yanlis atif geri gelmesin.
+    expect(dialog.textContent).not.toMatch(/Archive tarafından kimliksizleştir/);
     expect(dialog).toHaveTextContent('klinik kararda kullanılamaz');
     // Atif bir DOI'ye gitmeli; metin olarak kalan bir alinti atif sayilmaz.
     expect(screen.getByRole('link', { name: /10\.7937/ })).toHaveAttribute(

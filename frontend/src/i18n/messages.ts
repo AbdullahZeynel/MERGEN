@@ -153,8 +153,10 @@ export const tr = {
   'privacy.heading': 'Veri ve gizlilik',
   'privacy.lead':
     'Bu çalışma alanındaki bütün MR görüntüleri kamuya açık bir araştırma veri kümesinden gelir.',
-  'privacy.deidentified':
-    'Görüntüler insan katılımcılardan gelir ve veri kümesini yayımlayan The Cancer Imaging Archive tarafından kimliksizleştirilmiştir: hasta adı, kimlik numarası ve tarih gibi tanımlayıcılar kaldırılmış, yüz hatlarını taşıyan kafatası dokusu çıkarılmıştır.',
+  'privacy.consent':
+    'Görüntüler insan katılımcılardan gelir. Veri toplama, University of California San Francisco kurumsal etik kurulunca onaylanmış ve onam muafiyeti verilmiştir; koleksiyon kimliksizleştirilmiş olarak The Cancer Imaging Archive üzerinden yayımlanır.',
+  'privacy.skullStripped':
+    'Yayımlanan hacimlerde kafatası ve yüz dokusu çıkarılmıştır (skull-stripped). Bu, veriyi hazırlayan ekibin ön işleme adımıdır; sonucu olarak görüntüden yüz hatları da yeniden oluşturulamaz.',
   'privacy.noUpload':
     'Bu gösterimde hasta verisi yüklenmez ve saklanmaz. Ekranda gördüğünüz vakalar önceden hazırlanmış, kimliksizleştirilmiş örneklerdir.',
   'privacy.licence':
@@ -339,8 +341,10 @@ export const en: Record<MessageKey, string> = {
   'privacy.heading': 'Data and privacy',
   'privacy.lead':
     'Every MR image in this workspace comes from a publicly released research dataset.',
-  'privacy.deidentified':
-    'The images come from human participants and were de-identified by The Cancer Imaging Archive, which publishes the dataset: identifiers such as name, record number and dates were removed, and the skull tissue that carries facial features was stripped.',
+  'privacy.consent':
+    'The images come from human participants. Data collection was approved by the University of California San Francisco institutional review board with a waiver for consent, and the collection is published de-identified through The Cancer Imaging Archive.',
+  'privacy.skullStripped':
+    'The published volumes have the skull and face tissue removed (skull-stripped). That was a pre-processing step by the team who prepared the data; as a consequence facial features cannot be reconstructed from the images either.',
   'privacy.noUpload':
     'No patient data is uploaded or stored in this demonstration. The cases on screen are prepared, de-identified examples.',
   'privacy.licence':

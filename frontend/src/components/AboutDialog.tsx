@@ -47,7 +47,8 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
           <h3 id="privacy-heading">{t('privacy.heading')}</h3>
           <p className="about-lead">{t('privacy.lead')}</p>
           <ul className="about-list">
-            <li>{t('privacy.deidentified')}</li>
+            <li>{t('privacy.consent')}</li>
+            <li>{t('privacy.skullStripped')}</li>
             <li>{t('privacy.noUpload')}</li>
             <li>{t('privacy.licence')}</li>
           </ul>
