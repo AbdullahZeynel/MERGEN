@@ -297,6 +297,21 @@ yeniden üretilmez. Arşivin `uwcse_ensemble.py`'si depodakinden yenidir
 (`TC_MIN`, `review_flags`); kod senkronu M2'dedir ve bugünkü 22 demo vakası
 eski kuralla üretilmiştir.
 
+### M2 güncel durum
+
+`models/imaging/uwcse_ensemble.py` arşivle eşitlendi: `TC_MIN=250` (küçük çekirdek
+ödeme iner, doku WT'de kalır) ve `review_flags()` (kontrast tutmayan tümörde çekirdek
+iddiası gerekçesi ve sayılarıyla işaretlenir). `evaluate_uwcse.py` ve
+`nnunet_predictor.py` veri kökünü, fold listesini ve bölme büyüklüğünü ortamdan alır
+(`MERGEN_DATA_ROOT`, `UCSF_DIR`, `UCSF_METADATA`, `SWIN_PATH`, `UWCSE_RESULTS`,
+`N_VAL`, `N_TEST=0` = kalan hepsi, `NNUNET_FOLDS`); depodaki kanal adı çözümü
+korundu. `refit_uwcse_weights.py` ve `sweep_uwcse_sampling.py` ürün katsayılarının
+nasıl seçildiğini yeniden üretir. Patoloji hattı `models/pathology/` altındadır;
+`infer_slide.py` canlı çıkarım sözleşmesidir, executor'a bağlanması M6'dadır.
+Kural testleri (`test_uwcse_rules.py`, 12 test) CI'da torch'suz koşar. Bugünkü 22
+demo vakası eski kuralla üretilmiştir; yeniden üretim olasılık önbelleğini ister
+ve M5'te hostta yapılır.
+
 ## Git ve ekip çalışma düzeni
 
 - Bir sprint dalı bir sorumluluk alanını değiştirir. Aynı dosyaları değiştirecek iki

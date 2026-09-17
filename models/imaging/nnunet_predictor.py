@@ -26,9 +26,12 @@ os.environ.setdefault("nnUNet_preprocessed", f"{BASE_DIR}/nnUNet_data/nnUNet_pre
 
 from nnunetv2.inference.predict_from_raw_data import nnUNetPredictor
 
-MODEL_DIR = (
-    f"{BASE_DIR}/nnUNet_data/nnUNet_results/"
-    "Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres"
+# Model dizini ortamdaki `nnUNet_results` kökünden türer; böylece `MERGEN_DATA_ROOT`
+# düzenindeki bir host (ağırlıklar depo dışında) yalnız env ile yönlendirilir.
+MODEL_DIR = os.path.join(
+    os.environ["nnUNet_results"],
+    "Dataset002_BRATS19",
+    "nnUNetTrainer__nnUNetPlans__3d_fullres",
 )
 
 

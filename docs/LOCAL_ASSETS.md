@@ -19,6 +19,12 @@ ve alfa kanalı yoktur. Türetme `python frontend/scripts/prepare_logo.py "<kayn
 ile tekrarlanır: parlaklık kanalı alfaya taşınır, RGB beyaza sabitlenir. Kaynak
 dosya repoya kopyalanmaz.
 
+`models/imaging/evaluate_uwcse.py`, `refit_uwcse_weights.py`, `sweep_uwcse_sampling.py`
+ve `models/pathology/*` veri kökünü `MERGEN_DATA_ROOT` ortam değişkeninden okur
+(hostta `~/mergen-data`); değişken yoksa görüntü betikleri yukarıdaki depo içi
+düzene düşer. Tek tek yollar `UCSF_DIR`, `UCSF_METADATA`, `SWIN_PATH`, `UWCSE_RESULTS`
+ile de verilebilir.
+
 Yeni makinede bu dosyalar ayrıca sağlanmalı. Kaynak URL'si, lisans, sürüm ve hash doğrulandıktan sonra varlık manifestine kaydedilmeli; eksik bilgi uydurulmamalı. Model servisi paketlenirken bu manifest tamamlanacak.
 
 Veri hazırlama betiğindeki `--duplicate-missing` yalnızca sahte modaliteli duman testidir; ürettiği sonuçlar gerçek demo veya performans kanıtı olarak kullanılmaz. Bu hazırlıkta çalıştırılmadı.
