@@ -1,11 +1,59 @@
 {
   "schemaVersion": 1,
-  "modelId": "swin-unetr-brats21",
-  "modelVersion": "fold0-f48-ep300",
+  "modelId": "mergen-uwcse",
+  "modelVersion": "v3",
   "runnerModule": "mergen_imaging.runner",
   "checkpoints": [
     {
-      "path": "pretrained_models/model.pt",
+      "role": "nnunet-fold",
+      "fold": 0,
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "nnunet-fold",
+      "fold": 1,
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "nnunet-fold",
+      "fold": 2,
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_2/checkpoint_final.pth",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "nnunet-fold",
+      "fold": 3,
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_3/checkpoint_final.pth",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "nnunet-fold",
+      "fold": 4,
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_4/checkpoint_final.pth",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "nnunet-plan",
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/plans.json",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "nnunet-plan",
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset.json",
+      "size": 0,
+      "sha256": "<64 lowercase hex characters>"
+    },
+    {
+      "role": "swin",
+      "path": "swin/pretrained_models/model.pt",
       "size": 256368326,
       "sha256": "1083e1585263a73919a5ecfee9403989ca4bfd2ec70308679667bd23b53714b4"
     }

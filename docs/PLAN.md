@@ -27,8 +27,13 @@ katmanları ve indirme formatlarının ayrıntılı uygulama sırası
 
 Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu
 değildir. Arayüz, salt okunur demo API'si, MCP ve canlı oturum/kuyruk temeli
-çalışır; izole Swin UNETR runner uygulanmıştır ancak gerçek GPU fixture ve uçtan
-uca VPS kabulü yapılmamıştır. Donanım ve hız bilgileri ölçülmedikçe varsayımdır.
+çalışır; izole Swin UNETR runner'ı sentetik fixture ile gerçek GPU'da uçtan uca
+çalıştı (41 s, tepe 5794 MiB), VPS kuyruğuyla uçtan uca kabul yapılmamıştır.
+Runner M5'te ürün yapılandırmasını (`mergen-uwcse` / `v3`: beş nnU-Net foldu +
+Swin, UWCSE v3 kuralı) tarif eder; sözleşme, orkestrasyon ve kural eşitliği
+testlerle kapalıdır ama **nnU-Net üyesi gerçek ağırlıklarla hiç çalıştırılmadı**,
+yani canlı ürün çıktısı ölçülmemiştir (#48). Diğer donanım ve hız bilgileri
+ölçülmedikçe varsayımdır.
 Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
 
 ## Model yerleşimi
