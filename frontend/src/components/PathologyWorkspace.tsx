@@ -289,6 +289,11 @@ export function PathologyWorkspace({
               <span>{slide.id}</span>
               <strong>{t('cases.slideModality')}</strong>
             </div>
+            {/* Ham agirlik renderi neredeyse hicbir sey gostermez; goruntunun
+                kendisi bunu soylemezse ekran onu raporun figuru gibi sunar. */}
+            {slide.attention?.scale !== 'within_slide_percentile' && (
+              <span className="slide-warning">{t('pathology.mapRawBadge')}</span>
+            )}
             <SlideImage
               src={slide.assets.attention}
               alt={t('pathology.slideAlt', { id: slide.id })}

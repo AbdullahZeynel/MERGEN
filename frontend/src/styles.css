@@ -2080,6 +2080,19 @@ svg {
   text-transform: uppercase;
   color: var(--slide-label);
 }
+.slide-warning {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  padding: 5px 9px;
+  border-radius: 4px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .viewer-expanded .slide-stage {
   flex: 1;
   min-height: 0;

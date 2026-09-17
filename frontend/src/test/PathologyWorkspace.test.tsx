@@ -100,6 +100,9 @@ describe('the heat map, and what it is not', () => {
     expect(reading()).toHaveTextContent('4.096 kare · renk = ham attention ağırlığı');
     // Ham agirlik olcegi okunmaz bir harita verir; ekran bunu saklamıyor.
     expect(reading()).toHaveTextContent(/ölçeğin alt ucunda/);
+    // Uyari goruntunun ustunde durur: yan paneldeki bir cumle, ekranin
+    // ortasindaki resmi raporun figuru gibi okutmayi engellemiyor.
+    expect(screen.getByText('HAM AĞIRLIK RENDERI · OKUNAKLI DEĞİL')).toBeVisible();
   });
 
   it('switches its caption when the package carries the percentile rendering', () => {
@@ -115,6 +118,7 @@ describe('the heat map, and what it is not', () => {
     );
     expect(reading()).toHaveTextContent('8.192 kare · renk = slayt içi attention yüzdeliği');
     expect(reading()).not.toHaveTextContent(/ölçeğin alt ucunda/);
+    expect(screen.queryByText('HAM AĞIRLIK RENDERI · OKUNAKLI DEĞİL')).toBeNull();
   });
 
   it('separates the network that drew the map from the model that decided', () => {
