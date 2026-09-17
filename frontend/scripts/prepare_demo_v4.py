@@ -22,6 +22,8 @@ COLLECTION_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 CLASSES = ('A', 'O', 'G')
 REGIONS = ('TC', 'WT', 'ET')
 SPLITS = ('train', 'val', 'test', 'locked test')
+# `review_flags()` in models/imaging/uwcse_ensemble.py writes these fields.
+FLAG_FIELDS = ('finding', 'severity', 'reason', 'message')
 # Top-two probability gap under which the slide is handed to an expert.
 REVIEW_MARGIN = 0.45
 SLIDE_MODEL = {'id': 'mergen-wsi-attention-mil', 'version': 'mil_v1', 'ensemble': False}
@@ -132,6 +134,22 @@ def slide_record(case_id: str, info: dict, module: str, disease: str) -> dict:
     return record
 
 
+def _flags(raw, case_id: str) -> list:
+    """Review flags keep the pipeline's reason and numbers, not a bare string."""
+    if not isinstance(raw, list):
+        raise ValueError(f'Invalid review flags: {case_id}')
+    for flag in raw:
+        evidence = flag.get('evidence') if isinstance(flag, dict) else None
+        if (not isinstance(flag, dict)
+                or any(not isinstance(flag.get(field), str) or not flag[field]
+                       for field in FLAG_FIELDS)
+                or not isinstance(evidence, dict) or not evidence
+                or any(not isinstance(key, str) or type(value) not in (int, float)
+                       for key, value in evidence.items())):
+            raise ValueError(f'Invalid review flags: {case_id}')
+    return raw
+
+
 def figure_record(case_id: str, info: dict, module: str, disease: str) -> dict:
     """One measured MRI figure. A score without a reference volume is refused."""
     if info.get('case_id') != case_id:
@@ -144,9 +162,7 @@ def figure_record(case_id: str, info: dict, module: str, disease: str) -> dict:
     hd95 = _scores(info.get('hd95_mm'), case_id, 'hd95Mm')
     if (dice is not None or hd95 is not None) and 'reference' not in volumes:
         raise ValueError(f'Score without reference volumes: {case_id}')
-    flags = info.get('review_flags')
-    if not isinstance(flags, list) or any(not isinstance(flag, str) or not flag for flag in flags):
-        raise ValueError(f'Invalid review flags: {case_id}')
+    flags = _flags(info.get('review_flags'), case_id)
     slice_shown = info.get('slice_shown')
     if type(slice_shown) is not int or slice_shown < 0:
         raise ValueError(f'Invalid slice index: {case_id}')

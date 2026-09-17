@@ -28,7 +28,13 @@ def slide_info(patient, split='test', reference='O', predicted='O', probabilitie
     }
 
 
-def figure_info(case_id, reference={'TC': 0, 'WT': 40, 'ET': 0}, dice=None, hd95=None):
+FLAG = {'finding': 'tumor_core', 'severity': 'low_confidence',
+        'reason': 'non_enhancing_tumor', 'message': 'Gerekçe metni.',
+        'evidence': {'tumor_core_voxels': 94522, 'enhancing_voxels': 0}}
+
+
+def figure_info(case_id, reference={'TC': 0, 'WT': 40, 'ET': 0}, dice=None, hd95=None,
+                flags=()):
     return {
         'case_id': case_id, 'selection_reason': 'çekirdeksiz — model doğru sustu',
         'split': 'locked test', 'who_grade': '3', 'diagnosis': 'Example diagnosis',
@@ -36,7 +42,7 @@ def figure_info(case_id, reference={'TC': 0, 'WT': 40, 'ET': 0}, dice=None, hd95
         'predicted_voxels': {'TC': 0, 'WT': 42, 'ET': 0},
         'dice': dice if dice is not None else {'TC': 1.0, 'WT': 0.95, 'ET': 1.0},
         'hd95_mm': hd95 if hd95 is not None else {'TC': None, 'WT': 2.0, 'ET': None},
-        'review_flags': [], 'model': 'Example rule', 'slice_shown': 102,
+        'review_flags': list(flags), 'model': 'Example rule', 'slice_shown': 102,
         'files': {'overlay.png': 'FLAIR, T1c, referans ve tahmin yan yana'},
     }
 
@@ -166,6 +172,17 @@ class DemoV4Tests(unittest.TestCase):
         self.write_slide('test_TCGA-AA-0001', info)
         with self.assertRaisesRegex(ValueError, 'different models'):
             self.build()
+
+    def test_carries_a_review_flag_with_its_reason_and_numbers(self):
+        self.write_figure('UCSF-PDGM-0440', figure_info('UCSF-PDGM-0440', flags=[FLAG]))
+        self.build()
+        manifest = json.loads((self.output / 'imaging/glioma/manifest.json').read_text())
+        flagged = next(item for item in manifest['examples'] if item['id'] == 'UCSF-PDGM-0440')
+        self.assertEqual(flagged['reviewFlags'], [FLAG])
+        for broken in ('tumor_core', {**FLAG, 'reason': ''}, {**FLAG, 'evidence': {}}):
+            self.write_figure('UCSF-PDGM-0440', figure_info('UCSF-PDGM-0440', flags=[broken]))
+            with self.assertRaisesRegex(ValueError, 'Invalid review flags'):
+                self.build(self.root / f'out-{len(broken)}')
 
     def test_refuses_a_score_without_reference_volumes(self):
         self.write_figure('UCSF-PDGM-0231', figure_info('UCSF-PDGM-0231', reference=None))

@@ -343,6 +343,19 @@ class PathologyCollectionTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaisesRegex(ValueError, 'hd95Mm requires reference volumes'):
             self.reload()
 
+    async def test_a_review_flag_carries_its_reason_and_numbers(self):
+        flag = {'finding': 'tumor_core', 'severity': 'low_confidence',
+                'reason': 'non_enhancing_tumor', 'message': 'Gerekçe metni.',
+                'evidence': {'tumor_core_voxels': 94522, 'enhancing_voxels': 0}}
+        self.write_imaging(example={'reviewFlags': [flag]})
+        examples = self.reload().collections[('imaging', 'glioma')]['examples']
+        self.assertEqual(examples['FIG-1']['reviewFlags'], [flag])
+        for broken in ('tumor_core', {**flag, 'message': ''}, {**flag, 'evidence': {}},
+                       {**flag, 'evidence': {'tumor_core_voxels': 'many'}}):
+            self.write_imaging(example={'reviewFlags': [broken]})
+            with self.assertRaisesRegex(ValueError, 'Invalid review flags'):
+                self.reload()
+
     async def test_an_example_is_a_figure_not_a_case(self):
         collection = self.store.collections[('imaging', 'glioma')]
         self.assertNotIn('FIG-1', collection['cases'])

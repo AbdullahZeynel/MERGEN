@@ -119,6 +119,13 @@ kalır. `examples` vaka değildir: her kayıt `kind: "figure"`, kendi
 uçlarında görünmez. Hangi kuralın ürettiği vaka kaydından ayrı okunur; başka bir
 kuralla ölçülmüş figür vakanın kendi sayısı gibi sunulamaz.
 
+`reviewFlags` dizisi dizge taşımaz: her bayrak
+`models/imaging/uwcse_ensemble.review_flags()` çıktısındaki gibi `finding`,
+`severity`, `reason`, `message` ve sayılardan oluşan bir `evidence` sözlüğüdür.
+Arayüz gerekçeyi `reason` üzerinden kendi dilinde yazar ve sayıları `evidence`'tan
+okur; tanımadığı bir gerekçede hattın kendi `message`'ını gösterir. Bu yüzden
+"açıklamasız uyarı ikonu" mümkün değildir.
+
 Hiçbir vaka kaydı başka bir vakanın ya da koleksiyonun varlığına işaret edemez:
 kayıttaki her `/api/...` yolu o vakanın kendi ön ekiyle başlamalıdır. Bu, iki
 modülün aynı hastayı paylaştığı izlenimini manifest düzeyinde engeller.

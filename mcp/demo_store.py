@@ -22,6 +22,9 @@ PATHOLOGY_ASSETS = {
 }
 PATHOLOGY_IMAGES = ('attention', 'top_tiles', 'thumbnail')
 REGIONS = ('TC', 'WT', 'ET')
+# `models/imaging/uwcse_ensemble.review_flags()` output: a finding, why it is
+# doubted and the numbers behind it, so the interface can show the reason.
+FLAG_FIELDS = ('finding', 'severity', 'reason', 'message')
 ASSET_LIMIT = 8 * 1024 * 1024
 
 
@@ -54,10 +57,24 @@ def _check_metrics(record):
             raise ValueError(f'Invalid {name} table')
         if not isinstance(volumes, dict) or 'reference' not in volumes:
             raise ValueError(f'{name} requires reference volumes')
-    flags = record.get('reviewFlags')
-    if flags is not None and (not isinstance(flags, list)
-                              or any(not isinstance(flag, str) or not flag for flag in flags)):
+    _check_flags(record.get('reviewFlags'))
+
+
+def _check_flags(flags):
+    """A flag states its finding, its reason and the numbers behind it."""
+    if flags is None:
+        return
+    if not isinstance(flags, list):
         raise ValueError('Invalid review flags')
+    for flag in flags:
+        evidence = flag.get('evidence') if isinstance(flag, dict) else None
+        if (not isinstance(flag, dict)
+                or any(not isinstance(flag.get(field), str) or not flag[field]
+                       for field in FLAG_FIELDS)
+                or not isinstance(evidence, dict) or not evidence
+                or any(not isinstance(key, str) or type(value) not in (int, float)
+                       for key, value in evidence.items())):
+            raise ValueError('Invalid review flags')
 
 
 def _api_paths(value):
