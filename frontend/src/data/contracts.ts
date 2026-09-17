@@ -129,10 +129,30 @@ export const slideSchema = z
     split: z.string().min(1),
     whoGrade: z.string().min(1),
     tilesUsed: z.number().int().positive(),
+    // Karari veren modelin kimligi; harita ayri bir agdan gelir (attention).
+    modelId: z.string().min(1).optional(),
+    modelVersion: z.string().min(1).optional(),
     prediction: z.object({
       class: z.enum(pathologyClasses),
       probabilities: z.object({ A: share, O: share, G: share }),
     }),
+    // Hangi model karar verdi: urun toplulugu mu, tek ag mi.
+    predictionSource: z.enum(['ensemble_cv_v1', 'mil_v1']).optional(),
+    singleModel: z
+      .object({
+        class: z.enum(pathologyClasses),
+        probabilities: z.object({ A: share, O: share, G: share }),
+      })
+      .optional(),
+    // Isi haritasi her zaman tek agdan gelir; olcegi de paket soyler.
+    attention: z
+      .object({
+        modelId: z.string().min(1),
+        modelVersion: z.string().min(1),
+        tilesEvaluated: z.number().int().positive(),
+        scale: z.enum(['raw_weight', 'within_slide_percentile']),
+      })
+      .optional(),
     reference: z.object({ class: z.enum(pathologyClasses) }).optional(),
     agreesWithReference: z.boolean().optional(),
     needsExpertReview: z.boolean(),
@@ -172,6 +192,11 @@ export const slideSchema = z
       ctx.addIssue({ code: 'custom', message: 'Kare yerleşimi kendi sayısını tutmuyor.' });
     if (slide.tileGrid && slide.tileGrid.count > slide.tilesUsed)
       ctx.addIssue({ code: 'custom', message: 'Sayfa, slaytın kullandığından fazla kare iddia ediyor.' });
+    if (slide.singleModel) {
+      const shares = Object.values(slide.singleModel.probabilities).sort((a, b) => b - a);
+      if (slide.singleModel.probabilities[slide.singleModel.class] !== shares[0])
+        ctx.addIssue({ code: 'custom', message: 'Tek ağın sınıfı en yüksek olasılık değil.' });
+    }
     const agrees = slide.reference && slide.prediction.class === slide.reference.class;
     if (slide.reference ? slide.agreesWithReference !== agrees : 'agreesWithReference' in slide)
       ctx.addIssue({ code: 'custom', message: 'Uyum iddiası referansla tutmuyor.' });
@@ -186,8 +211,16 @@ export const slideManifestSchema = z
       id: z.string().min(1),
       version: z.string().min(1),
       ensemble: z.boolean(),
-      note: z.string().min(1),
     }),
+    // Haritayi cizen ag ayri; paketin tasidigi aciklama o aga aittir.
+    attentionModel: z
+      .object({
+        id: z.string().min(1),
+        version: z.string().min(1),
+        ensemble: z.boolean().optional(),
+        note: z.string().min(1).optional(),
+      })
+      .optional(),
     cases: z.array(slideSchema),
   })
   .superRefine((manifest, ctx) => {

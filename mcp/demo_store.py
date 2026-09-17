@@ -22,6 +22,11 @@ PATHOLOGY_ASSETS = {
 }
 PATHOLOGY_IMAGES = ('attention', 'top_tiles', 'thumbnail')
 TILE_GRID_FIELDS = ('tilePx', 'columns', 'rows', 'count', 'ordering', 'micronsPerPixel')
+# Which model decided the case, and how the attention map beside it was drawn.
+# The two are not the same network, so a record that hides one is refused.
+PATHOLOGY_PREDICTION_SOURCES = ('ensemble_cv_v1', 'mil_v1')
+ATTENTION_FIELDS = ('modelId', 'modelVersion', 'tilesEvaluated', 'scale')
+ATTENTION_SCALES = ('raw_weight', 'within_slide_percentile')
 REGIONS = ('TC', 'WT', 'ET')
 # `models/imaging/uwcse_ensemble.review_flags()` output: a finding, why it is
 # doubted and the numbers behind it, so the interface can show the reason.
@@ -129,6 +134,26 @@ def _check_pathology_case(case, module, disease, margin):
     ranked = sorted(probabilities.values(), reverse=True)
     if case['needsExpertReview'] is not (ranked[0] - ranked[1] < margin):
         raise ValueError('Pathology review flag does not match the declared margin')
+    source = case.get('predictionSource')
+    if source is not None and source not in PATHOLOGY_PREDICTION_SOURCES:
+        raise ValueError('Pathology case declares an unknown prediction source')
+    single = case.get('singleModel')
+    if single is not None:
+        shares = single.get('probabilities') if isinstance(single, dict) else None
+        if (not isinstance(single, dict) or single.get('class') not in PATHOLOGY_CLASSES
+                or not isinstance(shares, dict) or set(shares) != set(PATHOLOGY_CLASSES)
+                or not all(_number(value, 1) for value in shares.values())
+                or abs(sum(shares.values()) - 1) > 0.01
+                or shares[single['class']] != max(shares.values())):
+            raise ValueError('Pathology case carries an invalid single-model prediction')
+    attention = case.get('attention')
+    if attention is not None and (
+            not isinstance(attention, dict) or set(attention) != set(ATTENTION_FIELDS)
+            or not isinstance(attention.get('modelId'), str) or not attention['modelId']
+            or not isinstance(attention.get('modelVersion'), str) or not attention['modelVersion']
+            or type(attention.get('tilesEvaluated')) is not int or attention['tilesEvaluated'] <= 0
+            or attention.get('scale') not in ATTENTION_SCALES):
+        raise ValueError('Pathology case declares an invalid attention map')
     grid = case.get('tileGrid')
     # The sheet of top tiles is numbered on screen, so the layout it declares has
     # to be a layout: whole cells, and never more cells than the slide had tiles.

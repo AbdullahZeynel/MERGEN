@@ -30,7 +30,16 @@ export const makeSlide = (id: string, patch: Partial<SlideRecord> = {}): SlideRe
   split: 'test',
   whoGrade: 'G4',
   tilesUsed: 4096,
+  modelId: 'mergen-wsi-attention-mil',
+  modelVersion: 'ensemble_cv_v1',
   prediction: { class: 'G', probabilities: { A: 0.05, O: 0.05, G: 0.9 } },
+  predictionSource: 'ensemble_cv_v1',
+  attention: {
+    modelId: 'mergen-wsi-attention-mil',
+    modelVersion: 'mil_v1',
+    tilesEvaluated: 4096,
+    scale: 'raw_weight',
+  },
   reference: { class: 'G' },
   agreesWithReference: true,
   needsExpertReview: false,
@@ -53,9 +62,8 @@ export const makeSlide = (id: string, patch: Partial<SlideRecord> = {}): SlideRe
 
 export const slideModel = {
   id: 'mergen-wsi-attention-mil',
-  version: 'mil_v1',
-  ensemble: false,
-  note: 'Tek model.',
+  version: 'ensemble_cv_v1',
+  ensemble: true,
 };
 
 export const makeSlideManifest = (cases: SlideRecord[]) => ({
@@ -64,6 +72,12 @@ export const makeSlideManifest = (cases: SlideRecord[]) => ({
   disease: 'glioma',
   reviewMargin: 0.45,
   model: slideModel,
+  attentionModel: {
+    id: 'mergen-wsi-attention-mil',
+    version: 'mil_v1',
+    ensemble: false,
+    note: 'Tek ağ; haritayı bu ağ çizer.',
+  },
   cases,
 });
 

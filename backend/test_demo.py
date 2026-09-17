@@ -296,6 +296,30 @@ class PathologyCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.write_pathology([uncertain])
         self.assertEqual(len(self.reload().collections[('pathology', 'glioma')]['cases']), 1)
 
+    async def test_the_deciding_model_and_the_map_are_declared_separately(self):
+        # The ensemble decides, a single network draws the map. A record that
+        # blurs the two, or claims a scale nobody rendered, is refused.
+        good = slide('SLIDE-1', {'A': 0.02, 'O': 0.96, 'G': 0.02}, 'O', 'O', False)
+        attention = {'modelId': 'mergen-wsi-attention-mil', 'modelVersion': 'mil_v1',
+                     'tilesEvaluated': 4096, 'scale': 'raw_weight'}
+        single = {'class': 'A', 'probabilities': {'A': 0.6, 'O': 0.3, 'G': 0.1}}
+        self.write_pathology([{**good, 'tilesUsed': 4096, 'predictionSource': 'ensemble_cv_v1',
+                               'attention': attention, 'singleModel': single}])
+        case = self.reload().collections[('pathology', 'glioma')]['cases']['SLIDE-1']
+        self.assertEqual(case['attention']['scale'], 'raw_weight')
+        self.assertEqual(case['singleModel'], single)
+        for patch, message in (
+                ({'predictionSource': 'wishful_v9'}, 'unknown prediction source'),
+                ({'attention': {**attention, 'scale': 'prettier'}}, 'invalid attention map'),
+                ({'attention': {**attention, 'tilesEvaluated': 0}}, 'invalid attention map'),
+                ({'attention': {'modelId': 'x'}}, 'invalid attention map'),
+                ({'singleModel': {'class': 'G', 'probabilities': single['probabilities']}},
+                 'invalid single-model prediction'),
+        ):
+            self.write_pathology([{**good, 'tilesUsed': 4096, 'attention': attention, **patch}])
+            with self.assertRaisesRegex(ValueError, message):
+                self.reload()
+
     async def test_a_tile_grid_must_be_a_grid_the_slide_could_fill(self):
         # The sheet of top tiles is numbered on screen, so a declared layout that
         # is not one — or that claims more cells than the slide had tiles — is
