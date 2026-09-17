@@ -75,7 +75,11 @@ export function GuidedTour({ actions, onClose }: { actions: TourActions; onClose
   const remeasure = useCallback(() => {
     if (!step) return;
     const found = measure(step);
-    if (!found) return;
+    if (!found) {
+      // Bayat bir spot yaniltir; hedef su an olculemiyorsa spot cizilmez.
+      setBox(null);
+      return;
+    }
     setBox(found.box);
     const cardH = card.current?.offsetHeight ?? 180;
     setPos(place(found.box, step.placement, cardH));
@@ -85,17 +89,35 @@ export function GuidedTour({ actions, onClose }: { actions: TourActions; onClose
     if (!step) return;
     step.enter?.(actionsRef.current);
     const found = measure(step);
-    // Yalnizca gorunmuyorsa kaydir; ortalamak uzun hedeflerde basligi kacirir.
-    found?.el.scrollIntoView?.({ block: 'nearest', inline: 'nearest', behavior: 'instant' as ScrollBehavior });
-    // Kenar cubugu acilmasi gibi yerlesim degisikliklerinden sonra olc.
+    // Sayfa yalnizca hedef tamamen ekran disindayken kaydirilir. 'nearest' bile
+    // ekrandan uzun bir hedefi (vaka listesi) doldurmak icin kaydiriyor ve
+    // basligi goturuyordu; kismen gorunen hedef oldugu yerde aydinlatilir.
+    if (found) {
+      const r = found.el.getBoundingClientRect();
+      const outOfView = r.bottom <= 0 || r.top >= window.innerHeight;
+      if (outOfView) found.el.scrollIntoView?.({ block: 'start', inline: 'nearest', behavior: 'instant' as ScrollBehavior });
+    }
+    // Uc kez olc: hemen (arka plandaki sekmede rAF hic calismaz), bir sonraki
+    // karede (kenar cubugunun acilmasi gibi yerlesim degisikliklerinden sonra)
+    // ve gecisler bitince.
+    remeasure();
     const frame = requestAnimationFrame(() => {
       remeasure();
-      card.current?.focus();
+      // Odak sayfayi kaydirmasin: kart zaten hedefin yanina sabitlenmis durumda.
+      card.current?.focus({ preventScroll: true });
     });
+    const settle = window.setTimeout(remeasure, 300);
     return () => {
       cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
       step.leave?.(actionsRef.current);
     };
+  }, [step, remeasure]);
+
+  // Boyadan sonra bir kez daha: layout effect'te olculen deger, ayni karede
+  // tamamlanan baska bir yerlesim degisikliginin gerisinde kalabilir.
+  useEffect(() => {
+    remeasure();
   }, [step, remeasure]);
 
   useEffect(() => {
@@ -112,8 +134,8 @@ export function GuidedTour({ actions, onClose }: { actions: TourActions; onClose
       if (e.key === 'Escape') {
         e.preventDefault();
         onClose();
-      } else if (e.key === 'ArrowRight' && index < count - 1) setIndex(index + 1);
-      else if (e.key === 'ArrowLeft' && index > 0) setIndex(index - 1);
+      } else if (e.key === 'ArrowRight') setIndex((i) => Math.min(i + 1, count - 1));
+      else if (e.key === 'ArrowLeft') setIndex((i) => Math.max(i - 1, 0));
     };
     window.addEventListener('keydown', key, true);
     return () => window.removeEventListener('keydown', key, true);
@@ -150,7 +172,7 @@ export function GuidedTour({ actions, onClose }: { actions: TourActions; onClose
           ))}
         </div>
         <div className="tour-actions">
-          <button className="button ghost" disabled={index === 0} onClick={() => setIndex(index - 1)}>
+          <button className="button ghost" disabled={index === 0} onClick={() => setIndex((i) => Math.max(i - 1, 0))}>
             {t('guide.back')}
           </button>
           {last ? (
@@ -158,7 +180,7 @@ export function GuidedTour({ actions, onClose }: { actions: TourActions; onClose
               {t('guide.finish')}
             </button>
           ) : (
-            <button className="button primary" onClick={() => setIndex(index + 1)}>
+            <button className="button primary" onClick={() => setIndex((i) => Math.min(i + 1, count - 1))}>
               {t('guide.next')}
             </button>
           )}
