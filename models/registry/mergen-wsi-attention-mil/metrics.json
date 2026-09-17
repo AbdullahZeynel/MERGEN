@@ -1,0 +1,315 @@
+{
+  "model_id": "mergen-wsi-attention-mil",
+  "generated": "2026-09-14",
+  "upstream_reported": [],
+  "upstream_note": "Bu model bir literatür başlığı yeniden üretmez; tüm sayılar MERGEN'in kendi kilitli bölmesinde ölçülmüştür. En güvenilir genelleme tahmini 5-fold OOF (n=639): macro-F1 0,827 [0,793–0,857]. Doğrulamada en iyi epoch seçimi ortalama +0,046 makro-F1 şişkinlik getirir (10 koşuda ölçüldü), bu yüzden val skorları ürün iddiası olarak kullanılmaz.",
+  "mergen_reproduced": [
+    {
+      "run": "ensemble_cv_v1",
+      "split": "test",
+      "n": 113,
+      "checkpoint_epoch": null,
+      "metrics": {
+        "n": 113,
+        "accuracy": 0.8053097345132744,
+        "balanced_accuracy": 0.787719298245614,
+        "macro_f1": 0.7902574363078565,
+        "mcc": 0.6957191431579514,
+        "per_class_f1": {
+          "A": 0.7733333333333333,
+          "O": 0.7346938775510204,
+          "G": 0.8627450980392157
+        },
+        "per_class_recall": {
+          "A": 0.7631578947368421,
+          "O": 0.72,
+          "G": 0.88
+        },
+        "per_class_precision": {
+          "A": 0.7837837837837838,
+          "O": 0.75,
+          "G": 0.8461538461538461
+        },
+        "confusion_matrix": [
+          [
+            29,
+            4,
+            5
+          ],
+          [
+            4,
+            18,
+            3
+          ],
+          [
+            4,
+            2,
+            44
+          ]
+        ],
+        "auroc_macro_ovr": 0.9089924305713778
+      },
+      "bootstrap_ci95": {
+        "macro_f1": {
+          "ci95_low": 0.7084931965803983,
+          "ci95_high": 0.8630154212780079,
+          "n_boot": 1000
+        },
+        "balanced_accuracy": {
+          "ci95_low": 0.7073369842007949,
+          "ci95_high": 0.8652713601743919,
+          "n_boot": 1000
+        },
+        "auroc_macro_ovr": {
+          "ci95_low": 0.8628616880273414,
+          "ci95_high": 0.9497291816087143,
+          "n_boot": 1000
+        },
+        "mcc": {
+          "ci95_low": 0.580705469579373,
+          "ci95_high": 0.8007507846432224,
+          "n_boot": 1000
+        },
+        "accuracy": {
+          "ci95_low": 0.7342920353982302,
+          "ci95_high": 0.8761061946902655,
+          "n_boot": 1000
+        }
+      },
+      "qc_excluded": {
+        "TCGA-19-1387": "low_tissue (13 tiles < 100)",
+        "TCGA-19-1388": "no_features (no tissue detected)"
+      },
+      "artifact": "mergen-wsi-attention-mil/results/ensemble_cv_v1/eval_test.json"
+    },
+    {
+      "run": "ensemble_seeds_v1",
+      "split": "val",
+      "n": 115,
+      "checkpoint_epoch": null,
+      "metrics": {
+        "n": 115,
+        "accuracy": 0.8956521739130435,
+        "balanced_accuracy": 0.8857759784075574,
+        "macro_f1": 0.8861452161342211,
+        "mcc": 0.837465853734069,
+        "per_class_f1": {
+          "A": 0.8611111111111112,
+          "O": 0.8627450980392157,
+          "G": 0.9345794392523364
+        },
+        "per_class_recall": {
+          "A": 0.8157894736842105,
+          "O": 0.88,
+          "G": 0.9615384615384616
+        },
+        "per_class_precision": {
+          "A": 0.9117647058823529,
+          "O": 0.8461538461538461,
+          "G": 0.9090909090909091
+        },
+        "confusion_matrix": [
+          [
+            31,
+            3,
+            4
+          ],
+          [
+            2,
+            22,
+            1
+          ],
+          [
+            1,
+            1,
+            50
+          ]
+        ],
+        "auroc_macro_ovr": 0.9584926613347666
+      },
+      "bootstrap_ci95": {
+        "macro_f1": {
+          "ci95_low": 0.8145599462277547,
+          "ci95_high": 0.944207392023353,
+          "n_boot": 1000
+        },
+        "balanced_accuracy": {
+          "ci95_low": 0.8177883392526113,
+          "ci95_high": 0.9431587517253278,
+          "n_boot": 1000
+        },
+        "auroc_macro_ovr": {
+          "ci95_low": 0.9238142372648214,
+          "ci95_high": 0.9852573002187087,
+          "n_boot": 1000
+        },
+        "mcc": {
+          "ci95_low": 0.7425294980651397,
+          "ci95_high": 0.9193891900937587,
+          "n_boot": 1000
+        },
+        "accuracy": {
+          "ci95_low": 0.8347826086956521,
+          "ci95_high": 0.9478260869565217,
+          "n_boot": 1000
+        }
+      },
+      "qc_excluded": {},
+      "artifact": "mergen-wsi-attention-mil/results/ensemble_seeds_v1/eval_val.json"
+    },
+    {
+      "run": "mil_v1",
+      "split": "test",
+      "n": 113,
+      "checkpoint_epoch": 23,
+      "metrics": {
+        "n": 113,
+        "accuracy": 0.7876106194690266,
+        "balanced_accuracy": 0.7614035087719299,
+        "macro_f1": 0.7698009506833037,
+        "mcc": 0.670542759156576,
+        "per_class_f1": {
+          "A": 0.7647058823529411,
+          "O": 0.7083333333333334,
+          "G": 0.8363636363636363
+        },
+        "per_class_recall": {
+          "A": 0.6842105263157895,
+          "O": 0.68,
+          "G": 0.92
+        },
+        "per_class_precision": {
+          "A": 0.8666666666666667,
+          "O": 0.7391304347826086,
+          "G": 0.7666666666666667
+        },
+        "confusion_matrix": [
+          [
+            26,
+            4,
+            8
+          ],
+          [
+            2,
+            17,
+            6
+          ],
+          [
+            2,
+            2,
+            46
+          ]
+        ],
+        "auroc_macro_ovr": 0.9033766233766233
+      },
+      "bootstrap_ci95": {
+        "macro_f1": {
+          "ci95_low": 0.6789820673559795,
+          "ci95_high": 0.8466917928566865,
+          "n_boot": 1000
+        },
+        "balanced_accuracy": {
+          "ci95_low": 0.6811038011695907,
+          "ci95_high": 0.8428324766631219,
+          "n_boot": 1000
+        },
+        "auroc_macro_ovr": {
+          "ci95_low": 0.8553975538818933,
+          "ci95_high": 0.943629755564886,
+          "n_boot": 1000
+        },
+        "mcc": {
+          "ci95_low": 0.5405498828017704,
+          "ci95_high": 0.7749174374484783,
+          "n_boot": 1000
+        },
+        "accuracy": {
+          "ci95_low": 0.7079646017699115,
+          "ci95_high": 0.8584070796460177,
+          "n_boot": 1000
+        }
+      },
+      "qc_excluded": {
+        "TCGA-19-1387": "low_tissue (13 tiles < 100)",
+        "TCGA-19-1388": "no_features (no tissue detected)"
+      },
+      "artifact": "mergen-wsi-attention-mil/results/mil_v1/eval_test.json"
+    },
+    {
+      "run": "mil_v1",
+      "split": "val",
+      "n": 115,
+      "checkpoint_epoch": 23,
+      "metrics": {
+        "n": 115,
+        "accuracy": 0.8869565217391304,
+        "balanced_accuracy": 0.8770040485829961,
+        "macro_f1": 0.8808338717319207,
+        "mcc": 0.824152809534728,
+        "per_class_f1": {
+          "A": 0.8450704225352113,
+          "O": 0.88,
+          "G": 0.9174311926605505
+        },
+        "per_class_recall": {
+          "A": 0.7894736842105263,
+          "O": 0.88,
+          "G": 0.9615384615384616
+        },
+        "per_class_precision": {
+          "A": 0.9090909090909091,
+          "O": 0.88,
+          "G": 0.8771929824561403
+        },
+        "confusion_matrix": [
+          [
+            30,
+            2,
+            6
+          ],
+          [
+            2,
+            22,
+            1
+          ],
+          [
+            1,
+            1,
+            50
+          ]
+        ],
+        "auroc_macro_ovr": 0.9596553660764187
+      },
+      "bootstrap_ci95": {
+        "macro_f1": {
+          "ci95_low": 0.8149328639240716,
+          "ci95_high": 0.9355719096325364,
+          "n_boot": 1000
+        },
+        "balanced_accuracy": {
+          "ci95_low": 0.8105796167656634,
+          "ci95_high": 0.9351407361701479,
+          "n_boot": 1000
+        },
+        "auroc_macro_ovr": {
+          "ci95_low": 0.9294127301337746,
+          "ci95_high": 0.984417830329761,
+          "n_boot": 1000
+        },
+        "mcc": {
+          "ci95_low": 0.7334418115305386,
+          "ci95_high": 0.905309644807522,
+          "n_boot": 1000
+        },
+        "accuracy": {
+          "ci95_low": 0.8260869565217391,
+          "ci95_high": 0.9391304347826087,
+          "n_boot": 1000
+        }
+      },
+      "qc_excluded": {},
+      "artifact": "mergen-wsi-attention-mil/results/mil_v1/eval_val.json"
+    }
+  ],
+  "mergen_note": "Koşu kimliği ve artifact yolu her satırda; test bölmesi yalnız bir kez değerlendirilir."
+}

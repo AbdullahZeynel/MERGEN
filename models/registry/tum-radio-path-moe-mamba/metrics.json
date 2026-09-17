@@ -1,0 +1,119 @@
+{
+  "model_id": "tum-radio-path-moe-mamba",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "aog_subtyping",
+      "cohort": "10-fold çapraz doğrulama",
+      "metric": "AUC (MM-MoE)",
+      "value": 0.98,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (özet)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "AUC (MM-MoE)",
+      "value": 0.94,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (özet)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "10-fold çapraz doğrulama",
+      "metric": "Balanced accuracy",
+      "value": 0.91,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tartışma)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "Balanced accuracy",
+      "value": 0.8,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tartışma)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "Accuracy (MM-MoE, genel)",
+      "value": 0.85,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Sonuçlar)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "MCC MM-MoE",
+      "value": 0.73,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0)",
+      "sd": 0.05
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "MCC MM-EF",
+      "value": 0.71,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0)",
+      "sd": 0.02
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "MCC MM-LF",
+      "value": 0.7,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0)",
+      "sd": 0.07
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "MCC UM-WSI (yalnız histoloji)",
+      "value": 0.67,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0)",
+      "sd": 0.04
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA bağımsız test (171)",
+      "metric": "MCC UM-MRI (yalnız MRI)",
+      "value": 0.51,
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0)",
+      "sd": 0.06
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA test, histoloji-uyumlu GBM (78)",
+      "metric": "Accuracy UM-WSI / MoE-WSI / MoE-MM",
+      "value": "0.87±0.08 / 0.88±0.07 / 0.94±0.04",
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tablo 2)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA test, histoloji-uyumlu Astro (21)",
+      "metric": "Accuracy UM-WSI / MoE-WSI / MoE-MM",
+      "value": "0.75±0.11 / 0.61±0.12 / 0.73±0.09",
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tablo 2)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA test, histoloji-uyumlu Oligo (20)",
+      "metric": "Accuracy UM-WSI / MoE-WSI / MoE-MM",
+      "value": "0.72±0.06 / 0.69±0.03 / 0.69±0.05",
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tablo 2)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA test, uyumlu vakalar (119)",
+      "metric": "Accuracy UM-MRI / UM-WSI / MoE-MRI / MoE-WSI / MoE-MM",
+      "value": "0.73±0.07 / 0.83±0.08 / 0.72±0.06 / 0.80±0.07 / 0.86±0.05",
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tablo 2)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA test, WHO21 ile güncellenen vakalar (52)",
+      "metric": "Accuracy UM-MRI / UM-WSI / MoE-MRI / MoE-WSI / MoE-MM",
+      "value": "0.68±0.06 / 0.75±0.11 / 0.65±0.05 / 0.77±0.10 / 0.82±0.07",
+      "source": "Saueressig C, Scholz D, Raffler P, Delbridge C, Wiestler B, Schüffler P. Multimodal fusion of pathology and radiology foundation models for WHO 2021 glioma subtyping. npj Precis Oncol 2026;10:118. https://doi.org/10.1038/s41698-026-01366-5 (PMC12996459, CC BY 4.0) (Tablo 2)"
+    }
+  ],
+  "upstream_note": "Tablo S1'deki tam AUC/accuracy/BA dökümü makale ekinde olup burada doğrulanmadı. Değerler 10 fold üzerinden ortalama ± std'dir.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

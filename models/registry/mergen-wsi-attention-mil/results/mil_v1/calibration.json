@@ -1,0 +1,172 @@
+{
+  "fitted_on": "<MERGEN_DATA_ROOT>/pathology/runs/mil_v1/predictions_val.csv",
+  "n": 115,
+  "temperature": 1.8849999999999998,
+  "before": {
+    "nll": 0.450776423036253,
+    "ece": 0.09702782608695652,
+    "brier": 0.1933627103478261,
+    "mean_confidence": 0.9433669565217392,
+    "accuracy": 0.8869565217391304
+  },
+  "after": {
+    "nll": 0.36172985275997654,
+    "ece": 0.08285312581662513,
+    "brier": 0.19291012860263684,
+    "mean_confidence": 0.8690316790441068,
+    "accuracy": 0.8869565217391304
+  },
+  "abstention": {
+    "metric": "top2_gap_on_calibrated_probs",
+    "min_coverage": 0.85,
+    "chosen_threshold": 0.4,
+    "chosen": {
+      "threshold": 0.4,
+      "coverage": 0.8608695652173913,
+      "accuracy_kept": 0.9292929292929293,
+      "accuracy_abstained": 0.625,
+      "n_abstained": 16
+    },
+    "sweep": [
+      {
+        "threshold": 0.0,
+        "coverage": 1.0,
+        "accuracy_kept": 0.8869565217391304,
+        "accuracy_abstained": null,
+        "n_abstained": 0
+      },
+      {
+        "threshold": 0.05,
+        "coverage": 0.991304347826087,
+        "accuracy_kept": 0.8859649122807017,
+        "accuracy_abstained": 1.0,
+        "n_abstained": 1
+      },
+      {
+        "threshold": 0.1,
+        "coverage": 0.991304347826087,
+        "accuracy_kept": 0.8859649122807017,
+        "accuracy_abstained": 1.0,
+        "n_abstained": 1
+      },
+      {
+        "threshold": 0.15,
+        "coverage": 0.9739130434782609,
+        "accuracy_kept": 0.8928571428571429,
+        "accuracy_abstained": 0.6666666666666666,
+        "n_abstained": 3
+      },
+      {
+        "threshold": 0.2,
+        "coverage": 0.9652173913043478,
+        "accuracy_kept": 0.9009009009009009,
+        "accuracy_abstained": 0.5,
+        "n_abstained": 4
+      },
+      {
+        "threshold": 0.25,
+        "coverage": 0.9304347826086956,
+        "accuracy_kept": 0.9065420560747663,
+        "accuracy_abstained": 0.625,
+        "n_abstained": 8
+      },
+      {
+        "threshold": 0.3,
+        "coverage": 0.9217391304347826,
+        "accuracy_kept": 0.9150943396226415,
+        "accuracy_abstained": 0.5555555555555556,
+        "n_abstained": 9
+      },
+      {
+        "threshold": 0.35,
+        "coverage": 0.8956521739130435,
+        "accuracy_kept": 0.9223300970873787,
+        "accuracy_abstained": 0.5833333333333334,
+        "n_abstained": 12
+      },
+      {
+        "threshold": 0.4,
+        "coverage": 0.8608695652173913,
+        "accuracy_kept": 0.9292929292929293,
+        "accuracy_abstained": 0.625,
+        "n_abstained": 16
+      },
+      {
+        "threshold": 0.45,
+        "coverage": 0.8521739130434782,
+        "accuracy_kept": 0.9285714285714286,
+        "accuracy_abstained": 0.6470588235294118,
+        "n_abstained": 17
+      },
+      {
+        "threshold": 0.5,
+        "coverage": 0.808695652173913,
+        "accuracy_kept": 0.9247311827956989,
+        "accuracy_abstained": 0.7272727272727273,
+        "n_abstained": 22
+      },
+      {
+        "threshold": 0.55,
+        "coverage": 0.8,
+        "accuracy_kept": 0.9239130434782609,
+        "accuracy_abstained": 0.7391304347826086,
+        "n_abstained": 23
+      },
+      {
+        "threshold": 0.6,
+        "coverage": 0.7652173913043478,
+        "accuracy_kept": 0.9204545454545454,
+        "accuracy_abstained": 0.7777777777777778,
+        "n_abstained": 27
+      },
+      {
+        "threshold": 0.65,
+        "coverage": 0.7391304347826086,
+        "accuracy_kept": 0.9176470588235294,
+        "accuracy_abstained": 0.8,
+        "n_abstained": 30
+      },
+      {
+        "threshold": 0.7,
+        "coverage": 0.7043478260869566,
+        "accuracy_kept": 0.9259259259259259,
+        "accuracy_abstained": 0.7941176470588235,
+        "n_abstained": 34
+      },
+      {
+        "threshold": 0.75,
+        "coverage": 0.6695652173913044,
+        "accuracy_kept": 0.935064935064935,
+        "accuracy_abstained": 0.7894736842105263,
+        "n_abstained": 38
+      },
+      {
+        "threshold": 0.8,
+        "coverage": 0.6,
+        "accuracy_kept": 0.9420289855072463,
+        "accuracy_abstained": 0.8043478260869565,
+        "n_abstained": 46
+      },
+      {
+        "threshold": 0.85,
+        "coverage": 0.5652173913043478,
+        "accuracy_kept": 0.9538461538461539,
+        "accuracy_abstained": 0.8,
+        "n_abstained": 50
+      },
+      {
+        "threshold": 0.9,
+        "coverage": 0.4782608695652174,
+        "accuracy_kept": 0.9454545454545454,
+        "accuracy_abstained": 0.8333333333333334,
+        "n_abstained": 60
+      }
+    ]
+  },
+  "classes": [
+    "A",
+    "O",
+    "G"
+  ],
+  "note": "Temperature and threshold were chosen on the validation split; report test behaviour only once."
+}

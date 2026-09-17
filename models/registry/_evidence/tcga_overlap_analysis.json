@@ -1,0 +1,270 @@
+{
+  "local_cohort": {
+    "manifest": "<MERGEN_DATA_ROOT>/pathology/datasets/tcga_glioma/manifests/cohort.tsv",
+    "patients": 762,
+    "class_counts": {
+      "A": 255,
+      "G": 345,
+      "O": 162
+    },
+    "class_by_grade": {
+      "G2": {
+        "A": 108,
+        "G": 6,
+        "O": 77
+      },
+      "G3": {
+        "A": 96,
+        "G": 51,
+        "O": 66
+      },
+      "G4": {
+        "A": 19,
+        "G": 281,
+        "O": 1
+      },
+      "NA": {
+        "A": 32,
+        "G": 7,
+        "O": 18
+      }
+    },
+    "tissue_source_sites": 34
+  },
+  "tum_radio_path_moe_mamba": {
+    "training_cases": 1732,
+    "training_partition": {
+      "unpaired": 1732
+    },
+    "training_labels": {
+      "gbm": 1196,
+      "astro": 292,
+      "oligo": 244
+    },
+    "training_sources": {
+      "ucsf_pdgm_mri": 497,
+      "egd_mri": 462,
+      "ebrains_wsi": 773,
+      "tcga": 0
+    },
+    "mri_csv_sources": {
+      "tcga": 237,
+      "ucsf": 497,
+      "egd": 462,
+      "upenn": 499,
+      "bratum": 226
+    },
+    "tcga_histology_slides": 1594,
+    "tcga_histology_cases": 828,
+    "tcga_histology_labels": {
+      "gbm": 406,
+      "astro": 260,
+      "oligo": 162
+    },
+    "tcga_paired_test_cases": 171,
+    "tcga_paired_test_labels": {
+      "gbm": 95,
+      "astro": 55,
+      "oligo": 21
+    },
+    "overlap_with_local": {
+      "tcga_histology_cases": 760,
+      "paired_test_cases": 170
+    },
+    "label_agreement_with_local": {
+      "A->A": 255,
+      "G->G": 343,
+      "O->O": 162
+    },
+    "label_disagreements": []
+  },
+  "gmap": {
+    "training_patients": 877,
+    "cohort": {
+      "TCGA": 877
+    },
+    "IDH": {
+      "0": 381,
+      "1": 421,
+      "NA": 75
+    },
+    "1p19q": {
+      "0": 704,
+      "NA": 11,
+      "1": 162
+    },
+    "TERT": {
+      "NA": 576,
+      "1": 150,
+      "0": 151
+    },
+    "chr7_gain_chr10_loss": {
+      "1": 311,
+      "NA": 18,
+      "0": 548
+    },
+    "WHO_grade": {
+      "G4": 440,
+      "G3": 68,
+      "NA": 292,
+      "G2": 77
+    },
+    "classification": {
+      "Glioblastoma": 418,
+      "Astrocytoma": 287,
+      "Oligodendroglioma": 162,
+      "NA": 10
+    },
+    "overlap_with_local": 762,
+    "local_patients_not_in_gmap": 0
+  },
+  "iucompath_glioma_subtyping": {
+    "tcga_slides": 1322,
+    "tcga_cases": 656,
+    "tcga_label_by_case": {
+      "2": 289,
+      "1": 226,
+      "0": 141
+    },
+    "tcga_label_meaning": {
+      "2": {
+        "Glioblastoma, IDH-wildtype. Grade 4.": 289
+      },
+      "1": {
+        "Astrocytoma, IDH-mutant. Grade 4.": 29,
+        "Astrocytoma, IDH-mutant. Grade 2.": 105,
+        "Astrocytoma, IDH-mutant. Grade 3.": 90,
+        "Astrocytoma, IDH-mutant. Grade NA.": 2
+      },
+      "0": {
+        "Oligodendroglioma, IDH-mutant, 1p/19q-codeleted. Grade 3.": 65,
+        "Oligodendroglioma, IDH-mutant, 1p/19q-codeleted. Grade 2.": 76
+      }
+    },
+    "tcga_diagnosis_by_case": {
+      "Glioblastoma, IDH-wildtype. Grade 4.": 289,
+      "Astrocytoma, IDH-mutant. Grade 4.": 29,
+      "Oligodendroglioma, IDH-mutant, 1p/19q-codeleted. Grade 3.": 65,
+      "Astrocytoma, IDH-mutant. Grade 2.": 105,
+      "Astrocytoma, IDH-mutant. Grade 3.": 90,
+      "Oligodendroglioma, IDH-mutant, 1p/19q-codeleted. Grade 2.": 76,
+      "Astrocytoma, IDH-mutant. Grade NA.": 2
+    },
+    "tcga_slide_magnification": {
+      "20": 495,
+      "40": 827
+    },
+    "ebrains_slides": 794,
+    "ebrains_class": {
+      "Astrocytoma": 151,
+      "Oligodendroglioma": 173,
+      "Glioblastoma": 470
+    },
+    "ipd_cases": 209,
+    "ipd_diagnosis": {
+      "Oligodendroglioma, IDH-mutant (and 1p/19q-codeleted)": 68,
+      "Glioblastoma, IDH-wildtype": 69,
+      "Astrocytoma, IDH-mutant": 72
+    },
+    "splits_summary": [
+      {
+        "split": "0",
+        "train_slides": "1047",
+        "train_cases": "529",
+        "val_slides": "144",
+        "val_cases": "59",
+        "test_slides": "129",
+        "test_cases": "66"
+      },
+      {
+        "split": "1",
+        "train_slides": "1074",
+        "train_cases": "529",
+        "val_slides": "118",
+        "val_cases": "59",
+        "test_slides": "128",
+        "test_cases": "66"
+      },
+      {
+        "split": "2",
+        "train_slides": "1057",
+        "train_cases": "529",
+        "val_slides": "108",
+        "val_cases": "59",
+        "test_slides": "155",
+        "test_cases": "66"
+      },
+      {
+        "split": "3",
+        "train_slides": "1064",
+        "train_cases": "529",
+        "val_slides": "104",
+        "val_cases": "59",
+        "test_slides": "152",
+        "test_cases": "66"
+      },
+      {
+        "split": "4",
+        "train_slides": "1083",
+        "train_cases": "530",
+        "val_slides": "116",
+        "val_cases": "59",
+        "test_slides": "121",
+        "test_cases": "65"
+      },
+      {
+        "split": "5",
+        "train_slides": "1072",
+        "train_cases": "530",
+        "val_slides": "125",
+        "val_cases": "59",
+        "test_slides": "123",
+        "test_cases": "65"
+      },
+      {
+        "split": "6",
+        "train_slides": "1065",
+        "train_cases": "530",
+        "val_slides": "105",
+        "val_cases": "59",
+        "test_slides": "150",
+        "test_cases": "65"
+      },
+      {
+        "split": "7",
+        "train_slides": "1075",
+        "train_cases": "530",
+        "val_slides": "119",
+        "val_cases": "59",
+        "test_slides": "126",
+        "test_cases": "65"
+      },
+      {
+        "split": "8",
+        "train_slides": "1083",
+        "train_cases": "530",
+        "val_slides": "116",
+        "val_cases": "59",
+        "test_slides": "121",
+        "test_cases": "65"
+      },
+      {
+        "split": "9",
+        "train_slides": "1097",
+        "train_cases": "530",
+        "val_slides": "108",
+        "val_cases": "59",
+        "test_slides": "115",
+        "test_cases": "65"
+      }
+    ],
+    "overlap_with_local": 638,
+    "local_patients_not_in_iucompath": 124,
+    "label_agreement_with_local": {
+      "A->A": 223,
+      "G->G": 274,
+      "O->O": 141
+    },
+    "label_disagreements": []
+  }
+}

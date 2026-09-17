@@ -1,0 +1,15 @@
+{
+  "model_id": "dinov2-vitb14",
+  "generated": "2026-09-14",
+  "data": {
+    "training": {
+      "dataset": "LVD-142M (etiketsiz, self-supervised)",
+      "images": 142000000,
+      "source": "https://github.com/facebookresearch/dinov2"
+    },
+    "notes": [
+      "Patolojiye özgü değildir; genel görüntü encoder'ıdır. TCGA üzerinde eğitilmemiştir (WSI kohortumuzla veri sızıntısı riski yok)."
+    ]
+  },
+  "overlap_with_local_tcga_cohort": null
+}

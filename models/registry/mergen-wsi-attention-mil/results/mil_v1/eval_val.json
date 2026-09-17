@@ -1,0 +1,81 @@
+{
+  "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/mil_v1",
+  "checkpoint": "best.pt",
+  "checkpoint_epoch": 23,
+  "split": "val",
+  "n": 115,
+  "metrics": {
+    "n": 115,
+    "accuracy": 0.8869565217391304,
+    "balanced_accuracy": 0.8770040485829961,
+    "macro_f1": 0.8808338717319207,
+    "mcc": 0.824152809534728,
+    "per_class_f1": {
+      "A": 0.8450704225352113,
+      "O": 0.88,
+      "G": 0.9174311926605505
+    },
+    "per_class_recall": {
+      "A": 0.7894736842105263,
+      "O": 0.88,
+      "G": 0.9615384615384616
+    },
+    "per_class_precision": {
+      "A": 0.9090909090909091,
+      "O": 0.88,
+      "G": 0.8771929824561403
+    },
+    "confusion_matrix": [
+      [
+        30,
+        2,
+        6
+      ],
+      [
+        2,
+        22,
+        1
+      ],
+      [
+        1,
+        1,
+        50
+      ]
+    ],
+    "auroc_macro_ovr": 0.9596553660764187
+  },
+  "bootstrap_ci95": {
+    "macro_f1": {
+      "ci95_low": 0.8149328639240716,
+      "ci95_high": 0.9355719096325364,
+      "n_boot": 1000
+    },
+    "balanced_accuracy": {
+      "ci95_low": 0.8105796167656634,
+      "ci95_high": 0.9351407361701479,
+      "n_boot": 1000
+    },
+    "auroc_macro_ovr": {
+      "ci95_low": 0.9294127301337746,
+      "ci95_high": 0.984417830329761,
+      "n_boot": 1000
+    },
+    "mcc": {
+      "ci95_low": 0.7334418115305386,
+      "ci95_high": 0.905309644807522,
+      "n_boot": 1000
+    },
+    "accuracy": {
+      "ci95_low": 0.8260869565217391,
+      "ci95_high": 0.9391304347826087,
+      "n_boot": 1000
+    }
+  },
+  "classes": [
+    "A",
+    "O",
+    "G"
+  ],
+  "qc_min_tiles": 100,
+  "qc_excluded": {}
+}

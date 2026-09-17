@@ -1,0 +1,27 @@
+{
+  "model_id": "dinov2-vitb14",
+  "data_root_placeholder": "<MERGEN_DATA_ROOT>",
+  "generated": "2026-09-14",
+  "assets": [
+    {
+      "path": "models/dinov2-vitb14/dinov2_vitb14_pretrain.pth",
+      "role": "checkpoint",
+      "format": "torch",
+      "source": "https://dl.fbaipublicfiles.com/dinov2/dinov2_vitb14/dinov2_vitb14_pretrain.pth",
+      "model_id": "dinov2-vitb14",
+      "bytes": 346378731,
+      "sha256": "0b8b82f85de91b424aded121c7e1dcc2b7bc6d0adeea651bf73a13307fad8c73",
+      "status": "present"
+    },
+    {
+      "path": "models/dinov2-vitb14/dinov2-src-7764ea0f.tar.gz",
+      "role": "source_archive",
+      "format": "tar.gz",
+      "source": "https://github.com/facebookresearch/dinov2/archive/7764ea0f912e53c92e82eb78a2a1631e92725fc8.tar.gz",
+      "model_id": "dinov2-vitb14",
+      "bytes": 2869642,
+      "sha256": "c27dcdaf50e9fb5bbdf2bb529da357716372e19c6afab17d5350f3f0094aed4b",
+      "status": "present"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "model_id": "dinov2-vitb14",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "image_classification",
+      "cohort": "ImageNet-1k",
+      "metric": "k-NN top-1",
+      "value": 0.821,
+      "source": "https://github.com/facebookresearch/dinov2 (README tablosu)"
+    },
+    {
+      "task": "image_classification",
+      "cohort": "ImageNet-1k",
+      "metric": "linear top-1",
+      "value": 0.845,
+      "source": "https://github.com/facebookresearch/dinov2 (README tablosu)"
+    }
+  ],
+  "upstream_note": "Patoloji görevi metriği yoktur; encoder MERGEN MIL başlığı için özellik çıkarıcıdır.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

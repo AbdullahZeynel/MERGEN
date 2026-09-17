@@ -1,0 +1,13 @@
+{
+  "model_id": "legacy-esm2-xgboost",
+  "generated": "2026-09-14",
+  "data": {
+    "training": {
+      "note": "TCGA-GBM/LGG MAF missense varyantları; yerel veri yok."
+    },
+    "notes": [
+      "Veri erişim hatasında demo/sentetik girdiye düşen yollar canlı servis öncesi fail-closed yapılmalıdır."
+    ]
+  },
+  "overlap_with_local_tcga_cohort": null
+}

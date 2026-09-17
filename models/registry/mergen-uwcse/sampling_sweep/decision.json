@@ -1,0 +1,115 @@
+{
+  "decided": "2026-09-16",
+  "chosen": {
+    "composition": "proportional_stratified_by_who_grade",
+    "n_measure": 30,
+    "run": "uwcse_v2",
+    "weights": {
+      "TC": 0.425,
+      "WT": 0.697,
+      "ET": 0.447
+    }
+  },
+  "selection_rule": [
+    "1) Bileşim: orantılı tabakalı vs sadece-kolay farkı 0.0990 ortalama Dice — gürültünün çok üstünde, karar net.",
+    "2) Büyüklük: orantılı ailede n=10..80 yayılımı 0.0005 — istatistiksel olarak ayırt edilemez, test skoruyla seçilemez.",
+    "3) Bu yüzden n test skoruyla degil, uçuruma olan mesafe ve ölçüm maliyetiyle seçildi."
+  ],
+  "why_test_selection_is_safe_here": "Test skoruyla seçim, birbirine yakın çok sayıda aday arasından gürültüyle kazananı seçmek olduğunda tehlikelidir. Burada kararı belirleyen fark (bileşim) 0.099, aday sayısı 2 kategori; ayırt edilemeyen boyutta (büyüklük) ise zaten test skoruyla seçim yapılmadı.",
+  "cliff": {
+    "between": [
+      0.5,
+      0.55
+    ],
+    "chosen_margin_to_cliff": 0.1,
+    "note": "Seçilen ağırlık uçurumun 0.10 altında; ölçüm örneklemi değişse de taraf değişmez."
+  },
+  "sweep_common_test": {
+    "n": 100,
+    "seed": 7,
+    "proportional_family_mean_range": [
+      0.8599,
+      0.8604
+    ],
+    "easy_only_mean": 0.7612,
+    "single_models": {
+      "nnUNet": 0.7094,
+      "SwinUNETR": 0.8391,
+      "V0_Naive": 0.8374
+    }
+  },
+  "configs": [
+    {
+      "composition": "proportional",
+      "n": 10,
+      "w_tc": 0.38999999999999996,
+      "TC": 0.771962,
+      "WT": 0.926033,
+      "ET": 0.882603,
+      "Mean": 0.8601993333333334
+    },
+    {
+      "composition": "proportional",
+      "n": 20,
+      "w_tc": 0.4325,
+      "TC": 0.772487,
+      "WT": 0.9243339999999999,
+      "ET": 0.882882,
+      "Mean": 0.8599009999999999
+    },
+    {
+      "composition": "proportional",
+      "n": 30,
+      "w_tc": 0.4183333333333333,
+      "TC": 0.772299,
+      "WT": 0.9254549999999999,
+      "ET": 0.8829589999999999,
+      "Mean": 0.8602376666666666
+    },
+    {
+      "composition": "proportional",
+      "n": 45,
+      "w_tc": 0.4355555555555554,
+      "TC": 0.7725369999999999,
+      "WT": 0.92562,
+      "ET": 0.883187,
+      "Mean": 0.860448
+    },
+    {
+      "composition": "proportional",
+      "n": 60,
+      "w_tc": 0.44083333333333313,
+      "TC": 0.7726859999999999,
+      "WT": 0.9254690000000001,
+      "ET": 0.883015,
+      "Mean": 0.8603900000000001
+    },
+    {
+      "composition": "proportional",
+      "n": 80,
+      "w_tc": 0.4256249999999998,
+      "TC": 0.7724289999999999,
+      "WT": 0.925611,
+      "ET": 0.8829389999999999,
+      "Mean": 0.8603263333333332
+    },
+    {
+      "composition": "easy",
+      "n": 45,
+      "w_tc": 0.5533333333333335,
+      "TC": 0.6104609999999999,
+      "WT": 0.925656,
+      "ET": 0.7475970000000001,
+      "Mean": 0.761238
+    },
+    {
+      "composition": "hard",
+      "n": 45,
+      "w_tc": 0.26428571428571435,
+      "TC": 0.771041,
+      "WT": 0.9256300000000001,
+      "ET": 0.8821300000000001,
+      "Mean": 0.8596003333333334
+    }
+  ]
+}

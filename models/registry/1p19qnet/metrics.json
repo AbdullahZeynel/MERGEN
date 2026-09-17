@@ -1,0 +1,65 @@
+{
+  "model_id": "1p19qnet",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "Discovery set (288)",
+      "metric": "Logistic model Accuracy / Precision / Recall / F1 / AUC",
+      "value": "0.861 / 0.944 / 0.776 / 0.850 / 0.930",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "Discovery set (288)",
+      "metric": "1pNET Accuracy / Precision / Recall / F1 / AUC",
+      "value": "0.884 / 0.929 / 0.840 / 0.879 / 0.921",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "Discovery set (288)",
+      "metric": "19qNET Accuracy / Precision / Recall / F1 / AUC",
+      "value": "0.891 / 0.940 / 0.841 / 0.885 / 0.927",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "Discovery set (288)",
+      "metric": "Conventional FISH Accuracy / Precision / Recall / F1",
+      "value": "0.843 / 0.978 / 0.722 / 0.831",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "TCGA IVS (385)",
+      "metric": "Logistic model Accuracy / Precision / Recall / F1 / AUC",
+      "value": "0.725 / 0.831 / 0.386 / 0.527 / 0.837",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "TCGA IVS (385)",
+      "metric": "1pNET Accuracy / Precision / Recall / F1 / AUC",
+      "value": "0.777 / 0.725 / 0.706 / 0.715 / 0.833",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "1p19q_codeletion",
+      "cohort": "TCGA IVS (385)",
+      "metric": "19qNET Accuracy / Precision / Recall / F1 / AUC",
+      "value": "0.766 / 0.684 / 0.765 / 0.722 / 0.837",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0) (Tablo 1)"
+    },
+    {
+      "task": "fold_change_regression",
+      "cohort": "Discovery set",
+      "metric": "R² 1p / 19q",
+      "value": "0.589 / 0.547",
+      "source": "Kim GJ, Lee T, Ahn S, Uh Y, Kim SH. Efficient diagnosis of IDH-mutant gliomas: 1p/19qNET assesses 1p/19q codeletion status using weakly-supervised learning. npj Precis Oncol 2023;7:94. https://doi.org/10.1038/s41698-023-00450-4 (PMC10505231, CC BY 4.0)"
+    }
+  ],
+  "upstream_note": "Dış (TCGA) recall 0,386 düşüktür; GMAP 1p/19q AUROC'u (0,885 dış) daha yüksektir ve GMAP bu görevi kapsar.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

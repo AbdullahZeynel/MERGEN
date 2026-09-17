@@ -1,0 +1,8 @@
+{
+  "model_id": "doctor-rag",
+  "generated": "2026-09-14",
+  "upstream_reported": [],
+  "upstream_note": "Retrieval recall, citation precision, faithfulness ve güvenli-red testleri planlanmıştır.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

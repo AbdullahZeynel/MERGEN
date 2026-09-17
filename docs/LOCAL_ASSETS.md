@@ -9,6 +9,8 @@ Dosyanın Git'te olmaması makinede olmadığı anlamına gelmez. İddiada bulun
 | nnU-Net | `models/imaging/nnUNet_data/nnUNet_results/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth` |
 | Swin UNETR | `models/imaging/SwinUNETR_BRATS21/pretrained_models/fold0_f48_ep300_4gpu_dice0_8854/model.pt` |
 | Görüntü demo / değerlendirme | `models/imaging/results/`, `models/imaging/results_eval/` |
+| Kanıt arşivi (17 Eylül 2026): figürler, PDF rapor, 12 WSI + 5 MRI örnek vaka klasörü, eski genomik kaynak kodu | `.local/evidence-2026-09-17/` — metin/JSON kısmı depoda `models/registry/` |
+| GPU hostu veri kökü (ağırlıklar, TCGA WSI kohortu, embedding'ler, koşular) | `<MERGEN_DATA_ROOT>` = hostta `~/mergen-data`; yerleşim [`models/registry/LOCAL_ASSETS_HOST.md`](../models/registry/LOCAL_ASSETS_HOST.md), hash'ler `models/registry/assets.lock.json` |
 | Takım logosu kaynağı | `~/Assets/Sosyal Medya PP 3 (2).png` (Git dışı; türevleri `frontend/public/` içinde izlenir) |
 
 Arayüzdeki `frontend/public/ergenekon-logo.png` ve `frontend/public/favicon.png`

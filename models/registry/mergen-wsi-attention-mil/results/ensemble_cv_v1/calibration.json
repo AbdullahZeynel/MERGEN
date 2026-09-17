@@ -1,0 +1,23 @@
+{
+  "source": "chosen on seeds_v1 ensemble val (leak-free, 5-model mean); read out once on cv_v1 ensemble test",
+  "temperature": 1.0,
+  "temperature_note": "ensembling already calibrates; temperature scaling made ECE worse on val (0.071 -> 0.105), so T=1",
+  "abstention": {
+    "metric": "top2_gap_on_raw_ensemble_probs",
+    "chosen_threshold": 0.45,
+    "val": {
+      "coverage": 0.8608695652173913,
+      "accuracy_kept": 0.9292929292929293,
+      "accuracy_abstained": 0.6875,
+      "n_abstained": 16
+    },
+    "test_readout": {
+      "coverage": 0.8053097345132744,
+      "accuracy_kept": 0.8351648351648352,
+      "accuracy_abstained": 0.6818181818181818,
+      "n_abstained": 22,
+      "errors_caught": 7,
+      "errors_total": 22
+    }
+  }
+}
