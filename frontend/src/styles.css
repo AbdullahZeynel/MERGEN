@@ -1605,3 +1605,128 @@ svg {
 .button.ghost {
   background: transparent;
 }
+
+/* Sahnede gezen tanitim turu: karartma, spot ve hedefe bagli kart. */
+.guide-launcher {
+  position: relative;
+}
+.guide-nudge {
+  position: absolute;
+  left: 58px;
+  top: -6px;
+  width: 240px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: var(--panel-shadow);
+  display: grid;
+  gap: 6px;
+  font-size: 0.82rem;
+  z-index: 40;
+}
+.guide-nudge::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+.guide-nudge strong {
+  font-size: 0.86rem;
+}
+.guide-nudge span {
+  color: var(--secondary-text);
+}
+.guide-nudge-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+.button.small {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+}
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.tour-spotlight {
+  position: fixed;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgb(9 15 29 / 0.62);
+  outline: 2px solid var(--red);
+  outline-offset: 0;
+  transition: top 220ms ease, left 220ms ease, width 220ms ease, height 220ms ease;
+  pointer-events: none;
+}
+.tour-card {
+  position: fixed;
+  padding: 18px 20px 16px;
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--line);
+  box-shadow: var(--panel-shadow);
+  transition: top 220ms ease, left 220ms ease;
+}
+.tour-card:focus {
+  outline: none;
+}
+.tour-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+}
+.tour-progress {
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.tour-card h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+  padding-right: 24px;
+}
+.tour-card p {
+  margin: 0 0 12px;
+  color: var(--secondary-text);
+  line-height: 1.55;
+  font-size: 0.86rem;
+}
+.tour-dots {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 12px;
+}
+.tour-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--line);
+}
+.tour-dots i.on {
+  background: var(--red);
+}
+.tour-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-spotlight,
+  .tour-card {
+    transition: none;
+  }
+}

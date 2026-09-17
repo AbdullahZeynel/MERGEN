@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 // Vite'in kendi mekanizmasi: node tipleri ve yeni bir bagimlilik gerekmiyor.
 // Sozluk, testler ve dogrulama semalari disarida: oradaki metin ya sozlugun
 // kendisi ya da kullaniciya cikmayan gelistirici mesaji.
-const sources = import.meta.glob('../{*.tsx,components/**/*.tsx}', {
+const sources = import.meta.glob('../{*.tsx,components/**/*.tsx,tour/**/*.tsx}', {
   query: '?raw',
   eager: true,
   import: 'default',

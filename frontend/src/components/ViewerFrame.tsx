@@ -7,10 +7,13 @@ export function ViewerFrame({
   title,
   icon,
   children,
+  tour,
 }: {
   title: string;
   icon: ReactNode;
   children: ReactNode;
+  /** Tanitim turunun bu cerceveyi bulmasi icin `data-tour` degeri. */
+  tour?: string;
 }) {
   const t = useT();
   const [expanded, setExpanded] = useState(false);
@@ -38,6 +41,7 @@ export function ViewerFrame({
   const content = (
     <section
       className={`panel viewer-frame ${expanded ? 'viewer-expanded' : ''}`}
+      data-tour={tour}
       aria-label={title}
     >
       <div className="panel-heading">

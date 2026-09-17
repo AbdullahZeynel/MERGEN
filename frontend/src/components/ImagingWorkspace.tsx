@@ -47,7 +47,7 @@ export function ImagingWorkspace({
   return (
     <>
       <div className="imaging-grid">
-        <ViewerFrame title={t('viewer.slices')} icon={<ScanLine size={18} />}>
+        <ViewerFrame title={t('viewer.slices')} icon={<ScanLine size={18} />} tour="slice-viewer">
           <div
             className="image-stage"
             tabIndex={0}
@@ -113,7 +113,7 @@ export function ImagingWorkspace({
           </div>
           <div className="viewer-controls">
             {record.overlays && (
-              <div className="overlay-controls" aria-label={t('viewer.overlays')}>
+              <div className="overlay-controls" data-tour="overlay-controls" aria-label={t('viewer.overlays')}>
                 <button
                   aria-pressed={predictionVisible}
                   onClick={() => setPredictionVisible(!predictionVisible)}
@@ -175,7 +175,7 @@ export function ImagingWorkspace({
             <p className="slice-hint">{t('viewer.keyboardHint')}</p>
           </div>
         </ViewerFrame>
-        <ViewerFrame title={t('viewer.mesh')} icon={<Box size={18} />}>
+        <ViewerFrame title={t('viewer.mesh')} icon={<Box size={18} />} tour="mesh-viewer">
           <LazyVolumeViewer url={record.mesh} />
         </ViewerFrame>
       </div>
