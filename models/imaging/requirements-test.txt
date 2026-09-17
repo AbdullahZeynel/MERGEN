@@ -1,0 +1,6 @@
+# Torch'suz test paketi: UWCSE kuralı (numpy + connected components), yol çözümü
+# ve değerlendirme vakası hazırlığı. CI bunu kurar; model çalıştırmak için
+# models/imaging/requirements.txt gerekir.
+numpy>=1.26
+scikit-image>=0.22
+nibabel>=5.2

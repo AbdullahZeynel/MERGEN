@@ -1,0 +1,10 @@
+# Patoloji kolu (DINOv2 + Attention-MIL) çalışma ortamı. Torch'u hostun CUDA
+# sürümüne uygun resmi index'ten kur; DINOv2 kaynak kodu depoda değil,
+# <MERGEN_DATA_ROOT>/models/dinov2-vitb14/src altındadır (bkz. README).
+torch>=2.4
+numpy>=1.26
+pillow>=10
+openslide-python>=1.4      # openslide-bin ile birlikte
+scikit-learn>=1.3          # metrics.py
+matplotlib>=3.8            # attention ısı haritası renk haritası
+tqdm>=4.66

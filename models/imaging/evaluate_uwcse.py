@@ -6,7 +6,12 @@ into validation and test partitions with a fixed seed, runs nnU-Net + Swin
 UNETR inference, fits class-specific ensemble weights on the validation
 set, then reports per-variant Dice on the test set with mean ± std.
 
-Outputs (under results_eval/):
+Configuration comes from the environment so the same script runs on the GPU host
+(`MERGEN_DATA_ROOT` layout, see models/registry/LOCAL_ASSETS_HOST.md) and on the
+in-repo layout: UCSF_DIR, UCSF_METADATA, SWIN_PATH, UWCSE_RESULTS, N_VAL, N_TEST
+(0 = every remaining safe case), NNUNET_FOLDS (default all five).
+
+Outputs (under the results directory):
   split.json             — which case ids landed in val vs test
   optimal_weights.json   — per-case val weights + averaged final weights
   test_metrics.json      — per-case, per-variant, per-region Dice
@@ -37,8 +42,19 @@ from prepare_example_dataset import MODALITIES, LABEL_KEYS, index_case, pick
 BASE_DIR = Path(__file__).parent.resolve()
 
 
+def data_root() -> Path | None:
+    """`MERGEN_DATA_ROOT` verilmişse hostun veri kökü; verilmemişse depo içi düzen."""
+    configured = os.environ.get("MERGEN_DATA_ROOT")
+    return Path(configured).expanduser() if configured else None
+
+
 def _ucsf_dir() -> Path:
-    """Veri seti kökü: sürüm alt klasörü varsa onu, yoksa düz düzeni kullan."""
+    """Veri seti kökü: env, sonra veri kökü, sonra depo içi düzen."""
+    if os.environ.get("UCSF_DIR"):
+        return Path(os.environ["UCSF_DIR"]).expanduser()
+    root = data_root()
+    if root is not None:
+        return root / "datasets/ucsf_pdgm/UCSF-PDGM-v5"
     kok = BASE_DIR / "UCSF-PDGM"
     for aday in (kok / "UCSF-PDGM-v5", kok):
         if aday.is_dir() and any(aday.glob("*_nifti")):
@@ -47,6 +63,11 @@ def _ucsf_dir() -> Path:
 
 
 def _metadata() -> Path:
+    if os.environ.get("UCSF_METADATA"):
+        return Path(os.environ["UCSF_METADATA"]).expanduser()
+    root = data_root()
+    if root is not None:
+        return root / "datasets/ucsf_pdgm_metadata/UCSF-PDGM-metadata_v5.csv"
     kok = BASE_DIR / "UCSF-PDGM"
     for aday in (kok / "UCSF-PDGM-metadata_v5.csv",
                  BASE_DIR / "UCSF-PDGM-metadata.csv",
@@ -56,17 +77,29 @@ def _metadata() -> Path:
     return kok / "UCSF-PDGM-metadata_v5.csv"
 
 
+def _swin_path() -> Path:
+    if os.environ.get("SWIN_PATH"):
+        return Path(os.environ["SWIN_PATH"]).expanduser()
+    root = data_root()
+    if root is not None:
+        return root / "models/swin-unetr-brats21/model.pt"
+    return (BASE_DIR / "SwinUNETR_BRATS21" / "pretrained_models"
+            / "fold0_f48_ep300_4gpu_dice0_8854" / "model.pt")
+
+
 UCSF_DIR = _ucsf_dir()
 METADATA = _metadata()
-SWIN_PATH = (
-    BASE_DIR / "SwinUNETR_BRATS21" / "pretrained_models"
-    / "fold0_f48_ep300_4gpu_dice0_8854" / "model.pt"
-)
-RESULTS_DIR = BASE_DIR / "results_eval"
+SWIN_PATH = _swin_path()
+RESULTS_DIR = Path(os.environ.get("UWCSE_RESULTS", "")).expanduser() if os.environ.get("UWCSE_RESULTS") \
+    else ((data_root() / "runs/uwcse_v1") if data_root() else BASE_DIR / "results_eval")
 
 # ── Evaluation configuration ──────────────────────────────────────────
-N_VAL = 10            # cases used to tune CSW weights
-N_TEST = 20           # cases used for final reporting
+# BraTS21 kohortu dışında ~200 UCSF-PDGM vakası var. Ürün ölçümü (uwcse_v3) 30
+# tabakalı vakada ağırlık uydurdu ve kalan 172 vakanın tamamını test yaptı; 20
+# vakalık bir test, varyantları ayırt edemeyecek kadar geniş güven aralığı bırakır.
+N_VAL = int(os.environ.get("N_VAL", 10))     # ağırlık uydurulan vaka sayısı
+N_TEST = int(os.environ.get("N_TEST", 0))    # 0 = kalan güvenli vakaların tamamı
+NNUNET_FOLDS = tuple(int(f) for f in os.environ.get("NNUNET_FOLDS", "0,1,2,3,4").split(","))
 SEED = 42             # split reproducibility
 
 
@@ -164,13 +197,14 @@ def normalize(arr: np.ndarray) -> torch.Tensor:
 def run():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Device: {device}")
-    RESULTS_DIR.mkdir(exist_ok=True)
+    RESULTS_DIR.mkdir(parents=True, exist_ok=True)
 
     # ── Case selection + split ────────────────────────────────────────
     print("\nDiscovering safe (BraTS21-out-of-cohort) cases ...")
     safe_ids = discover_safe_cases()
     print(f"  Found {len(safe_ids)} safe cases on disk.")
-    n_needed = N_VAL + N_TEST
+    n_test = N_TEST if N_TEST else len(safe_ids) - N_VAL
+    n_needed = N_VAL + n_test
     assert len(safe_ids) >= n_needed, (
         f"Need at least {n_needed} safe cases; only {len(safe_ids)} available."
     )
@@ -179,7 +213,7 @@ def run():
     chosen = list(safe_ids)
     rng.shuffle(chosen)
     val_ids = chosen[:N_VAL]
-    test_ids = chosen[N_VAL:N_VAL + N_TEST]
+    test_ids = chosen[N_VAL:N_VAL + n_test]
 
     split = {"seed": SEED, "n_safe": len(safe_ids),
              "val": val_ids, "test": test_ids}
@@ -191,8 +225,8 @@ def run():
     print(f"\n{'='*60}\nPHASE 1: Inference\n{'='*60}")
     PROBS_DIR = RESULTS_DIR / "_probs_cache"
     PROBS_DIR.mkdir(exist_ok=True)
-    print("Loading nnU-Net (BraTS21, fold_0) ...")
-    nn_predictor = NNUNetBraTSPredictor(folds=(0,), device=device)
+    print(f"Loading nnU-Net (BraTS21, folds {NNUNET_FOLDS}) ...")
+    nn_predictor = NNUNetBraTSPredictor(folds=NNUNET_FOLDS, device=device)
 
     case_index: dict[str, str] = {}      # case_id -> split label
     all_cases = [(cid, "VAL") for cid in val_ids] + [(cid, "TEST") for cid in test_ids]
@@ -259,6 +293,8 @@ def run():
         per_case_w.append((cid, w))
         print(f"  [{cid}]  TC={w[0]:.2f}  WT={w[1]:.2f}  ET={w[2]:.2f}")
         del d
+    if not per_case_w:
+        raise SystemExit("no validation case produced probabilities; see the PHASE 1 errors above")
     weights_arr = np.array([w for _, w in per_case_w])
     optimal_w = weights_arr.mean(axis=0).tolist()
     print(f"\n  Optimal averaged weights (nnU-Net):")
