@@ -1,0 +1,27 @@
+{
+  "model_id": "swin-unetr-brats21",
+  "data_root_placeholder": "<MERGEN_DATA_ROOT>",
+  "generated": "2026-09-14",
+  "assets": [
+    {
+      "path": "models/swin-unetr-brats21/downloads/fold0_f48_ep300_4gpu_dice0_8854.zip",
+      "role": "weight_archive",
+      "format": "zip",
+      "source": "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/tag/0.8.1",
+      "model_id": "swin-unetr-brats21",
+      "bytes": 231022652,
+      "sha256": "47ba479743f9d5151654d1232d3e8d3aa68d7e9d68a837ef7b8c644329293d63",
+      "status": "present"
+    },
+    {
+      "path": "models/swin-unetr-brats21/weights/fold0_f48_ep300_4gpu_dice0_8854/model.pt",
+      "role": "checkpoint_fold_0",
+      "format": "torch",
+      "source": "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/tag/0.8.1",
+      "model_id": "swin-unetr-brats21",
+      "bytes": 256368326,
+      "sha256": "1083e1585263a73919a5ecfee9403989ca4bfd2ec70308679667bd23b53714b4",
+      "status": "present"
+    }
+  ]
+}

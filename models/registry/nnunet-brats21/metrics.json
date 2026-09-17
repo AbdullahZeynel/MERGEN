@@ -1,0 +1,37 @@
+{
+  "model_id": "nnunet-brats21",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "segmentation",
+      "cohort": "nnU-Net fold doğrulama (eğitim sırasında, pseudo-Dice)",
+      "metric": "mean final EMA foreground pseudo-Dice (5 fold ort.)",
+      "value": 0.8691,
+      "source": "checkpoint 'logging' kaydı; models/registry/nnunet-brats21/upstream_training_log.json"
+    },
+    {
+      "task": "segmentation",
+      "cohort": "nnU-Net fold doğrulama",
+      "metric": "final pseudo-Dice label 1 (5 fold ort.)",
+      "value": 0.8521,
+      "source": "checkpoint 'logging'"
+    },
+    {
+      "task": "segmentation",
+      "cohort": "nnU-Net fold doğrulama",
+      "metric": "final pseudo-Dice label 2 (5 fold ort.)",
+      "value": 0.8936,
+      "source": "checkpoint 'logging'"
+    },
+    {
+      "task": "segmentation",
+      "cohort": "nnU-Net fold doğrulama",
+      "metric": "final pseudo-Dice label 4 / ET (5 fold ort.)",
+      "value": 0.8643,
+      "source": "checkpoint 'logging'"
+    }
+  ],
+  "upstream_note": "Zenodo kaydı yayımlanmış WT/TC/ET Dice bildirmez. Yukarıdaki değerler checkpoint içindeki eğitim-zamanı doğrulama pseudo-Dice kayıtlarından çözülmüştür; tam hacim üzerinde bağımsız değerlendirme değildir. Fold bazlı değerler upstream_training_log.json içindedir.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

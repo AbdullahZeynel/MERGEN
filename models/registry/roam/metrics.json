@@ -1,0 +1,44 @@
+{
+  "model_id": "roam",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "glioma_subtyping_3class",
+      "cohort": "Xiangya in-house test (depo örnek sonucu, seed s1)",
+      "metric": "Accuracy",
+      "value": 0.8519,
+      "source": "https://github.com/whiteyunjie/ROAM (ROAM/results/.../s1/visual_res/metrics.json)"
+    },
+    {
+      "task": "glioma_subtyping_3class",
+      "cohort": "Xiangya in-house test (s1)",
+      "metric": "Precision (macro)",
+      "value": 0.8524,
+      "source": "https://github.com/whiteyunjie/ROAM (metrics.json)"
+    },
+    {
+      "task": "glioma_subtyping_3class",
+      "cohort": "Xiangya in-house test (s1)",
+      "metric": "Recall (macro)",
+      "value": 0.8325,
+      "source": "https://github.com/whiteyunjie/ROAM (metrics.json)"
+    },
+    {
+      "task": "glioma_subtyping_3class",
+      "cohort": "Xiangya in-house test (s1)",
+      "metric": "F1 (macro)",
+      "value": 0.8417,
+      "source": "https://github.com/whiteyunjie/ROAM (metrics.json)"
+    },
+    {
+      "task": "glioma_subtyping_3class",
+      "cohort": "Xiangya in-house test (s1)",
+      "metric": "Balanced accuracy",
+      "value": 0.8325,
+      "source": "https://github.com/whiteyunjie/ROAM (metrics.json)"
+    }
+  ],
+  "upstream_note": "Makaledeki AUC değerleri (ör. alt tip AUC) tam metin erişimi olmadığı için buraya alınmadı; yalnız depodaki sonuç dosyaları kullanıldı.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

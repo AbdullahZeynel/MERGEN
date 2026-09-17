@@ -1,0 +1,111 @@
+{
+  "checkpoints": [
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold0/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold1/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold2/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold3/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold4/best.pt"
+  ],
+  "n_models": 5,
+  "split": "test",
+  "n": 113,
+  "temperature": 1.0,
+  "metrics": {
+    "n": 113,
+    "accuracy": 0.8053097345132744,
+    "balanced_accuracy": 0.787719298245614,
+    "macro_f1": 0.7902574363078565,
+    "mcc": 0.6957191431579514,
+    "per_class_f1": {
+      "A": 0.7733333333333333,
+      "O": 0.7346938775510204,
+      "G": 0.8627450980392157
+    },
+    "per_class_recall": {
+      "A": 0.7631578947368421,
+      "O": 0.72,
+      "G": 0.88
+    },
+    "per_class_precision": {
+      "A": 0.7837837837837838,
+      "O": 0.75,
+      "G": 0.8461538461538461
+    },
+    "confusion_matrix": [
+      [
+        29,
+        4,
+        5
+      ],
+      [
+        4,
+        18,
+        3
+      ],
+      [
+        4,
+        2,
+        44
+      ]
+    ],
+    "auroc_macro_ovr": 0.9089924305713778
+  },
+  "bootstrap_ci95": {
+    "macro_f1": {
+      "ci95_low": 0.7084931965803983,
+      "ci95_high": 0.8630154212780079,
+      "n_boot": 1000
+    },
+    "balanced_accuracy": {
+      "ci95_low": 0.7073369842007949,
+      "ci95_high": 0.8652713601743919,
+      "n_boot": 1000
+    },
+    "auroc_macro_ovr": {
+      "ci95_low": 0.8628616880273414,
+      "ci95_high": 0.9497291816087143,
+      "n_boot": 1000
+    },
+    "mcc": {
+      "ci95_low": 0.580705469579373,
+      "ci95_high": 0.8007507846432224,
+      "n_boot": 1000
+    },
+    "accuracy": {
+      "ci95_low": 0.7342920353982302,
+      "ci95_high": 0.8761061946902655,
+      "n_boot": 1000
+    }
+  },
+  "qc_excluded": {
+    "TCGA-19-1387": "low_tissue (13 tiles < 100)",
+    "TCGA-19-1388": "no_features (no tissue detected)"
+  },
+  "training_overlap": {
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold0/best.pt": {
+      "n_train": 511,
+      "n_overlap": 0,
+      "examples": []
+    },
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold1/best.pt": {
+      "n_train": 511,
+      "n_overlap": 0,
+      "examples": []
+    },
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold2/best.pt": {
+      "n_train": 511,
+      "n_overlap": 0,
+      "examples": []
+    },
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold3/best.pt": {
+      "n_train": 511,
+      "n_overlap": 0,
+      "examples": []
+    },
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold4/best.pt": {
+      "n_train": 512,
+      "n_overlap": 0,
+      "examples": []
+    }
+  }
+}

@@ -1,0 +1,98 @@
+{
+  "model_id": "nnunet-brats21",
+  "data_root_placeholder": "<MERGEN_DATA_ROOT>",
+  "generated": "2026-09-14",
+  "assets": [
+    {
+      "path": "models/nnunet-brats21/downloads/Dataset002_BRATS19.zip",
+      "role": "weight_archive",
+      "format": "zip",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "expected_md5": "23a3f55dead4a6642271a08d1a503bbb",
+      "model_id": "nnunet-brats21",
+      "bytes": 1155915349,
+      "sha256": "f45eff0624604333a80ca5e6ea9c71153d908a4c2082df9038051dd7c4b2491f",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth",
+      "role": "checkpoint_fold_0",
+      "format": "torch",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 256125179,
+      "sha256": "82261f2482f9502249aa6eb3f05b0412a47f070afdbe91a3673c7ac5c6f55c01",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth",
+      "role": "checkpoint_fold_1",
+      "format": "torch",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 256125566,
+      "sha256": "4dbab86cdfc05cc8ea595581f52cfd3343a9257be1d17653d5cda7c5377854af",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_2/checkpoint_final.pth",
+      "role": "checkpoint_fold_2",
+      "format": "torch",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 256125758,
+      "sha256": "2cdbd76a570e1dd8a0a956b2fad111ec0fd1918947b95a42017a51a35ad1f912",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_3/checkpoint_final.pth",
+      "role": "checkpoint_fold_3",
+      "format": "torch",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 256125438,
+      "sha256": "1ecc782979c1453c88b99b8c8874567f19da837f5e58ebe5e31b89179427296f",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_4/checkpoint_final.pth",
+      "role": "checkpoint_fold_4",
+      "format": "torch",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 256125566,
+      "sha256": "7343742da28ba31058fdfb695d1ba37301687244ed16b5eea26f03df446da5ab",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/plans.json",
+      "role": "plans",
+      "format": "json",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 8484,
+      "sha256": "504b6278db2aee6b8dacf8d4ac21578a906f8184f4cdf652d23053ade0852b64",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset.json",
+      "role": "dataset_json",
+      "format": "json",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 11689851,
+      "sha256": "26b3f6909a4417df27d13b169c2eece4839752aed03448ead08cbba1ab74d1eb",
+      "status": "present"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset_fingerprint.json",
+      "role": "dataset_fingerprint",
+      "format": "json",
+      "source": "https://doi.org/10.5281/zenodo.11582627",
+      "model_id": "nnunet-brats21",
+      "bytes": 11370262,
+      "sha256": "11efc1e87cccc53407dd11373f0415b1fecababcbe44e75e95e74e28d1e0f05f",
+      "status": "present"
+    }
+  ]
+}

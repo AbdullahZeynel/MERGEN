@@ -33,6 +33,7 @@ Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
 
 ## Model yerleşimi
 
-Görüntü bileşenleri `models/imaging/` altındadır. Veri ve ağırlıklar Git
-dışıdır. Canlı adaptör oluşturulurken `data`, `weights` ve `artifacts` yolları
+Görüntü bileşenleri `models/imaging/`, patoloji bileşenleri `models/pathology/`
+altındadır; her bileşenin kökeni, lisansı ve ölçümleri `models/registry/` kayıt
+defterindedir. Veri ve ağırlıklar Git dışıdır. Canlı adaptör oluşturulurken `data`, `weights` ve `artifacts` yolları
 açık yapılandırma ile tanımlanacaktır. Kapsam dışı eski bileşenler kaldırılmıştır.

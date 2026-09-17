@@ -1,0 +1,49 @@
+{
+  "model_id": "swin-unetr-brats21",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "segmentation",
+      "cohort": "BraTS21 fold-0 doğrulama",
+      "metric": "Mean Dice (WT/ET/TC ort.)",
+      "value": 0.8854,
+      "source": "https://github.com/Project-MONAI/research-contributions/blob/main/SwinUNETR/BRATS21/README.md",
+      "downloaded": true
+    },
+    {
+      "task": "segmentation",
+      "cohort": "BraTS21 fold-1 doğrulama",
+      "metric": "Mean Dice",
+      "value": 0.9059,
+      "source": "https://github.com/Project-MONAI/research-contributions/blob/main/SwinUNETR/BRATS21/README.md",
+      "downloaded": false
+    },
+    {
+      "task": "segmentation",
+      "cohort": "BraTS21 fold-2 doğrulama",
+      "metric": "Mean Dice",
+      "value": 0.8981,
+      "source": "https://github.com/Project-MONAI/research-contributions/blob/main/SwinUNETR/BRATS21/README.md",
+      "downloaded": false
+    },
+    {
+      "task": "segmentation",
+      "cohort": "BraTS21 fold-3 doğrulama",
+      "metric": "Mean Dice",
+      "value": 0.8924,
+      "source": "https://github.com/Project-MONAI/research-contributions/blob/main/SwinUNETR/BRATS21/README.md",
+      "downloaded": false
+    },
+    {
+      "task": "segmentation",
+      "cohort": "BraTS21 fold-4 doğrulama",
+      "metric": "Mean Dice",
+      "value": 0.9035,
+      "source": "https://github.com/Project-MONAI/research-contributions/blob/main/SwinUNETR/BRATS21/README.md",
+      "downloaded": false
+    }
+  ],
+  "upstream_note": "README yalnız ortalama Dice verir; sınıf bazlı WT/TC/ET, HD95 ve bağımsız test sonucu yayımlanmamıştır.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

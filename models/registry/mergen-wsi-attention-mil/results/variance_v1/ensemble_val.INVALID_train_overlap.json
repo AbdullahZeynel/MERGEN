@@ -1,0 +1,82 @@
+{
+  "INVALID": "LEAKED RESULT \u2014 DO NOT REPORT. These 5 fold models were trained on the train+val pool; all 115 locked-val patients were in the training set of 4 of the 5 models. macro-F1 0.9234 measures memorisation, not generalisation. Kept only as a record of the mistake (found 2026-09-15).",
+  "checkpoints": [
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold0/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold1/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold2/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold3/best.pt",
+    "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold4/best.pt"
+  ],
+  "n_models": 5,
+  "split": "val",
+  "n": 115,
+  "temperature": 1.0,
+  "metrics": {
+    "n": 115,
+    "accuracy": 0.9304347826086956,
+    "balanced_accuracy": 0.925425101214575,
+    "macro_f1": 0.9233886375062846,
+    "mcc": 0.891423391186262,
+    "per_class_f1": {
+      "A": 0.9066666666666666,
+      "O": 0.9019607843137255,
+      "G": 0.9615384615384616
+    },
+    "per_class_recall": {
+      "A": 0.8947368421052632,
+      "O": 0.92,
+      "G": 0.9615384615384616
+    },
+    "per_class_precision": {
+      "A": 0.918918918918919,
+      "O": 0.8846153846153846,
+      "G": 0.9615384615384616
+    },
+    "confusion_matrix": [
+      [
+        34,
+        2,
+        2
+      ],
+      [
+        2,
+        23,
+        0
+      ],
+      [
+        1,
+        1,
+        50
+      ]
+    ],
+    "auroc_macro_ovr": 0.9794227371069476
+  },
+  "bootstrap_ci95": {
+    "macro_f1": {
+      "ci95_low": 0.8654942645074225,
+      "ci95_high": 0.9713985263728903,
+      "n_boot": 1000
+    },
+    "balanced_accuracy": {
+      "ci95_low": 0.8673953081232493,
+      "ci95_high": 0.9711751198129477,
+      "n_boot": 1000
+    },
+    "auroc_macro_ovr": {
+      "ci95_low": 0.9550090476194472,
+      "ci95_high": 0.9973453011835846,
+      "n_boot": 1000
+    },
+    "mcc": {
+      "ci95_low": 0.8158734913119081,
+      "ci95_high": 0.9592594550105046,
+      "n_boot": 1000
+    },
+    "accuracy": {
+      "ci95_low": 0.8782608695652174,
+      "ci95_high": 0.9739130434782609,
+      "n_boot": 1000
+    }
+  },
+  "qc_excluded": {}
+}

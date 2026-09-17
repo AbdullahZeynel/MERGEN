@@ -1,0 +1,19 @@
+{
+  "model_id": "swin-unetr-brats21",
+  "generated": "2026-09-14",
+  "data": {
+    "training": {
+      "dataset": "BraTS 2021",
+      "cases": 1251,
+      "split": "brats21_folds.json ile 5 fold; her fold ≈1.000 eğitim / ≈250 doğrulama",
+      "source": "https://github.com/Project-MONAI/research-contributions/blob/main/SwinUNETR/BRATS21/README.md"
+    },
+    "validation": {
+      "note": "README'deki Mean Dice değerleri her fold'un doğrulama bölümündedir (WT, ET, TC ortalaması)."
+    },
+    "notes": [
+      "Yalnız fold-0 ağırlığı indirildi; diğer fold arşivleri kayıt altındadır."
+    ]
+  },
+  "overlap_with_local_tcga_cohort": null
+}

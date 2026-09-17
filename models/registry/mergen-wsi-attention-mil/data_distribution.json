@@ -1,0 +1,28 @@
+{
+  "model_id": "mergen-wsi-attention-mil",
+  "generated": "2026-09-14",
+  "data": {
+    "training": {
+      "dataset": "TCGA-GBM + TCGA-LGG tanısal H&E WSI (hasta başına bir primer DX slayt)",
+      "patients": 762,
+      "class_counts": {
+        "A": 255,
+        "O": 162,
+        "G": 345
+      },
+      "bytes": 661993519708,
+      "source": "https://portal.gdc.cancer.gov/ (files API: https://api.gdc.cancer.gov/files)"
+    },
+    "labels": {
+      "A": "IDH-mutant, 1p/19q non-codeleted (cBioPortal IDHmut-non-codel)",
+      "O": "IDH-mutant, 1p/19q codeleted (IDHmut-codel)",
+      "G": "IDH-wildtype ve (G4 veya +7/−10 veya TERT mutant)"
+    },
+    "notes": [
+      "Kilitli split (splits_v1, tohum 20260914): hasta düzeyinde, sınıf×grade stratifiye, 532/115/115. QC (>=100 doku tile) sonrası kullanılabilir: 524/115/113; 758/762 slayttan embedding çıkarıldı.",
+      "Etiketler TUM (760/760) ve IUCompPath (638/638) WHO2021 etiketleriyle %100 uyumludur (bkz. _evidence/tcga_overlap_analysis.json).",
+      "G sınıfı: G4 vakalarda G=281, A=19, O=1 — grade ile sınıf güçlü ilişkilidir; grade-2/3 alt kümede ayrıca değerlendirme gerekir."
+    ]
+  },
+  "overlap_with_local_tcga_cohort": null
+}

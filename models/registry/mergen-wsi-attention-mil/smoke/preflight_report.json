@@ -1,0 +1,114 @@
+{
+  "started": "2026-09-14T16:17:49+00:00",
+  "steps": {
+    "environment": {
+      "python": "3.14.4",
+      "torch": "2.14.0+cu130",
+      "cuda": true,
+      "gpu": "NVIDIA GeForce RTX 5060 Ti",
+      "openslide": "1.4.6",
+      "dinov2_weights": true,
+      "split_exists": true,
+      "free_disk_gib": 1109.1
+    },
+    "extraction": {
+      "returncode": 0,
+      "slides": [
+        "TCGA-DU-A7TC",
+        "TCGA-HT-7483",
+        "TCGA-DU-6410",
+        "TCGA-HT-7468",
+        "TCGA-12-0620",
+        "TCGA-12-0820"
+      ],
+      "wall_seconds": 23.6,
+      "tiles_per_slide": [
+        276,
+        12,
+        955,
+        512,
+        846,
+        619
+      ],
+      "seconds_per_slide": [
+        2.7,
+        3.8,
+        6.5,
+        4.1,
+        2.1,
+        2.1
+      ],
+      "tiles_per_s_end_to_end": 151.2
+    },
+    "training_resume": {
+      "first_run_rc": 0,
+      "resume_run_rc": 0,
+      "epochs_logged": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "resumed_correctly": true,
+      "checkpoints": [
+        "best.pt",
+        "epoch_001.pt",
+        "epoch_002.pt",
+        "epoch_003.pt",
+        "epoch_004.pt",
+        "last.pt"
+      ],
+      "last_val": {
+        "n": 2,
+        "accuracy": 0.0,
+        "balanced_accuracy": 0.0,
+        "macro_f1": 0.0,
+        "mcc": 0.0,
+        "per_class_f1": {
+          "A": 0.0,
+          "O": 0.0,
+          "G": 0.0
+        },
+        "per_class_recall": {
+          "A": 0.0,
+          "O": 0.0,
+          "G": 0.0
+        },
+        "per_class_precision": {
+          "A": 0.0,
+          "O": 0.0,
+          "G": 0.0
+        },
+        "auroc_macro_ovr": NaN,
+        "loss": 1.4646
+      },
+      "epoch_seconds_tiny": [
+        0.5,
+        0.0,
+        0.5,
+        0.0
+      ]
+    },
+    "inference": {
+      "returncode": 0,
+      "seconds": 6.0,
+      "outputs": [
+        "TCGA-DU-A7TC-01Z-00-DX1_attention.npy",
+        "TCGA-DU-A7TC-01Z-00-DX1_attention.png",
+        "TCGA-DU-A7TC-01Z-00-DX1_prediction.json",
+        "TCGA-DU-A7TC-01Z-00-DX1_thumbnail.png"
+      ]
+    },
+    "projection": {
+      "cohort_slides": 762,
+      "mean_seconds_per_slide_measured": 3.6,
+      "extraction_hours_full_cohort": 0.75,
+      "note_extraction": "preflight uses the smallest slides per class; expect the full-cohort mean to be 1.5\u20132\u00d7 higher",
+      "train_bags": 532,
+      "epoch_seconds_estimate": 1.6,
+      "training_hours_100_epochs": 0.044
+    }
+  },
+  "ok": true,
+  "finished": "2026-09-14T16:18:26+00:00"
+}

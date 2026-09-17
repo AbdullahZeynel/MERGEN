@@ -1,0 +1,107 @@
+{
+  "checkpoint": "<MERGEN_DATA_ROOT>/pathology/runs/mil_v1/best.pt",
+  "cases": [
+    {
+      "patient_id": "TCGA-FG-A4MY",
+      "true": "A",
+      "pred_now": "A",
+      "pred_in_csv": "A",
+      "grade": "G2",
+      "site": "Case Western",
+      "probs": {
+        "A": 0.998,
+        "O": 0.0,
+        "G": 0.001
+      },
+      "n_tiles": 4096,
+      "attention_top1_share": 0.0296,
+      "attention_top10_share": 0.1934,
+      "attention_entropy_norm": 0.7051
+    },
+    {
+      "patient_id": "TCGA-DU-7301",
+      "true": "A",
+      "pred_now": "A",
+      "pred_in_csv": "A",
+      "grade": "G2",
+      "site": "Henry Ford Hospital",
+      "probs": {
+        "A": 1.0,
+        "O": 0.0,
+        "G": 0.0
+      },
+      "n_tiles": 2025,
+      "attention_top1_share": 0.0511,
+      "attention_top10_share": 0.2676,
+      "attention_entropy_norm": 0.7125
+    },
+    {
+      "patient_id": "TCGA-QH-A65X",
+      "true": "O",
+      "pred_now": "O",
+      "pred_in_csv": "O",
+      "grade": "G3",
+      "site": "Fondazione-Besta",
+      "probs": {
+        "A": 0.011,
+        "O": 0.912,
+        "G": 0.077
+      },
+      "n_tiles": 4096,
+      "attention_top1_share": 0.0342,
+      "attention_top10_share": 0.1823,
+      "attention_entropy_norm": 0.6716
+    },
+    {
+      "patient_id": "TCGA-TM-A84S",
+      "true": "O",
+      "pred_now": "A",
+      "pred_in_csv": "A",
+      "grade": "G3",
+      "site": "The University of New South Wales",
+      "probs": {
+        "A": 0.527,
+        "O": 0.465,
+        "G": 0.008
+      },
+      "n_tiles": 4096,
+      "attention_top1_share": 0.1441,
+      "attention_top10_share": 0.4342,
+      "attention_entropy_norm": 0.5734
+    },
+    {
+      "patient_id": "TCGA-S9-A6WN",
+      "true": "O",
+      "pred_now": "A",
+      "pred_in_csv": "A",
+      "grade": "G3",
+      "site": "Dept of Neurosurgery at University of Heidelberg",
+      "probs": {
+        "A": 0.967,
+        "O": 0.009,
+        "G": 0.024
+      },
+      "n_tiles": 4096,
+      "attention_top1_share": 0.0437,
+      "attention_top10_share": 0.2695,
+      "attention_entropy_norm": 0.661
+    },
+    {
+      "patient_id": "TCGA-14-1458",
+      "true": "A",
+      "pred_now": "G",
+      "pred_in_csv": "G",
+      "grade": "G4",
+      "site": "Emory University",
+      "probs": {
+        "A": 0.201,
+        "O": 0.311,
+        "G": 0.489
+      },
+      "n_tiles": 4096,
+      "attention_top1_share": 0.128,
+      "attention_top10_share": 0.3922,
+      "attention_entropy_norm": 0.6011
+    }
+  ]
+}

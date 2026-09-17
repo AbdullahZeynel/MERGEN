@@ -1,0 +1,14 @@
+{
+  "model_id": "mergen-uwcse",
+  "generated": "2026-09-14",
+  "data": {
+    "training": {
+      "note": "Ağ eğitimi yok."
+    },
+    "validation": {
+      "planned": "UCSF-PDGM BraTS21-dışı vakalar: 10 validation (katsayı) + 20 test (evaluate_uwcse.py tasarımı); veri yerelde yok."
+    },
+    "notes": []
+  },
+  "overlap_with_local_tcga_cohort": null
+}

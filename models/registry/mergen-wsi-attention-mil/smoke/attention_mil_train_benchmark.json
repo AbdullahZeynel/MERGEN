@@ -1,0 +1,19 @@
+{
+  "model": "gated attention MIL 768\u2192256\u2192128\u21923",
+  "n_parameters": 263556,
+  "bag_size": 4096,
+  "n_train_bags": 533,
+  "gpu": "NVIDIA GeForce RTX 5060 Ti",
+  "amp": "bf16",
+  "optimizer": "AdamW lr 1e-4",
+  "seconds_train_step_per_bag": 0.00159,
+  "seconds_h2d_copy_per_bag_fp16": 0.00104,
+  "seconds_per_bag_total": 0.00263,
+  "seconds_per_epoch_train": 1.4,
+  "seconds_inference_per_bag": 0.0003,
+  "projected_wall_time_epochs_typical_h": 0.016,
+  "projected_wall_time_epochs_budget_h": 0.039,
+  "peak_vram_mib_train": 191,
+  "train_embeddings_fp16_gib": 3.12,
+  "note": "Timing per bag with bag on GPU plus host-to-device copy of an fp16 bag; disk read of memory-mapped .npy files is not included (\u22485 GiB total, fits page cache). Validation pass per epoch adds \u2248 n_val \u00d7 inference time."
+}

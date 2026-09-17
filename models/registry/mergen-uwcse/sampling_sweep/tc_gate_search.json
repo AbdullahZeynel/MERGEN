@@ -1,0 +1,293 @@
+{
+  "weights": [
+    0.425,
+    0.697,
+    0.447
+  ],
+  "baseline": {
+    "tau": 0.5,
+    "vmin": 0,
+    "dice_present": 0.7940642209325444,
+    "silent_rate": 0.6571428571428571
+  },
+  "chosen": {
+    "tau": 0.75,
+    "vmin": 500,
+    "silent_rate": 0.8285714285714286,
+    "dice_present": 0.7808925167288822
+  },
+  "criterion": "maximise silence subject to Dice loss <= 0.02 on present-core cases",
+  "explored_on": "102-case measurement pool (common test set untouched)",
+  "grid": [
+    {
+      "tau": 0.5,
+      "vmin": 0,
+      "dice_present": 0.7940642209325444,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.5,
+      "vmin": 250,
+      "dice_present": 0.7893215790055704,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.5,
+      "vmin": 500,
+      "dice_present": 0.7786142461126172,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.5,
+      "vmin": 1000,
+      "dice_present": 0.7538982318975574,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.5,
+      "vmin": 2000,
+      "dice_present": 0.7118636012427201,
+      "silent_rate": 0.8571428571428571
+    },
+    {
+      "tau": 0.55,
+      "vmin": 0,
+      "dice_present": 0.7941747276410401,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.55,
+      "vmin": 250,
+      "dice_present": 0.7897890729793,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.55,
+      "vmin": 500,
+      "dice_present": 0.7788194223538485,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.55,
+      "vmin": 1000,
+      "dice_present": 0.7540832599442925,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.55,
+      "vmin": 2000,
+      "dice_present": 0.7119313021989286,
+      "silent_rate": 0.8571428571428571
+    },
+    {
+      "tau": 0.6,
+      "vmin": 0,
+      "dice_present": 0.7961039637422327,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.6,
+      "vmin": 250,
+      "dice_present": 0.791718309080487,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.6,
+      "vmin": 500,
+      "dice_present": 0.7805496625252097,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.6,
+      "vmin": 1000,
+      "dice_present": 0.7452072283783221,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.6,
+      "vmin": 2000,
+      "dice_present": 0.7128811945360979,
+      "silent_rate": 0.8571428571428571
+    },
+    {
+      "tau": 0.65,
+      "vmin": 0,
+      "dice_present": 0.7962463371446001,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.65,
+      "vmin": 250,
+      "dice_present": 0.7921043675698057,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.65,
+      "vmin": 500,
+      "dice_present": 0.7808243620752017,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.65,
+      "vmin": 1000,
+      "dice_present": 0.7453730781087747,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.65,
+      "vmin": 2000,
+      "dice_present": 0.7128354672049727,
+      "silent_rate": 0.8571428571428571
+    },
+    {
+      "tau": 0.7,
+      "vmin": 0,
+      "dice_present": 0.7962814835289059,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.7,
+      "vmin": 250,
+      "dice_present": 0.7922631138419635,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.7,
+      "vmin": 500,
+      "dice_present": 0.7808781780636322,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.7,
+      "vmin": 1000,
+      "dice_present": 0.7453483223810085,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.7,
+      "vmin": 2000,
+      "dice_present": 0.7127514209760145,
+      "silent_rate": 0.8571428571428571
+    },
+    {
+      "tau": 0.75,
+      "vmin": 0,
+      "dice_present": 0.7961975664163412,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.75,
+      "vmin": 250,
+      "dice_present": 0.7923039908190649,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.75,
+      "vmin": 500,
+      "dice_present": 0.7808925167288822,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.75,
+      "vmin": 1000,
+      "dice_present": 0.7452815633185177,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.75,
+      "vmin": 2000,
+      "dice_present": 0.7126569938866469,
+      "silent_rate": 0.8571428571428571
+    },
+    {
+      "tau": 0.8,
+      "vmin": 0,
+      "dice_present": 0.7962311263600672,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.8,
+      "vmin": 250,
+      "dice_present": 0.792337550762791,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.8,
+      "vmin": 500,
+      "dice_present": 0.7808726271452255,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.8,
+      "vmin": 1000,
+      "dice_present": 0.7452127554169414,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.8,
+      "vmin": 2000,
+      "dice_present": 0.7125515016343463,
+      "silent_rate": 0.8857142857142857
+    },
+    {
+      "tau": 0.85,
+      "vmin": 0,
+      "dice_present": 0.7962100100500858,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.85,
+      "vmin": 250,
+      "dice_present": 0.7923164344528097,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.85,
+      "vmin": 500,
+      "dice_present": 0.7807864068735001,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.85,
+      "vmin": 1000,
+      "dice_present": 0.7451156155894547,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.85,
+      "vmin": 2000,
+      "dice_present": 0.7124018632488803,
+      "silent_rate": 0.8857142857142857
+    },
+    {
+      "tau": 0.9,
+      "vmin": 0,
+      "dice_present": 0.7961511916592141,
+      "silent_rate": 0.6571428571428571
+    },
+    {
+      "tau": 0.9,
+      "vmin": 250,
+      "dice_present": 0.7922576160619378,
+      "silent_rate": 0.8
+    },
+    {
+      "tau": 0.9,
+      "vmin": 500,
+      "dice_present": 0.7807275884826282,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.9,
+      "vmin": 1000,
+      "dice_present": 0.7449873793758431,
+      "silent_rate": 0.8285714285714286
+    },
+    {
+      "tau": 0.9,
+      "vmin": 2000,
+      "dice_present": 0.7122418650067808,
+      "silent_rate": 0.8857142857142857
+    }
+  ]
+}

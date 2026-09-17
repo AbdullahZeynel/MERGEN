@@ -159,12 +159,24 @@ istekte doğrulanır.
 | G4 — `feat/gpu-model-adapter` | Kilitli görüntü ortamı, sürümlü model dizini, gerçek adaptör, başlangıç preflight'ı ve adaptörün süreç yalıtımı | Görüntü fixture'ı gerçek modelle çalışır; eksik ağırlık/şema capability olarak ilan edilmez; adaptör ayrı süreç ve venv'de, kendi süreç grubunda çalışır; zaman aşımı ve cancel bu grubu sonlandırır; yazma alanı OS düzeyinde işin `work/output`'una daraltılır ve dışına yazma denemesinin başarısız olduğu test edilir |
 | G5 — `feat/live-end-to-end` | Mevcut VPS oturum/kuyruk katmanını dispatcher'a bağla; canlı UI, ilerleme, sonuç varlıkları ve ZIP indirme | Kullanıcı yalnız kendi işini görür/indirir; 3 dk idle/logout GPU+VPS kopyalarını siler; bağlantı kopması demo sonucu gibi görünmez |
 | G6 — `chore/resilience-privacy-drill` | Yedek host, servis boot, disk sınırı, log denetimi, veri yaşam döngüsü ve sunum provası | GPU kapalıyken demo çalışır; yedek elle devreye alınır; 10 oturum/1 GPU işi ve temizlik kanıtı kaydedilir |
+| M1 — `feat/model-registry` | 17 Eylül 2026 kanıt arşivini `models/registry/` olarak al: kartlar, kaynaklı metrikler, envanter, geçersiz sonuçlar; atıflar ve yerel varlık konumları | `repo_guard` temiz; gerçek host yolu yok; kart içi bağlantılar çözülür; ürün/referans ayrımı kayıtta açık (#44) |
+| M2 — `feat/uwcse-v3-rule` | `uwcse_ensemble.py` senkronu (`TC_MIN=250`, `review_flags`), nnU-Net/evaluate env taşıması, `models/pathology/` kodu; kural birim testleri ve CI adımı | Testler CI'da geçer; modüller torch'suz import edilir; demo vakalarının eski kuralla üretildiği belgelidir (#45) |
+| M3 — `feat/demo-v4-pathology` | `pathology/glioma` koleksiyonu sözleşmesi; 12 WSI + 5 MRI örnek vakasından üretici; MCP/API varlık uçları | Bilinmeyen koleksiyon 404; yol koleksiyon kökü dışına çıkamaz; MRI ile WSI aynı vaka gibi sunulmaz; yanlış sınıflanan vakalar etiketli kalır (#46) |
+| M4 — `feat/pathology-workspace` | Modül seçici, patoloji ekranı (thumbnail + attention, en yüksek kareler, A/O/G kartı, çekimserlik), MRI `review_flags` bandı, krediler, doğrulama bölümü, i18n | Sözleşme ve arayüz testleri; yalnız kilitli test sayıları ve üç uyarı birlikte; `MCP/VPS/spool` ekranda geçmez (#47) |
+| M5 — GPU host görevi | Canlı MRI'ı UWCSE v3'e yükselt: nnunetv2, çoklu checkpoint manifesti, runner orkestrasyonu, 22 demo vakasının v3 ile yeniden üretimi | Fixture kabulü hostta geçer; `modelId` `mergen-uwcse`/`v3`; hacim ve bayraklar raporda (#48) |
+| M6 — koşullu | Canlı patoloji: `pathology` capability, `infer_slide.py` sarmalı, slayt girdi sözleşmesi | Karar: slayt boyutu vs VPS yükleme sınırı; TEKNOFEST kapsamı (#49) |
 
 S0–S2 demo ve sözleşme temeli `main` üzerinde bulunur. Yeni canlı yol G0 ile başlar;
 G1, G0'ın geri dönüş ve veri kapsamı kararı olmadan uygulanmaz. G2 ile G3 yerel iş
 sözleşmesi birleştikten sonra paralel ilerleyebilir. G4 ikisine, G5 gerçek G4
 çıktısına bağlıdır. G6 bütün zincirin yayın kapısıdır. Frontend chunk ayrıştırması
 ve demo mesh optimizasyonu bu zincirden bağımsız kısa performans sprintleridir.
+
+M serisi 17 Eylül 2026 kanıt arşiviyle gelen ürün setini (MRI'da UWCSE v3, patolojide
+DINOv2 + Attention-MIL) depoya ve arayüze taşır. M1–M4 GPU istemez ve sırayla
+ilerler; M5 hostu ister ve G4/G5 ile birleşir; M6 ayrı bir karar bekler. Kanıt
+arşivinin ürün seti, sayı okuma kuralları ve ürüne girmeyen modeller
+[`models/registry/README.md`](../models/registry/README.md) içindedir.
 
 ### S1 güncel durum
 
@@ -273,6 +285,17 @@ doğrulamasından geçti ve üç bölge de GLB'ye girdi. 2 mm'ye ölçeklenmiş 
 fixture `input-invalid` ile reddedildi. Checkpoint'in 159 anahtarı strict
 yüklendi. Kalan iş dispatcher/VPS kuyruğuyla uçtan uca kabuldür; o tamamlanmadan
 G4 bitmiş sayılmaz.
+
+### M1 güncel durum
+
+Arşivin metin ve JSON'ları (131 dosya, 1,4 MB) `models/registry/` altında; figürler,
+PDF ve örnek vaka klasörleri `.local/evidence-2026-09-17/` (Git dışı). Hostun gerçek
+kullanıcı yolu 30 dosyada `<MERGEN_DATA_ROOT>` ile değiştirildi; arşivin kendi
+yolları depo yerleşimine çevrildi ve kart içi bağlantıların tamamı çözülüyor.
+Kartlar dondurulmuş anlık görüntüdür; üreten betikler hostta kaldığı için burada
+yeniden üretilmez. Arşivin `uwcse_ensemble.py`'si depodakinden yenidir
+(`TC_MIN`, `review_flags`); kod senkronu M2'dedir ve bugünkü 22 demo vakası
+eski kuralla üretilmiştir.
 
 ## Git ve ekip çalışma düzeni
 

@@ -1,0 +1,980 @@
+{
+  "test_ids": [
+    "UCSF-PDGM-0005",
+    "UCSF-PDGM-0008",
+    "UCSF-PDGM-0012",
+    "UCSF-PDGM-0056",
+    "UCSF-PDGM-0071",
+    "UCSF-PDGM-0072",
+    "UCSF-PDGM-0076",
+    "UCSF-PDGM-0078",
+    "UCSF-PDGM-0083",
+    "UCSF-PDGM-0089",
+    "UCSF-PDGM-0091",
+    "UCSF-PDGM-0105",
+    "UCSF-PDGM-0113",
+    "UCSF-PDGM-0121",
+    "UCSF-PDGM-0136",
+    "UCSF-PDGM-0152",
+    "UCSF-PDGM-0153",
+    "UCSF-PDGM-0154",
+    "UCSF-PDGM-0165",
+    "UCSF-PDGM-0166",
+    "UCSF-PDGM-0201",
+    "UCSF-PDGM-0214",
+    "UCSF-PDGM-0231",
+    "UCSF-PDGM-0233",
+    "UCSF-PDGM-0234",
+    "UCSF-PDGM-0242",
+    "UCSF-PDGM-0244",
+    "UCSF-PDGM-0246",
+    "UCSF-PDGM-0247",
+    "UCSF-PDGM-0250",
+    "UCSF-PDGM-0252",
+    "UCSF-PDGM-0253",
+    "UCSF-PDGM-0255",
+    "UCSF-PDGM-0257",
+    "UCSF-PDGM-0259",
+    "UCSF-PDGM-0262",
+    "UCSF-PDGM-0263",
+    "UCSF-PDGM-0266",
+    "UCSF-PDGM-0268",
+    "UCSF-PDGM-0269",
+    "UCSF-PDGM-0270",
+    "UCSF-PDGM-0274",
+    "UCSF-PDGM-0277",
+    "UCSF-PDGM-0279",
+    "UCSF-PDGM-0281",
+    "UCSF-PDGM-0282",
+    "UCSF-PDGM-0284",
+    "UCSF-PDGM-0285",
+    "UCSF-PDGM-0298",
+    "UCSF-PDGM-0300",
+    "UCSF-PDGM-0302",
+    "UCSF-PDGM-0303",
+    "UCSF-PDGM-0304",
+    "UCSF-PDGM-0305",
+    "UCSF-PDGM-0306",
+    "UCSF-PDGM-0307",
+    "UCSF-PDGM-0308",
+    "UCSF-PDGM-0318",
+    "UCSF-PDGM-0327",
+    "UCSF-PDGM-0331",
+    "UCSF-PDGM-0332",
+    "UCSF-PDGM-0335",
+    "UCSF-PDGM-0339",
+    "UCSF-PDGM-0344",
+    "UCSF-PDGM-0352",
+    "UCSF-PDGM-0365",
+    "UCSF-PDGM-0383",
+    "UCSF-PDGM-0389",
+    "UCSF-PDGM-0398",
+    "UCSF-PDGM-0401",
+    "UCSF-PDGM-0402",
+    "UCSF-PDGM-0409",
+    "UCSF-PDGM-0422",
+    "UCSF-PDGM-0431",
+    "UCSF-PDGM-0436",
+    "UCSF-PDGM-0439",
+    "UCSF-PDGM-0440",
+    "UCSF-PDGM-0442",
+    "UCSF-PDGM-0444",
+    "UCSF-PDGM-0446",
+    "UCSF-PDGM-0455",
+    "UCSF-PDGM-0460",
+    "UCSF-PDGM-0461",
+    "UCSF-PDGM-0468",
+    "UCSF-PDGM-0471",
+    "UCSF-PDGM-0475",
+    "UCSF-PDGM-0483",
+    "UCSF-PDGM-0484",
+    "UCSF-PDGM-0491",
+    "UCSF-PDGM-0495",
+    "UCSF-PDGM-0500",
+    "UCSF-PDGM-0505",
+    "UCSF-PDGM-0513",
+    "UCSF-PDGM-0519",
+    "UCSF-PDGM-0521",
+    "UCSF-PDGM-0528",
+    "UCSF-PDGM-0530",
+    "UCSF-PDGM-0535",
+    "UCSF-PDGM-0537",
+    "UCSF-PDGM-0540"
+  ],
+  "n_test": 100,
+  "test_seed": 7,
+  "measure_seed": 42,
+  "pool_size": 102,
+  "configs": [
+    {
+      "composition": "proportional",
+      "n_measure": 10,
+      "weights": {
+        "TC": 0.38999999999999996,
+        "WT": 0.6899999999999998,
+        "ET": 0.38
+      },
+      "n_empty_tc_in_measure": 4,
+      "grades_in_measure": {
+        "2": 3,
+        "3": 2,
+        "4": 5
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8155656250000001,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.926033,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8267790322580645,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    },
+    {
+      "composition": "proportional",
+      "n_measure": 20,
+      "weights": {
+        "TC": 0.4325,
+        "WT": 0.6024999999999999,
+        "ET": 0.42750000000000005
+      },
+      "n_empty_tc_in_measure": 7,
+      "grades_in_measure": {
+        "2": 6,
+        "3": 4,
+        "4": 10
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8163859375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9243339999999999,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8272290322580643,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    },
+    {
+      "composition": "proportional",
+      "n_measure": 30,
+      "weights": {
+        "TC": 0.4183333333333333,
+        "WT": 0.6483333333333334,
+        "ET": 0.4383333333333333
+      },
+      "n_empty_tc_in_measure": 10,
+      "grades_in_measure": {
+        "2": 8,
+        "3": 7,
+        "4": 15
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8160921875,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9254549999999999,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8273532258064515,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    },
+    {
+      "composition": "proportional",
+      "n_measure": 45,
+      "weights": {
+        "TC": 0.4355555555555554,
+        "WT": 0.6600000000000003,
+        "ET": 0.46111111111111097
+      },
+      "n_empty_tc_in_measure": 15,
+      "grades_in_measure": {
+        "2": 12,
+        "3": 10,
+        "4": 23
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8164640624999999,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.92562,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8277209677419356,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    },
+    {
+      "composition": "proportional",
+      "n_measure": 60,
+      "weights": {
+        "TC": 0.44083333333333313,
+        "WT": 0.6491666666666666,
+        "ET": 0.44499999999999973
+      },
+      "n_empty_tc_in_measure": 21,
+      "grades_in_measure": {
+        "2": 16,
+        "3": 13,
+        "4": 31
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.816696875,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9254690000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8274435483870968,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    },
+    {
+      "composition": "proportional",
+      "n_measure": 80,
+      "weights": {
+        "TC": 0.4256249999999998,
+        "WT": 0.6593749999999996,
+        "ET": 0.4362499999999997
+      },
+      "n_empty_tc_in_measure": 29,
+      "grades_in_measure": {
+        "2": 22,
+        "3": 17,
+        "4": 41
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8162953125,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.925611,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8273209677419354,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    },
+    {
+      "composition": "easy",
+      "n_measure": 45,
+      "weights": {
+        "TC": 0.5533333333333335,
+        "WT": 0.657777777777778,
+        "ET": 0.5766666666666668
+      },
+      "n_empty_tc_in_measure": 0,
+      "grades_in_measure": {
+        "4": 45
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8757203124999999,
+            "n_absent": 36,
+            "silent": 5,
+            "silent_rate": 0.1388888888888889
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.925656,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.867091935483871,
+            "n_absent": 38,
+            "silent": 21,
+            "silent_rate": 0.5526315789473685
+          }
+        }
+      }
+    },
+    {
+      "composition": "hard",
+      "n_measure": 45,
+      "weights": {
+        "TC": 0.26428571428571435,
+        "WT": 0.6628571428571431,
+        "ET": 0.23285714285714296
+      },
+      "n_empty_tc_in_measure": 35,
+      "grades_in_measure": {
+        "2": 22,
+        "3": 13
+      },
+      "variants": {
+        "nnUNet": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8703390625,
+            "n_absent": 36,
+            "silent": 4,
+            "silent_rate": 0.1111111111111111
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9276180000000003,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8608016129032258,
+            "n_absent": 38,
+            "silent": 7,
+            "silent_rate": 0.18421052631578946
+          }
+        },
+        "SwinUNETR": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8102734375,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.8979010000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8238370967741935,
+            "n_absent": 38,
+            "silent": 34,
+            "silent_rate": 0.8947368421052632
+          }
+        },
+        "V0_Naive": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8266249999999999,
+            "n_absent": 36,
+            "silent": 24,
+            "silent_rate": 0.6666666666666666
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.909073,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.829256451612903,
+            "n_absent": 38,
+            "silent": 32,
+            "silent_rate": 0.8421052631578947
+          }
+        },
+        "V4_UWCSE_Full": {
+          "TC": {
+            "n_present": 64,
+            "dice_present": 0.8141265625,
+            "n_absent": 36,
+            "silent": 25,
+            "silent_rate": 0.6944444444444444
+          },
+          "WT": {
+            "n_present": 100,
+            "dice_present": 0.9256300000000001,
+            "n_absent": 0,
+            "silent": 0,
+            "silent_rate": null
+          },
+          "ET": {
+            "n_present": 62,
+            "dice_present": 0.8260161290322582,
+            "n_absent": 38,
+            "silent": 37,
+            "silent_rate": 0.9736842105263158
+          }
+        }
+      }
+    }
+  ],
+  "note": "Betimleyici tarama. Ortak test kümesi her yapılandırmada aynıdır ve hiçbir ölçüme girmez; buradan bir yapılandırma test skoruna bakılarak seçilmemiştir."
+}

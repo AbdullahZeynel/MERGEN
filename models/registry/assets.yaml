@@ -1,0 +1,642 @@
+schema_version: 2
+generated: 2026-09-14
+data_root: "<MERGEN_DATA_ROOT>"
+assets:
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/downloads/Dataset002_BRATS19.zip
+    role: weight_archive
+    format: zip
+    bytes: 1155915349
+    sha256: f45eff0624604333a80ca5e6ea9c71153d908a4c2082df9038051dd7c4b2491f
+    source: "https://doi.org/10.5281/zenodo.11582627"
+    expected_md5: 23a3f55dead4a6642271a08d1a503bbb
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth
+    role: checkpoint_fold_0
+    format: torch
+    bytes: 256125179
+    sha256: 82261f2482f9502249aa6eb3f05b0412a47f070afdbe91a3673c7ac5c6f55c01
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth
+    role: checkpoint_fold_1
+    format: torch
+    bytes: 256125566
+    sha256: 4dbab86cdfc05cc8ea595581f52cfd3343a9257be1d17653d5cda7c5377854af
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_2/checkpoint_final.pth
+    role: checkpoint_fold_2
+    format: torch
+    bytes: 256125758
+    sha256: 2cdbd76a570e1dd8a0a956b2fad111ec0fd1918947b95a42017a51a35ad1f912
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_3/checkpoint_final.pth
+    role: checkpoint_fold_3
+    format: torch
+    bytes: 256125438
+    sha256: 1ecc782979c1453c88b99b8c8874567f19da837f5e58ebe5e31b89179427296f
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_4/checkpoint_final.pth
+    role: checkpoint_fold_4
+    format: torch
+    bytes: 256125566
+    sha256: 7343742da28ba31058fdfb695d1ba37301687244ed16b5eea26f03df446da5ab
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/plans.json
+    role: plans
+    format: json
+    bytes: 8484
+    sha256: 504b6278db2aee6b8dacf8d4ac21578a906f8184f4cdf652d23053ade0852b64
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset.json
+    role: dataset_json
+    format: json
+    bytes: 11689851
+    sha256: 26b3f6909a4417df27d13b169c2eece4839752aed03448ead08cbba1ab74d1eb
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: nnunet-brats21
+    path: models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset_fingerprint.json
+    role: dataset_fingerprint
+    format: json
+    bytes: 11370262
+    sha256: 11efc1e87cccc53407dd11373f0415b1fecababcbe44e75e95e74e28d1e0f05f
+    source: "https://doi.org/10.5281/zenodo.11582627"
+  - model_id: swin-unetr-brats21
+    path: models/swin-unetr-brats21/downloads/fold0_f48_ep300_4gpu_dice0_8854.zip
+    role: weight_archive
+    format: zip
+    bytes: 231022652
+    sha256: 47ba479743f9d5151654d1232d3e8d3aa68d7e9d68a837ef7b8c644329293d63
+    source: "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/tag/0.8.1"
+  - model_id: swin-unetr-brats21
+    path: models/swin-unetr-brats21/weights/fold0_f48_ep300_4gpu_dice0_8854/model.pt
+    role: checkpoint_fold_0
+    format: torch
+    bytes: 256368326
+    sha256: 1083e1585263a73919a5ecfee9403989ca4bfd2ec70308679667bd23b53714b4
+    source: "https://github.com/Project-MONAI/MONAI-extra-test-data/releases/tag/0.8.1"
+  - model_id: dinov2-vitb14
+    path: models/dinov2-vitb14/dinov2_vitb14_pretrain.pth
+    role: checkpoint
+    format: torch
+    bytes: 346378731
+    sha256: 0b8b82f85de91b424aded121c7e1dcc2b7bc6d0adeea651bf73a13307fad8c73
+    source: "https://dl.fbaipublicfiles.com/dinov2/dinov2_vitb14/dinov2_vitb14_pretrain.pth"
+  - model_id: dinov2-vitb14
+    path: models/dinov2-vitb14/dinov2-src-7764ea0f.tar.gz
+    role: source_archive
+    format: tar.gz
+    bytes: 2869642
+    sha256: c27dcdaf50e9fb5bbdf2bb529da357716372e19c6afab17d5350f3f0094aed4b
+    source: "https://github.com/facebookresearch/dinov2/archive/7764ea0f912e53c92e82eb78a2a1631e92725fc8.tar.gz"
+  - model_id: mergen-wsi-attention-mil
+    path: pathology/datasets/tcga_glioma/manifests/cohort.tsv
+    role: cohort_manifest
+    format: tsv
+    bytes: 180478
+    sha256: f8308659a4386e19d1227da55ecd64965a58afb28a0790aa033c9ffba43f6a73
+    source: "https://portal.gdc.cancer.gov/ (files API: https://api.gdc.cancer.gov/files)"
+  - model_id: mergen-wsi-attention-mil
+    path: pathology/datasets/tcga_glioma/manifests/gdc_manifest_full.txt
+    role: gdc_manifest
+    format: tsv
+    bytes: 117562
+    sha256: 4ba5a17e8a53645fbd0d770a21d95c4d9fe47d1f0505ec6a119b2a74b7acaeb8
+    source: "https://portal.gdc.cancer.gov/ (files API: https://api.gdc.cancer.gov/files)"
+  - model_id: mergen-wsi-attention-mil
+    path: pathology/datasets/tcga_glioma/metadata/data_clinical_sample.txt
+    role: labels
+    format: tsv
+    bytes: 374033
+    sha256: cf622c83218f6a1a6f02a5e2cc8cc5c365ec90c71193faa693e113c5326e45ac
+    source: "https://github.com/cBioPortal/datahub/tree/04f170590dbd1ac6e49c2d334decb4dbdb4c14b9/public/lgggbm_tcga_pub"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_0_checkpoint.pt
+    role: checkpoint_fold_0
+    format: torch
+    bytes: 1099444
+    sha256: 48919cc1de82380394da6f8b53fe78886c29fcfb2c671325fa98674d87a0d4cf
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_1_checkpoint.pt
+    role: checkpoint_fold_1
+    format: torch
+    bytes: 1099444
+    sha256: 1dadc51275d8b96c49692f443eac7b3b40d792275659059ffb3e830df2e9d3c7
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_2_checkpoint.pt
+    role: checkpoint_fold_2
+    format: torch
+    bytes: 1099444
+    sha256: 355b586d5489c2659226ce88fd553a1c150f78739ff03d81b3aa1fd5376ad9d0
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_3_checkpoint.pt
+    role: checkpoint_fold_3
+    format: torch
+    bytes: 1099444
+    sha256: 20674aff13370fe323be1800173b844fc9cc8b03646ecb3f873ee03fc74a6840
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_4_checkpoint.pt
+    role: checkpoint_fold_4
+    format: torch
+    bytes: 1099444
+    sha256: b1e105f31b518743edfcb9c7dd71ea185178a313148cd6b78efa2dfd2f328797
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_5_checkpoint.pt
+    role: checkpoint_fold_5
+    format: torch
+    bytes: 1099444
+    sha256: cb4bb50ddf9de9c288188988902a7e4153d421df02384e895704dc00ccfe0a80
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_6_checkpoint.pt
+    role: checkpoint_fold_6
+    format: torch
+    bytes: 1099444
+    sha256: 8202d858c4e9606f21fac7ea31c9be81bdea727f1aa18461ab62603dd3eed940
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_7_checkpoint.pt
+    role: checkpoint_fold_7
+    format: torch
+    bytes: 1099444
+    sha256: 6143e4b50f3462c07c5a29467afd71a21f4c62f4def37c34199d7d06d602d983
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_8_checkpoint.pt
+    role: checkpoint_fold_8
+    format: torch
+    bytes: 1099444
+    sha256: aeefedb09e041e75d8e2a1c685bc729f17cbfebe5d5d9c90f8ee51f1fd11bcae
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/ckpt/moe-mamba/s_9_checkpoint.pt
+    role: checkpoint_fold_9
+    format: torch
+    bytes: 1099444
+    sha256: 4615e867d60b3a0ae6985e0fa023b93ddf9e430b009ea6a675e9a8d5c4246936
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/histo_tcga.csv
+    role: metadata_csv
+    format: csv
+    bytes: 159229
+    sha256: d0f3aa67b3fbdfa14d41a2edf2f8f701394e6ecd30d5d8c94c80b0b228c593e5
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/histo_ebrains.csv
+    role: metadata_csv
+    format: csv
+    bytes: 36681
+    sha256: 98ba2c7043e7a38a99abc9955c4728c1af59364506b8bb26dc5b18359329f58d
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/mri.csv
+    role: metadata_csv
+    format: csv
+    bytes: 49887
+    sha256: 1f4eae2b467193c44c4a44078592ff55d0497681de64c9f9e7f9df96f3e9d732
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/tcga_paired.csv
+    role: metadata_csv
+    format: csv
+    bytes: 5147
+    sha256: f51c560abf0c79eedbd5145e62d27209905289fc14020723e06c12a24e5c6a7b
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/train_cases.csv
+    role: metadata_csv
+    format: csv
+    bytes: 47474
+    sha256: e02716c9c830f292897911595d64a2105b918c757bc33b8038887c5b64d95d3c
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/splits/train_cases_5f/split_0.csv
+    role: split_csv
+    format: csv
+    bytes: 17657
+    sha256: 7f3be45233554b53dc56139ba716d5a6c14605153155bf960c3f541ab81ed6b6
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/splits/train_cases_5f/split_1.csv
+    role: split_csv
+    format: csv
+    bytes: 17643
+    sha256: eed6eba05abb842b8731cdd7477a3d0c45a79a119f2aac907b3b72a02b7be540
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/splits/train_cases_5f/split_2.csv
+    role: split_csv
+    format: csv
+    bytes: 17641
+    sha256: eada10b3126878a1c121379c17ae5ee60fe6636641642a92358215eded5bc95e
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/splits/train_cases_5f/split_3.csv
+    role: split_csv
+    format: csv
+    bytes: 17641
+    sha256: 3c28f3429627f2ec299a5a6760250af65a6bea4baf3251d54dd42e62449c05da
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/metadata/splits/train_cases_5f/split_4.csv
+    role: split_csv
+    format: csv
+    bytes: 17647
+    sha256: 555764268310ae533da5ab04685a1ee27ee9b4fd07dc90c69de8411eebead36e
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/README.upstream.md
+    role: upstream_readme
+    format: md
+    bytes: 3751
+    sha256: 90dc5f2513097b2bfd39ee50ff409d2e35c07d7f22bd711aa724da2457db565f
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: tum-radio-path-moe-mamba
+    path: models/tum-radio-path-moe-mamba/env.upstream.yml
+    role: upstream_env
+    format: yaml
+    bytes: 453
+    sha256: e0ae82ee8ac95c8f24f87893376b3a24a13d6a1ccf686a8d78e8574d5afc016b
+    source: "https://github.com/csaueres/radio-path-glioma-subtyping"
+  - model_id: gmap
+    path: models/gmap/downloads/GMAP.zip
+    role: weight_archive
+    format: zip
+    bytes: 71408335
+    sha256: 264446a669988bcdc88cb84c64840fcd3348d9e916c9fc4db039be4a57da51ba
+    source: "https://drive.google.com/file/d/17X5aLFs8ZiZ9z-0Jwg-hEhg2pQAshpDo/view"
+  - model_id: gmap
+    path: models/gmap/weights/GMAP/IDH.ckpt
+    role: checkpoint_IDH
+    format: torch
+    bytes: 19336348
+    sha256: d2244f0ccceba70b0aad72a1028b591714e09dac049825ef6dbb71f13d482731
+    source: "https://drive.google.com/file/d/17X5aLFs8ZiZ9z-0Jwg-hEhg2pQAshpDo/view"
+  - model_id: gmap
+    path: models/gmap/weights/GMAP/1p19q.ckpt
+    role: checkpoint_1p19q
+    format: torch
+    bytes: 19336348
+    sha256: 77682eef66f6716a51dcc6eb421e253a6a3fb6e89be94a21c7418ce17b5c0803
+    source: "https://drive.google.com/file/d/17X5aLFs8ZiZ9z-0Jwg-hEhg2pQAshpDo/view"
+  - model_id: gmap
+    path: models/gmap/weights/GMAP/TERT.ckpt
+    role: checkpoint_TERT
+    format: torch
+    bytes: 19336348
+    sha256: b06321a3c180459cf539af1954bbc202be38274806cb4818d3f2367cfe9574c0
+    source: "https://drive.google.com/file/d/17X5aLFs8ZiZ9z-0Jwg-hEhg2pQAshpDo/view"
+  - model_id: gmap
+    path: models/gmap/weights/GMAP/7g10l.ckpt
+    role: checkpoint_7g10l
+    format: torch
+    bytes: 19336348
+    sha256: b4661581cc4566ba0a58c461cd439a9f839a4d3a583b34ee274b0079b6f8a652
+    source: "https://drive.google.com/file/d/17X5aLFs8ZiZ9z-0Jwg-hEhg2pQAshpDo/view"
+  - model_id: gmap
+    path: models/gmap/label/total_label.csv
+    role: training_labels
+    format: csv
+    bytes: 60361
+    sha256: 591877dbc18f6f44f563124c29e9a5870bafdff34823efd5f90e1566b12c3db0
+    source: "https://github.com/Bingchao-Zhao/GMAP"
+  - model_id: gmap
+    path: models/gmap/README.upstream.md
+    role: upstream_readme
+    format: md
+    bytes: 5587
+    sha256: 914588af05f63ea8d7fe5c4d83c09859846a3b1c7ada26fd3330c3fadd2bc6eb
+    source: "https://github.com/Bingchao-Zhao/GMAP"
+  - model_id: gmap
+    path: models/gmap/requirements.upstream.txt
+    role: upstream_requirements
+    format: text
+    bytes: 340
+    sha256: 801891fbef2c454aa237c15ba67c0feb5172f377997e2ebc9e78d8a1559c8efd
+    source: "https://github.com/Bingchao-Zhao/GMAP"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/dataset_csv/tcga_2021_who_labels.csv
+    role: labels_csv
+    format: csv
+    bytes: 335188
+    sha256: ba20f9dacc8b951841e17e4c39ac5e7ee2b1b04b8f6372cc92721040ac579d27
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/dataset_csv/ebrains_2021_who_labels.csv
+    role: labels_csv
+    format: csv
+    bytes: 353431
+    sha256: 0f3708ac5ceed58a471db51b9ee8e73faa0eb28155d8191a5ecaa1ff9ecbb8c4
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/dataset_csv/ipd_2021_who_labels_casewise_final.csv
+    role: labels_csv
+    format: csv
+    bytes: 15724
+    sha256: 71745a0681d7e4ebe971090d1441f81fa4db2c4b714e046c77e7fabdb69a5509
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/dataset_csv/ipd_2021_who_labels_slidewise.csv
+    role: labels_csv
+    format: csv
+    bytes: 302871
+    sha256: da69b0580806d13c65e578959b8e5d73dfc2c31fb3a8d7b186f96cddda044696
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/dataset_csv/tcga_slides_gbm_lgg_20x.csv
+    role: labels_csv
+    format: csv
+    bytes: 203992
+    sha256: 754a75c137265221f3546b73186c4d11321900cb2797987598f73e171d47b19e
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/dataset_csv/tcga_slides_gbm_lgg_40x.csv
+    role: labels_csv
+    format: csv
+    bytes: 302362
+    sha256: 82588414e808ad90fea73d177530a192092e66f9eba5e686cc8a45743a0e4878
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_summary.csv
+    role: split_summary
+    format: csv
+    bytes: 325
+    sha256: 060352c5a10b5c99793c830a65dc0f2f264c554701622819b7e6cbfbd0d27a41
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_0.csv
+    role: split_csv
+    format: csv
+    bytes: 82364
+    sha256: 5821b4a3be0f2af132dce2052fc5e5880dc461ad58b31412b8f288e01a82082a
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_1.csv
+    role: split_csv
+    format: csv
+    bytes: 82445
+    sha256: f623424c7866bc2f3c1e3320ab09538e797c3d1012119a5a7c63291d3d8854e3
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_2.csv
+    role: split_csv
+    format: csv
+    bytes: 82394
+    sha256: 4e5219648ee4719befc6f09cee677fad2c49289ebd4fbc975e2c4a022b4534d5
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_3.csv
+    role: split_csv
+    format: csv
+    bytes: 82415
+    sha256: a30703f4afe63171e7c84fa47169ccba6ebf8f0b177d563875bb2dfc85bd06cd
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_4.csv
+    role: split_csv
+    format: csv
+    bytes: 82472
+    sha256: eb1e69cc0d30e3c19b10118e690292bd07fe477f177262f56c8b7018350df092
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_5.csv
+    role: split_csv
+    format: csv
+    bytes: 82439
+    sha256: 8b7c960dae4feb2ffd1f54fc338ddec8c178c97efa9beaf4f027e5dda573244b
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_6.csv
+    role: split_csv
+    format: csv
+    bytes: 82418
+    sha256: fa6d2405be868b774e8f14b4f757e5b83540ad83bdc2bc08ac8a9ed3603d0811
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_7.csv
+    role: split_csv
+    format: csv
+    bytes: 82448
+    sha256: 42fd6bc6b14474133a05769d97090e9215bdda14d5a0341d0384ffd51f2f2231
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_8.csv
+    role: split_csv
+    format: csv
+    bytes: 82472
+    sha256: 8f5b2375ebeb4740ef0e3ea2fe51293209c32145c7196a67bdfc30a51c3f7cef
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/splits/tcga_who_2021_100/splits_9.csv
+    role: split_csv
+    format: csv
+    bytes: 82514
+    sha256: df98f1cdd920e71646ad3e296555051038af218639a9b93fd9ee412db188516b
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: iucompath-glioma-subtyping
+    path: models/iucompath-glioma-subtyping/README.upstream.md
+    role: upstream_readme
+    format: md
+    bytes: 13248
+    sha256: 398b47ae7a7c130050c3974340eea6e3a694313b70835f9001ddc66a57f9508f
+    source: "https://github.com/IUCompPath/glioma-subtyping"
+  - model_id: 1p19qnet
+    path: models/1p19qnet/model/1pNet_19qNet/1pNet/all/best_model_95.pth
+    role: checkpoint_1pNET
+    format: torch
+    bytes: 252687
+    sha256: 7aab623c1c9d4bc234bf03659682e5563f7d19ec53385a92f1527fa2cd22d256
+    source: "https://github.com/rogo96/1p19qNet"
+  - model_id: 1p19qnet
+    path: models/1p19qnet/model/1pNet_19qNet/19qNet/all/best_model_72.pth
+    role: checkpoint_19qNET
+    format: torch
+    bytes: 252687
+    sha256: 212ba965f52de79429e5f4eea4f177147610c48b62842decadf75a4d1339c10e
+    source: "https://github.com/rogo96/1p19qNet"
+  - model_id: 1p19qnet
+    path: models/1p19qnet/model/1pNet_19qNet/logistic/all/logistic_model.pth
+    role: checkpoint_logistic
+    format: torch
+    bytes: 1327
+    sha256: 1697eaca1b064e2c759476f5b8227a610b667d04dfdd51d53255c4ec067bd2e0
+    source: "https://github.com/rogo96/1p19qNet"
+  - model_id: 1p19qnet
+    path: models/1p19qnet/README.upstream.md
+    role: upstream_readme
+    format: md
+    bytes: 5853
+    sha256: 437121ab249680e869fcd43fc26eeaabd0da36b951b2b9f4e7cf00afbebcb4df
+    source: "https://github.com/rogo96/1p19qNet"
+  - model_id: 1p19qnet
+    path: models/1p19qnet/environment.upstream.yml
+    role: upstream_env
+    format: yaml
+    bytes: 3571
+    sha256: e7abcdd8794ffbe0671f50d0db6190492b715b7b462634e671c4632affd13f43
+    source: "https://github.com/rogo96/1p19qNet"
+  - model_id: roam
+    path: models/roam/checkpoints/ROAM_split0.pth
+    role: checkpoint_split_0
+    format: torch
+    bytes: 35168473
+    sha256: 694629e4ac0054664d901fe89ac11b8cbd735b252e6c6ee222f0d7078ceaf0e1
+    source: "https://drive.google.com/drive/folders/1fi_OWsR9jlmFgx2uBdPOO5vwsHAy4WH8"
+  - model_id: roam
+    path: models/roam/checkpoints/ROAM_split1.pth
+    role: checkpoint_split_1
+    format: torch
+    bytes: 35168473
+    sha256: 7d30a3ab53265143a43f1d18b69550087279af8179d0a357d58571f118b173b2
+    source: "https://drive.google.com/drive/folders/1fi_OWsR9jlmFgx2uBdPOO5vwsHAy4WH8"
+  - model_id: roam
+    path: models/roam/checkpoints/ROAM_split2.pth
+    role: checkpoint_split_2
+    format: torch
+    bytes: 35168473
+    sha256: 9897385308297ee00df21702c17556f8095812ce2dfb99b6bd0593539669af28
+    source: "https://drive.google.com/drive/folders/1fi_OWsR9jlmFgx2uBdPOO5vwsHAy4WH8"
+  - model_id: roam
+    path: models/roam/checkpoints/ROAM_split3.pth
+    role: checkpoint_split_3
+    format: torch
+    bytes: 35168473
+    sha256: a6b6d0f30c164b9a7f8c700e2e6eaba8dbe0bf98af39f414a7b8ea3dcd76a82b
+    source: "https://drive.google.com/drive/folders/1fi_OWsR9jlmFgx2uBdPOO5vwsHAy4WH8"
+  - model_id: roam
+    path: models/roam/checkpoints/ROAM_split4.pth
+    role: checkpoint_split_4
+    format: torch
+    bytes: 35168473
+    sha256: 50aa7cc9350e55a1a964ba0067037c3b893a1f6858a1b8c7510e46780ae804e4
+    source: "https://drive.google.com/drive/folders/1fi_OWsR9jlmFgx2uBdPOO5vwsHAy4WH8"
+  - model_id: roam
+    path: models/roam/LICENSE
+    role: license
+    format: text
+    bytes: 35149
+    sha256: 3972dc9744f6499f0f9b2dbf76696f2ae7ad8af9b23dde66d6af86c9dfb36986
+    source: "https://github.com/whiteyunjie/ROAM"
+  - model_id: roam
+    path: models/roam/README.upstream.md
+    role: upstream_readme
+    format: md
+    bytes: 19161
+    sha256: ff9b0e463598de963f6c030eca7bc583901124cb152c06631b9e52df8967cd82
+    source: "https://github.com/whiteyunjie/ROAM"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_abmil.pt
+    role: init_abmil
+    format: torch
+    bytes: 5124520
+    sha256: 392b44d2d0abc3ec50e1385a25560afa21a0b76674599dea8d4fd0b7061dd834
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_clam_sb.pt
+    role: init_clam_sb
+    format: torch
+    bytes: 7094770
+    sha256: eec31207ce30ed74fbe513cb745bdb356758503071d1af302350de45456e6a11
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_clam_mb.pt
+    role: init_clam_mb
+    format: torch
+    bytes: 7096882
+    sha256: 3af5fca3c4f21010df3313269bfa7ae5e69ea7db7dd96517cfc74514044d41ae
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_transmil.pt
+    role: init_transmil
+    format: torch
+    bytes: 12797703
+    sha256: 757ba9b6d33f4d8bfa60f9da15f3f09b2cfe6b9f2f7204e213146b38477295fb
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_2dmamba.pt
+    role: init_2dmamba
+    format: torch
+    bytes: 1598323
+    sha256: c782ad82c3082f2bab639121a9365b96091c510b7042ef20c143ad3bb00094d7
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_amdmil.pt
+    role: init_amdmil
+    format: torch
+    bytes: 11816303
+    sha256: 692f975cdb4904d6c940fcc035a7bbe3db042f8e0722b8463a74829a3aaddb69
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_aemmil.pt
+    role: init_aemmil
+    format: torch
+    bytes: 4733308
+    sha256: 0e95420d5f28bdcbade2824557aa4931d7a01ea42929b0e169e57586de4e68c4
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_dagmil.pt
+    role: init_dagmil
+    format: torch
+    bytes: 3839879
+    sha256: 018876440fbc531f3170e0e3fc31c2e7cfb2d8d3a00b047e6790dab6c06b3dbd
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_gdfmil.pt
+    role: init_gdfmil
+    format: torch
+    bytes: 3978603
+    sha256: 762b42a60668cbd813c0e58c7cc577ad7285238c581786febc7a44caf8e79f10
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/pretrained_weight/pretrained_wikg.pt
+    role: init_wikg
+    format: torch
+    bytes: 8942692
+    sha256: b917d326e753d708d98934e53dc6215c60ada3c1703650fe7e3b08cac5f86ac0
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/README.upstream.md
+    role: upstream_readme
+    format: md
+    bytes: 7372
+    sha256: 834897673cabc667a87203bc08ef69aaf81ca2a5e2046cbc940192366e3743d3
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: mil-pretrained
+    path: models/mil-pretrained/requirements.upstream.txt
+    role: upstream_requirements
+    format: text
+    bytes: 522
+    sha256: a2a90d9a44cd5c5f9db77f9b73619b133ef5a4c08673cd5902736a2e9feb5534
+    source: "https://github.com/fu0201/MIL_Pretrained"
+  - model_id: attention-deep-mil
+    path: models/attention-deep-mil/model.py
+    role: reference_code
+    format: text
+    bytes: 4389
+    sha256: 21775302071de4e811ae70330c06fae31a3029e85c6be0c5b1aaab4a08789df4
+    source: "https://github.com/AMLab-Amsterdam/AttentionDeepMIL"
+  - model_id: attention-deep-mil
+    path: models/attention-deep-mil/LICENSE
+    role: license
+    format: text
+    bytes: 1090
+    sha256: f652daf79344b562c725c684b2dea90b3ce2670d7db269619d0ce6e209ac9baa
+    source: "https://github.com/AMLab-Amsterdam/AttentionDeepMIL"
+  - model_id: attention-deep-mil
+    path: models/attention-deep-mil/README.md
+    role: upstream_readme
+    format: md
+    bytes: 3747
+    sha256: 1d7d29f80d71719d4aad22036288417634de494f65062839cbb204fe3670c2e4
+    source: "https://github.com/AMLab-Amsterdam/AttentionDeepMIL"

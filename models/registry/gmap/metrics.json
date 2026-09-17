@@ -1,0 +1,73 @@
+{
+  "model_id": "gmap",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "IDH",
+      "cohort": "iç test (88 hasta)",
+      "metric": "AUROC",
+      "value": 0.939,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.865–0.993"
+    },
+    {
+      "task": "1p19q",
+      "cohort": "iç test",
+      "metric": "AUROC",
+      "value": 0.955,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.898–0.992"
+    },
+    {
+      "task": "TERT",
+      "cohort": "iç test",
+      "metric": "AUROC",
+      "value": 0.944,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.849–1.000"
+    },
+    {
+      "task": "+7/-10",
+      "cohort": "iç test",
+      "metric": "AUROC",
+      "value": 0.886,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.802–0.955"
+    },
+    {
+      "task": "IDH",
+      "cohort": "dış doğrulama (3147 hasta)",
+      "metric": "AUROC",
+      "value": 0.87,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.857–0.883"
+    },
+    {
+      "task": "1p19q",
+      "cohort": "dış doğrulama",
+      "metric": "AUROC",
+      "value": 0.885,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.865–0.905"
+    },
+    {
+      "task": "TERT",
+      "cohort": "dış doğrulama",
+      "metric": "AUROC",
+      "value": 0.694,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.665–0.724"
+    },
+    {
+      "task": "+7/-10",
+      "cohort": "dış doğrulama",
+      "metric": "AUROC",
+      "value": 0.672,
+      "source": "Han C, Li D, Zhao B, et al. Molecular alterations prediction in gliomas via an interpretable deep learning model: a multicentre and retrospective study. Lancet Digit Health 2026;8(4):100977. https://doi.org/10.1016/j.landig.2025.100977 (PMID 42115062)",
+      "ci95": "0.615–0.727"
+    }
+  ],
+  "upstream_note": "Makale accuracy, sensitivity, specificity ve F1 de raporlar; tam metin açık erişimli olmadığı için bu değerler buraya alınmadı.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

@@ -1,0 +1,68 @@
+{
+  "assets": [
+    {
+      "path": "models/dinov2-vitb14/dinov2_vitb14_pretrain.pth",
+      "role": "checkpoint",
+      "status": "ok",
+      "bytes": 346378731,
+      "sha256": "0b8b82f85de91b424aded121c7e1dcc2b7bc6d0adeea651bf73a13307fad8c73",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": true,
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "cls_token",
+          "pos_embed",
+          "mask_token",
+          "patch_embed.proj.weight",
+          "patch_embed.proj.bias",
+          "blocks.0.norm1.weight",
+          "blocks.0.norm1.bias",
+          "blocks.0.attn.qkv.weight",
+          "blocks.0.attn.qkv.bias",
+          "blocks.0.attn.proj.weight",
+          "blocks.0.attn.proj.bias",
+          "blocks.0.ls1.gamma",
+          "blocks.0.norm2.weight",
+          "blocks.0.norm2.bias",
+          "blocks.0.mlp.fc1.weight",
+          "blocks.0.mlp.fc1.bias",
+          "blocks.0.mlp.fc2.weight",
+          "blocks.0.mlp.fc2.bias",
+          "blocks.0.ls2.gamma",
+          "blocks.1.norm1.weight"
+        ],
+        "state_dict_key": "<root>",
+        "n_tensors": 175,
+        "n_parameters": 86580480,
+        "first_keys": [
+          "cls_token",
+          "pos_embed",
+          "mask_token",
+          "patch_embed.proj.weight",
+          "patch_embed.proj.bias",
+          "blocks.0.norm1.weight",
+          "blocks.0.norm1.bias",
+          "blocks.0.attn.qkv.weight"
+        ]
+      }
+    },
+    {
+      "path": "models/dinov2-vitb14/dinov2-src-7764ea0f.tar.gz",
+      "role": "source_archive",
+      "status": "ok",
+      "bytes": 2869642,
+      "sha256": "c27dcdaf50e9fb5bbdf2bb529da357716372e19c6afab17d5350f3f0094aed4b"
+    }
+  ],
+  "environment": {
+    "python": "3.14.4",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "data_root": "<MERGEN_DATA_ROOT>",
+    "checked_at_utc": "2026-09-14T14:05:55+00:00",
+    "torch": "2.14.0+cu130",
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 5060 Ti"
+  },
+  "all_ok": true
+}

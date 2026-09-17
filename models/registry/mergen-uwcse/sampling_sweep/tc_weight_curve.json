@@ -1,0 +1,111 @@
+{
+  "w_wt_fixed": 0.697,
+  "w_et_fixed": 0.447,
+  "n_test": 100,
+  "curve": [
+    {
+      "w_tc": 0.2,
+      "n_present": 64,
+      "dice_present": 0.8136546874999999,
+      "n_absent": 36,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444
+    },
+    {
+      "w_tc": 0.25,
+      "n_present": 64,
+      "dice_present": 0.8141375000000001,
+      "n_absent": 36,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444
+    },
+    {
+      "w_tc": 0.3,
+      "n_present": 64,
+      "dice_present": 0.8144703124999999,
+      "n_absent": 36,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444
+    },
+    {
+      "w_tc": 0.35,
+      "n_present": 64,
+      "dice_present": 0.81505625,
+      "n_absent": 36,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444
+    },
+    {
+      "w_tc": 0.4,
+      "n_present": 64,
+      "dice_present": 0.8157453124999999,
+      "n_absent": 36,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444
+    },
+    {
+      "w_tc": 0.45,
+      "n_present": 64,
+      "dice_present": 0.8170890625,
+      "n_absent": 36,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444
+    },
+    {
+      "w_tc": 0.5,
+      "n_present": 64,
+      "dice_present": 0.8261734375,
+      "n_absent": 36,
+      "silent": 24,
+      "silent_rate": 0.6666666666666666
+    },
+    {
+      "w_tc": 0.55,
+      "n_present": 64,
+      "dice_present": 0.86454375,
+      "n_absent": 36,
+      "silent": 4,
+      "silent_rate": 0.1111111111111111
+    },
+    {
+      "w_tc": 0.6,
+      "n_present": 64,
+      "dice_present": 0.8654265624999999,
+      "n_absent": 36,
+      "silent": 4,
+      "silent_rate": 0.1111111111111111
+    },
+    {
+      "w_tc": 0.65,
+      "n_present": 64,
+      "dice_present": 0.8655937499999999,
+      "n_absent": 36,
+      "silent": 4,
+      "silent_rate": 0.1111111111111111
+    },
+    {
+      "w_tc": 0.7,
+      "n_present": 64,
+      "dice_present": 0.86535625,
+      "n_absent": 36,
+      "silent": 4,
+      "silent_rate": 0.1111111111111111
+    },
+    {
+      "w_tc": 0.75,
+      "n_present": 64,
+      "dice_present": 0.86525625,
+      "n_absent": 36,
+      "silent": 4,
+      "silent_rate": 0.1111111111111111
+    },
+    {
+      "w_tc": 0.8,
+      "n_present": 64,
+      "dice_present": 0.8648703125,
+      "n_absent": 36,
+      "silent": 4,
+      "silent_rate": 0.1111111111111111
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "patient_id": "TCGA-QH-A65R",
+  "true_class": "O",
+  "subtype": "IDHmut-codel",
+  "grade": "G3",
+  "tissue_tiles_total": 13459,
+  "tiles_used": 6000,
+  "dinov2": {
+    "embedding_shape": [
+      6000,
+      768
+    ],
+    "kmeans_cluster_sizes": [
+      1686,
+      778,
+      1336,
+      210,
+      433,
+      1557
+    ]
+  },
+  "p19qnet": {
+    "p_1pNET": 0.2348,
+    "p_19qNET": 0.2984,
+    "p_codeleted_logistic": 0.9709,
+    "predicted_class": "O",
+    "tile_score_1p_min_max": [
+      -3.789,
+      3.103
+    ]
+  },
+  "seconds": 21.8,
+  "gpu_peak_mib": 1108
+}
