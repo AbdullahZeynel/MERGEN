@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Box, ImageOff, ScanLine, Info } from 'lucide-react';
-import { axes, axisLabels, type Axis, type CaseRecord } from '../data/contracts';
+import { axes, axisKeys, type Axis, type CaseRecord } from '../data/contracts';
+import { useT } from '../i18n';
 import { EmptyState } from './EmptyState';
 import { LazyVolumeViewer } from './LazyVolumeViewer';
 import { ViewerFrame } from './ViewerFrame';
@@ -12,6 +13,7 @@ export function ImagingWorkspace({
   record: CaseRecord;
   nextMeshUrl?: string;
 }) {
+  const t = useT();
   const [axis, setAxis] = useState<Axis>('axial');
   const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const [indices, setIndices] = useState(
@@ -45,11 +47,11 @@ export function ImagingWorkspace({
   return (
     <>
       <div className="imaging-grid">
-        <ViewerFrame title="2D kesit görüntüleyici" icon={<ScanLine size={18} />}>
+        <ViewerFrame title={t('viewer.slices')} icon={<ScanLine size={18} />}>
           <div
             className="image-stage"
             tabIndex={0}
-            aria-label="Kesit görüntüsü; ok tuşlarıyla gezin"
+            aria-label={t('viewer.stage')}
             onKeyDown={(event) => {
               if (['ArrowUp', 'ArrowRight', 'ArrowDown', 'ArrowLeft'].includes(event.key)) {
                 event.preventDefault();
@@ -64,14 +66,14 @@ export function ImagingWorkspace({
             {failedSrc === src ? (
               <EmptyState
                 icon={<ImageOff />}
-                title="Kesit görüntüsü yüklenemedi"
+                title={t('viewer.sliceFailed')}
                 action={
                   <button className="button" onClick={() => setFailedSrc(null)}>
-                    Yeniden dene
+                    {t('workspace.retry')}
                   </button>
                 }
               >
-                Vakanın diğer düzlemlerini görüntüleyebilirsiniz.
+                {t('viewer.sliceFailedBody')}
               </EmptyState>
             ) : (
               <img
@@ -80,49 +82,53 @@ export function ImagingWorkspace({
                 style={{ visibility: loadedSrc === src ? 'visible' : 'hidden' }}
                 onLoad={() => setLoadedSrc(src)}
                 onError={() => setFailedSrc(src)}
-                alt={`${record.id} FLAIR ${axisLabels[axis]}, kesit ${index + 1}`}
+                alt={t('viewer.sliceAlt', {
+                  id: record.id,
+                  axis: t(axisKeys[axis]),
+                  index: index + 1,
+                })}
               />
             )}
             {record.overlays?.includes('prediction') && predictionVisible && (
               <img
                 className="slice-overlay"
                 src={`/api/demo/cases/${record.id}/overlays/prediction/${axis}/${index}`}
-                alt="Ensemble tahmin maskesi"
+                alt={t('viewer.predictionAlt')}
               />
             )}
             {record.overlays?.includes('ground_truth') && groundTruthVisible && (
               <img
                 className="slice-overlay"
                 src={`/api/demo/cases/${record.id}/overlays/ground_truth/${axis}/${index}`}
-                alt="Referans segmentasyon maskesi"
+                alt={t('viewer.groundTruthAlt')}
               />
             )}
             <div className="image-caption">
-              <span>{axisLabels[axis]}</span>
+              <span>{t(axisKeys[axis])}</span>
               <span>
-                Kesit {index + 1} / {count}
-                {loadedSrc !== src && failedSrc !== src ? ' · Yükleniyor…' : ''}
+                {t('viewer.sliceOf', { index: index + 1, count })}
+                {loadedSrc !== src && failedSrc !== src ? ` · ${t('viewer.loadingShort')}` : ''}
               </span>
             </div>
           </div>
           <div className="viewer-controls">
             {record.overlays && (
-              <div className="overlay-controls" aria-label="Segmentasyon katmanları">
+              <div className="overlay-controls" aria-label={t('viewer.overlays')}>
                 <button
                   aria-pressed={predictionVisible}
                   onClick={() => setPredictionVisible(!predictionVisible)}
                 >
-                  <i className="prediction-dot" /> Tahmin
+                  <i className="prediction-dot" /> {t('viewer.prediction')}
                 </button>
                 <button
                   aria-pressed={groundTruthVisible}
                   onClick={() => setGroundTruthVisible(!groundTruthVisible)}
                 >
-                  <i className="ground-truth-dot" /> Referans
+                  <i className="ground-truth-dot" /> {t('viewer.groundTruth')}
                 </button>
               </div>
             )}
-            <div className="segmented" aria-label="Görüntü düzlemi">
+            <div className="segmented" aria-label={t('viewer.plane')}>
               {axes.map((a) => (
                 <button
                   key={a}
@@ -130,23 +136,23 @@ export function ImagingWorkspace({
                   className={axis === a ? 'selected' : ''}
                   onClick={() => setAxis(a)}
                 >
-                  {axisLabels[a]}
+                  {t(axisKeys[a])}
                 </button>
               ))}
             </div>
             <div className="slice-navigation">
               <button
                 className="button"
-                aria-label="Önceki kesit"
+                aria-label={t('viewer.previousSlice')}
                 disabled={index === 0}
                 onClick={() => move(index - 1)}
               >
                 −
               </button>
               <label>
-                Kesit {index + 1} / {count}
+                {t('viewer.sliceOf', { index: index + 1, count })}
                 <input
-                  aria-label="Kesit seç"
+                  aria-label={t('viewer.pickSlice')}
                   type="range"
                   min={1}
                   max={count}
@@ -156,49 +162,48 @@ export function ImagingWorkspace({
               </label>
               <button
                 className="button"
-                aria-label="Sonraki kesit"
+                aria-label={t('viewer.nextSlice')}
                 disabled={index === count - 1}
                 onClick={() => move(index + 1)}
               >
                 +
               </button>
               <button className="button" onClick={() => move(Math.floor(count / 2))}>
-                Merkez
+                {t('viewer.centre')}
               </button>
             </div>
+            <p className="slice-hint">{t('viewer.keyboardHint')}</p>
           </div>
         </ViewerFrame>
-        <ViewerFrame title="3D segmentasyon" icon={<Box size={18} />}>
+        <ViewerFrame title={t('viewer.mesh')} icon={<Box size={18} />}>
           <LazyVolumeViewer url={record.mesh} />
         </ViewerFrame>
       </div>
       <div className="notice">
         <Info size={16} />
         <span>
-          Hazır FLAIR kesitleri ve ensemble segmentasyonu VPS demo arşivinden MCP üzerinden sunulur.
-          {record.brainContext &&
-            ' Beyin dış yüzeyi MR ön planından yaklaşık olarak üretildi; korteks segmentasyonu değildir.'}
-          {' Kesit alanına odaklanıp ok tuşlarıyla da gezinebilirsiniz.'}
+          {t('case.notice')}
+          {record.brainContext && ` ${t('case.brainNotice')}`}
         </span>
       </div>
       <section className="case-details panel">
         <div>
-          <span className="eyebrow">VERİ KAYNAĞI</span>
+          <span className="eyebrow">{t('case.sourceEyebrow')}</span>
           <strong>{record.source}</strong>
         </div>
         <div>
-          <span className="eyebrow">HACİM BOYUTU</span>
+          <span className="eyebrow">{t('case.shapeEyebrow')}</span>
           <strong>
-            {record.shape.join(' × ')} <small>voxel</small>
+            {record.shape.join(' × ')} <small>{t('case.voxel')}</small>
           </strong>
         </div>
         <div>
-          <span className="eyebrow">MEVCUT ÖNİZLEME</span>
-          <strong>FLAIR · 3 düzlem</strong>
+          <span className="eyebrow">{t('case.previewEyebrow')}</span>
+          <strong>{t('case.previewValue')}</strong>
         </div>
         <div>
-          <span className="eyebrow">SONUÇ TÜRÜ</span>
-          <strong>Hazır demo</strong>
+          <span className="eyebrow">{t('case.resultEyebrow')}</span>
+          <strong>{t('cases.demo')}</strong>
         </div>
       </section>
     </>

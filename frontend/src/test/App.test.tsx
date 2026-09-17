@@ -4,10 +4,12 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
 import { makeCase } from './fixtures';
+import { withLanguage } from './render';
 
 afterEach(() => {
   vi.unstubAllGlobals();
   window.localStorage.clear();
+  document.documentElement.removeAttribute('lang');
   delete document.documentElement.dataset.theme;
   document.documentElement.style.removeProperty('color-scheme');
 });
@@ -16,9 +18,11 @@ function mount(payload: unknown = { version: 2, cases }) {
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(
-    <QueryClientProvider client={client}>
-      <App />
-    </QueryClientProvider>,
+    withLanguage(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>,
+    ),
   );
   return userEvent.setup();
 }
@@ -127,6 +131,29 @@ describe('case workspace', () => {
     });
     expect(slider).toHaveValue('154');
   });
+  it('switches the interface language and remembers it', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    expect(document.documentElement).toHaveAttribute('lang', 'tr');
+    await user.click(screen.getByRole('button', { name: 'Switch interface language to English' }));
+    expect(document.documentElement).toHaveAttribute('lang', 'en');
+    expect(window.localStorage.getItem('mergen-language')).toBe('en');
+    // Ceviri yalnizca dugmeyi degil, calisma alaninin metnini de degistirmeli.
+    expect(screen.getByRole('button', { name: 'Prediction' })).toBeVisible();
+    expect(screen.getByText('Research use only, not for clinical decisions', { exact: false }))
+      .toBeVisible();
+    expect(screen.queryByText('Tahmin')).not.toBeInTheDocument();
+  });
+
+  it('never shows the reader where the data is served from', async () => {
+    mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    // Hekime gore metin: ic mimari ekranda yer almaz.
+    for (const leak of ['MCP', 'VPS', 'spool', 'dispatcher']) {
+      expect(document.body.textContent).not.toContain(leak);
+    }
+  });
+
   it('keeps prediction and reference overlays explicitly separate', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
@@ -134,11 +161,11 @@ describe('case workspace', () => {
     const reference = screen.getByRole('button', { name: 'Referans' });
     expect(prediction).toHaveAttribute('aria-pressed', 'true');
     expect(reference).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByAltText('Ensemble tahmin maskesi')).toBeVisible();
+    expect(screen.getByAltText('Model tahmini segmentasyon maskesi')).toBeVisible();
     expect(screen.queryByAltText('Referans segmentasyon maskesi')).not.toBeInTheDocument();
     await user.click(prediction);
     await user.click(reference);
-    expect(screen.queryByAltText('Ensemble tahmin maskesi')).not.toBeInTheDocument();
+    expect(screen.queryByAltText('Model tahmini segmentasyon maskesi')).not.toBeInTheDocument();
     expect(screen.getByAltText('Referans segmentasyon maskesi')).toBeVisible();
   });
 });

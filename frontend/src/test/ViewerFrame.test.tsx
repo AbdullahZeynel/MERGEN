@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it, vi } from 'vitest';
 import { ViewerFrame } from '../components/ViewerFrame';
+import { renderWithLanguage } from './render';
 
 it('opens an accessible dialog and closes on Escape without closing the assistant', async () => {
   HTMLDialogElement.prototype.showModal = function () {
@@ -10,7 +11,7 @@ it('opens an accessible dialog and closes on Escape without closing the assistan
   const onEscape = vi.fn();
   document.addEventListener('keydown', onEscape);
   const user = userEvent.setup();
-  render(
+  renderWithLanguage(
     <ViewerFrame title="3D segmentasyon" icon={null}>
       <p>Mesh</p>
     </ViewerFrame>,

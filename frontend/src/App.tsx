@@ -5,6 +5,7 @@ import {
   ChevronRight,
   Database,
   FolderOpen,
+  Languages,
   LayoutGrid,
   Link2Off,
   Menu,
@@ -16,7 +17,8 @@ import {
   X,
 } from 'lucide-react';
 import { demoSource, liveSource } from './data/source';
-import { statusLabels, type SourceMode, type CaseRecord } from './data/contracts';
+import { statusKeys, type SourceMode, type CaseRecord } from './data/contracts';
+import { useLanguage } from './i18n';
 import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
@@ -34,6 +36,7 @@ function initialTheme(): Theme {
 }
 
 export default function App() {
+  const { language, setLanguage, t } = useLanguage();
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [mode, setMode] = useState<SourceMode>('demo');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -76,15 +79,15 @@ export default function App() {
   return (
     <div className="app">
       <a className="skip-link" href="#workspace">
-        Çalışma alanına geç
+        {t('app.skip')}
       </a>
-      <nav className="rail" aria-label="Ana gezinme">
-        <a href="#workspace" className="brand-mark" aria-label="MERGEN çalışma alanı">
+      <nav className="rail" aria-label={t('app.nav')}>
+        <a href="#workspace" className="brand-mark" aria-label={t('app.brand')}>
           <img src="/ergenekon-logo.png" alt="" width={192} height={88} />
         </a>
         <button
           className={`rail-button ${casesOpen ? 'active' : ''}`}
-          aria-label={casesOpen ? 'Vaka listesini gizle' : 'Vaka listesini göster'}
+          aria-label={casesOpen ? t('cases.hide') : t('cases.show')}
           aria-expanded={casesOpen}
           aria-controls="case-sidebar"
           onClick={() => setCasesOpen(!casesOpen)}
@@ -105,18 +108,27 @@ export default function App() {
       <div className="app-body">
         <header className="topbar">
           <div className="wordmark">
-            MERGEN<span>ONKOLOJİ KARAR DESTEĞİ</span>
+            MERGEN<span>{t('app.wordmarkSub')}</span>
           </div>
           <div className="topbar-right">
             <button
               className="theme-toggle"
               type="button"
-              aria-label={theme === 'dark' ? 'Açık temaya geç' : 'Koyu temaya geç'}
+              aria-label={theme === 'dark' ? t('theme.toLight') : t('theme.toDark')}
               aria-pressed={theme === 'dark'}
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
               {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-              <span>{theme === 'dark' ? 'Açık' : 'Koyu'}</span>
+              <span>{theme === 'dark' ? t('theme.light') : t('theme.dark')}</span>
+            </button>
+            <button
+              className="theme-toggle language-toggle"
+              type="button"
+              aria-label={t('language.switch')}
+              onClick={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+            >
+              <Languages size={16} />
+              <span>{t('language.short')}</span>
             </button>
           </div>
         </header>
@@ -124,57 +136,57 @@ export default function App() {
           <aside
             id="case-sidebar"
             className={`case-sidebar ${casesOpen ? 'open' : 'collapsed'}`}
-            aria-label="Vakalar"
+            aria-label={t('cases.title')}
           >
             <div className="sidebar-title">
               <h1>
-                Vakalar <span>{cases.length.toString().padStart(2, '0')}</span>
+                {t('cases.title')} <span>{cases.length.toString().padStart(2, '0')}</span>
               </h1>
               <button
                 className="icon-button mobile-only"
-                aria-label="Vaka listesini kapat"
+                aria-label={t('cases.close')}
                 onClick={() => setCasesOpen(false)}
               >
                 <X />
               </button>
             </div>
-            <p className="sidebar-description">İncelemek için bir vaka seçin.</p>
-            <div className="source-switch segmented" aria-label="Veri kaynağı">
+            <p className="sidebar-description">{t('cases.pick')}</p>
+            <div className="source-switch segmented" aria-label={t('cases.sourceLabel')}>
               <button
                 className={mode === 'demo' ? 'selected' : ''}
                 aria-pressed={mode === 'demo'}
                 onClick={() => changeMode('demo')}
               >
-                Hazır demo
+                {t('cases.demo')}
               </button>
               <button
                 className={mode === 'live' ? 'selected' : ''}
                 aria-pressed={mode === 'live'}
                 onClick={() => changeMode('live')}
               >
-                Canlı analiz
+                {t('cases.live')}
               </button>
             </div>
             <label className="search-box">
               <Search size={17} />
-              <span className="sr-only">Vaka ara</span>
+              <span className="sr-only">{t('cases.search')}</span>
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Vaka kimliği ile ara"
+                placeholder={t('cases.searchPlaceholder')}
               />
             </label>
             <div className="list-label">
-              <span>VAKA LİSTESİ</span>
+              <span>{t('cases.listLabel')}</span>
               <select
-                aria-label="Vaka durumunu filtrele"
+                aria-label={t('cases.filter')}
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
               >
-                <option value="all">Tüm durumlar</option>
-                {Object.entries(statusLabels).map(([key, label]) => (
-                  <option key={key} value={key}>
-                    {label}
+                <option value="all">{t('cases.allStatuses')}</option>
+                {Object.entries(statusKeys).map(([status, key]) => (
+                  <option key={status} value={status}>
+                    {t(key)}
                   </option>
                 ))}
               </select>
@@ -182,7 +194,7 @@ export default function App() {
             <div className="case-list" aria-busy={query.isPending}>
               {query.isPending ? (
                 <p role="status" className="list-message">
-                  Vakalar yükleniyor…
+                  {t('cases.loading')}
                 </p>
               ) : (
                 filtered.map((c) => (
@@ -202,10 +214,10 @@ export default function App() {
                     </span>
                     <span className="case-item-text">
                       <strong>{c.id}</strong>
-                      <span>MR görüntüleme</span>
+                      <span>{t('cases.modality')}</span>
                       <span className="status-pill">
                         <span />
-                        {statusLabels[c.status]}
+                        {t(statusKeys[c.status])}
                       </span>
                     </span>
                     <ChevronRight size={15} />
@@ -214,7 +226,7 @@ export default function App() {
               )}
               {!query.isPending && filtered.length === 0 && (
                 <p className="list-message">
-                  {query.isError ? 'Vaka listesi alınamadı.' : 'Eşleşen vaka bulunamadı.'}
+                  {query.isError ? t('cases.listFailed') : t('cases.noMatch')}
                 </p>
               )}
             </div>
@@ -223,20 +235,20 @@ export default function App() {
             <div className="breadcrumb">
               <button
                 className="icon-button mobile-only"
-                aria-label="Vakaları göster"
+                aria-label={t('workspace.showCases')}
                 onClick={() => setCasesOpen(true)}
               >
                 <Menu size={18} />
               </button>
-              <span>Çalışma alanı</span>
+              <span>{t('workspace.breadcrumb')}</span>
               <ChevronRight size={14} />
-              <strong>{record?.id ?? (mode === 'demo' ? 'Hazır demo' : 'Canlı analiz')}</strong>
+              <strong>{record?.id ?? t(mode === 'demo' ? 'cases.demo' : 'cases.live')}</strong>
             </div>
             <div className="workspace-title">
               <div>
-                <span className="eyebrow">VAKA İNCELEME</span>
-                <h2>{record?.id ?? 'Vaka çalışma alanı'}</h2>
-                {!record && <p>Vaka verileri hazır olduğunda burada görüntülenir.</p>}
+                <span className="eyebrow">{t('workspace.eyebrow')}</span>
+                <h2>{record?.id ?? t('workspace.emptyTitle')}</h2>
+                {!record && <p>{t('workspace.emptyBody')}</p>}
               </div>
               {assistantEnabled && (
                 <button
@@ -251,28 +263,28 @@ export default function App() {
             <div className="context-bar">
               <span className={`mode-badge ${mode}`}>
                 <Database size={14} />
-                {mode === 'demo' ? 'HAZIR DEMO' : 'CANLI ANALİZ'}
+                {t(mode === 'demo' ? 'workspace.modeDemo' : 'workspace.modeLive')}
               </span>
               {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh
                   istekleri ayrica hata verebilir, o yuzden metin liste diyor. */}
               <span className="service-state" role="status">
                 {query.isPending ? (
-                  <><RefreshCw size={14} className="spin" /> Servis yanıtı bekleniyor</>
+                  <><RefreshCw size={14} className="spin" /> {t('workspace.waiting')}</>
                 ) : query.isError ? (
                   <>
                     <Link2Off size={14} />{' '}
-                    {mode === 'demo' ? 'Demo servisine ulaşılamadı' : 'AI servisi bağlı değil'}
+                    {t(mode === 'demo' ? 'workspace.demoUnreachable' : 'workspace.liveDisconnected')}
                   </>
                 ) : (
                   <>
                     <Database size={14} />{' '}
-                    {mode === 'demo' ? 'Demo vaka listesi alındı' : 'Canlı vaka listesi alındı'}
+                    {t(mode === 'demo' ? 'workspace.demoListed' : 'workspace.liveListed')}
                   </>
                 )}
               </span>
               <button
                 className="refresh"
-                aria-label="Vaka verilerini yenile"
+                aria-label={t('workspace.refresh')}
                 disabled={query.isFetching}
                 onClick={() => void query.refetch()}
               >
@@ -283,14 +295,14 @@ export default function App() {
               <div className="analysis-content">
                 {query.isPending ? (
                   <div className="panel loading-panel" role="status">
-                    <RefreshCw className="spin" /> Vaka verileri yükleniyor…
+                    <RefreshCw className="spin" /> {t('workspace.loadingCase')}
                   </div>
                 ) : query.isError ? (
                   <div className="panel" role="alert">
                     <EmptyState
                       icon={<Link2Off />}
                       title={
-                        mode === 'live' ? 'Canlı bağlantı henüz kurulmadı' : 'Demo paketi okunamadı'
+                        t(mode === 'live' ? 'workspace.liveNotReadyTitle' : 'workspace.demoUnreadableTitle')
                       }
                       action={
                         <button
@@ -299,19 +311,17 @@ export default function App() {
                             mode === 'live' ? changeMode('demo') : void query.refetch()
                           }
                         >
-                          {mode === 'live' ? 'Hazır demolara dön' : 'Yeniden dene'}
+                          {t(mode === 'live' ? 'workspace.backToDemo' : 'workspace.retry')}
                         </button>
                       }
                     >
-                      {mode === 'live'
-                        ? 'Canlı analiz için model servislerinin bağlanması gerekiyor.'
-                        : 'Hazır vaka dosyaları bulunamadı veya geçerli değil. Demo paketinin hazırlanması gerekiyor.'}
+                      {t(mode === 'live' ? 'workspace.liveNeedsServices' : 'workspace.demoMissing')}
                     </EmptyState>
                   </div>
                 ) : !record ? (
                   <div className="panel">
-                    <EmptyState icon={<FolderOpen />} title="Henüz vaka yok">
-                      Bu veri kaynağında görüntülenecek vaka bulunmuyor.
+                    <EmptyState icon={<FolderOpen />} title={t('workspace.noCaseTitle')}>
+                      {t('workspace.noCaseBody')}
                     </EmptyState>
                   </div>
                 ) : (
@@ -334,7 +344,7 @@ export default function App() {
               <span>
                 MERGEN <span className="muted">/</span> ERGENEKON
               </span>
-              <span>Onkolojide 3T · Araştırma ve gösterim amaçlı</span>
+              <span>{t('footer.purpose')}</span>
             </footer>
           </main>
         </div>

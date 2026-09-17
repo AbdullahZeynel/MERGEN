@@ -5,15 +5,18 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { RotateCcw, Box } from 'lucide-react';
 import { parseMesh, regions, type Region } from '../data/mesh';
 import { EmptyState } from './EmptyState';
+import { useT } from '../i18n';
+import type { MessageKey } from '../i18n/messages';
 
 const colors = { ET: 0xff596c, TC_NCR: 0x57cea2, ED: 0x599eee, BRAIN: 0xe2e8f0 };
-const labels = {
-  ET: 'Kontrast tutan tümör',
-  TC_NCR: 'Nekrotik çekirdek',
-  ED: 'Ödem',
-  BRAIN: 'Beyin dış yüzeyi',
+const labelKeys: Record<Region, MessageKey> = {
+  ET: 'mesh.ET',
+  TC_NCR: 'mesh.TC_NCR',
+  ED: 'mesh.ED',
+  BRAIN: 'mesh.BRAIN',
 };
 export function VolumeViewer({ url }: { url?: string }) {
+  const t = useT();
   const host = useRef<HTMLDivElement>(null);
   const sceneControl = useRef<{ group: THREE.Group; draw: () => void; reset: () => void } | null>(
     null,
@@ -45,7 +48,7 @@ export function VolumeViewer({ url }: { url?: string }) {
     setState('loading');
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     element.appendChild(renderer.domElement);
-    renderer.domElement.setAttribute('aria-label', 'Etkileşimli 3D tümör modeli');
+    renderer.domElement.setAttribute('aria-label', t('mesh.canvas'));
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 10000);
     const controls = new OrbitControls(camera, renderer.domElement);
@@ -194,30 +197,30 @@ export function VolumeViewer({ url }: { url?: string }) {
               icon={<Box />}
               title={
                 state === 'loading'
-                  ? '3D model yükleniyor…'
+                  ? t('mesh.loading')
                   : state === 'missing'
-                    ? '3D sonuç paketi bulunamadı'
+                    ? t('mesh.missing')
                     : state === 'webgl'
-                      ? '3D görüntüleme başlatılamadı'
-                      : '3D model yüklenemedi'
+                      ? t('mesh.webglFailed')
+                      : t('mesh.failed')
               }
               action={
                 state !== 'loading' && state !== 'missing' ? (
                   <button className="button" onClick={() => setAttempt((a) => a + 1)}>
-                    Yeniden dene
+                    {t('workspace.retry')}
                   </button>
                 ) : undefined
               }
             >
               {state === 'webgl'
-                ? 'Tarayıcının WebGL desteğini ve donanım hızlandırmasını kontrol edin.'
+                ? t('mesh.webglHint')
                 : state === 'loading'
-                  ? 'Hazır segmentasyon verisi açılıyor.'
-                  : 'Vakanın 2D görüntülerini incelemeye devam edebilirsiniz.'}
+                  ? t('mesh.loadingHint')
+                  : t('mesh.fallbackHint')}
             </EmptyState>
           </div>
         )}
-        <span className="mesh-hint">Sürükle: döndür · Tekerlek: yakınlaştır · Sağ tuş: taşı</span>
+        <span className="mesh-hint">{t('mesh.navHint')}</span>
       </div>
       <div className="mesh-controls">
         <div className="region-buttons">
@@ -227,20 +230,18 @@ export function VolumeViewer({ url }: { url?: string }) {
               className={`region-${region}`}
               disabled={state !== 'ready' || !available.includes(region)}
               title={
-                region === 'BRAIN'
-                  ? 'MR ön planından yaklaşık dış yüzey; anatomik korteks segmentasyonu değildir.'
-                  : labels[region]
+                region === 'BRAIN' ? t('mesh.brainTitle') : t(labelKeys[region])
               }
               aria-pressed={visible[region]}
               onClick={() => setVisible((v) => ({ ...v, [region]: !v[region] }))}
             >
               <i />
-              {labels[region]}
+              {t(labelKeys[region])}
             </button>
           ))}
           <button
             className="icon-button"
-            aria-label="3D kamerayı sıfırla"
+            aria-label={t('mesh.resetCamera')}
             disabled={state !== 'ready'}
             onClick={() => sceneControl.current?.reset()}
           >
@@ -248,7 +249,7 @@ export function VolumeViewer({ url }: { url?: string }) {
           </button>
         </div>
         <label>
-          Tümör opaklığı{' '}
+          {t('mesh.opacity')}{' '}
           <input
             type="range"
             min="10"

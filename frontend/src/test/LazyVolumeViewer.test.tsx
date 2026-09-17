@@ -1,4 +1,5 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
+import { renderWithLanguage } from './render';
 import { afterEach, expect, it, vi } from 'vitest';
 
 afterEach(() => {
@@ -17,7 +18,7 @@ it('announces an accessible busy state while the 3D chunk loads', async () => {
   );
   const { LazyVolumeViewer } = await import('../components/LazyVolumeViewer');
 
-  render(<LazyVolumeViewer url="/demo.glb" />);
+  renderWithLanguage(<LazyVolumeViewer url="/demo.glb" />);
 
   const status = screen.getByRole('status');
   expect(status).toHaveAttribute('aria-live', 'polite');
