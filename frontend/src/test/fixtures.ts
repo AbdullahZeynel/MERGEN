@@ -1,4 +1,4 @@
-import type { CaseRecord } from '../data/contracts';
+import type { CaseRecord, FigureRecord, ReviewFlag, SlideRecord } from '../data/contracts';
 
 // Contract-only fixtures; no patient results or fabricated medical scores.
 export const makeCase = (id: string): CaseRecord => ({
@@ -14,4 +14,82 @@ export const makeCase = (id: string): CaseRecord => ({
     { axis: 'coronal', index: 120, src: `/api/demo/cases/${id}/slices/coronal/120` },
     { axis: 'sagittal', index: 120, src: `/api/demo/cases/${id}/slices/sagittal/120` },
   ],
+});
+
+// Asagidaki sayilar sozlesme fixture'i: olcum degil, semanin sinandigi
+// uydurma degerler. Gercek sayilar model kayit defterinden gelir.
+const slideBase = (id: string) => `/api/demo/modules/pathology/diseases/glioma/cases/${id}`;
+
+export const makeSlide = (id: string, patch: Partial<SlideRecord> = {}): SlideRecord => ({
+  id,
+  patientId: id,
+  source: 'TCGA',
+  sourceSite: 'Test Site',
+  mode: 'demo',
+  status: 'demo_ready',
+  split: 'test',
+  whoGrade: 'G4',
+  tilesUsed: 4096,
+  prediction: { class: 'G', probabilities: { A: 0.05, O: 0.05, G: 0.9 } },
+  reference: { class: 'G' },
+  agreesWithReference: true,
+  needsExpertReview: false,
+  attentionConcentration: { top1Share: 0.04, top10Share: 0.24, entropyNormalised: 0.65 },
+  assets: {
+    attention: `${slideBase(id)}/images/attention`,
+    top_tiles: `${slideBase(id)}/images/top_tiles`,
+    report: `${slideBase(id)}/report`,
+  },
+  ...patch,
+});
+
+export const slideModel = {
+  id: 'mergen-wsi-attention-mil',
+  version: 'mil_v1',
+  ensemble: false,
+  note: 'Tek model.',
+};
+
+export const makeSlideManifest = (cases: SlideRecord[]) => ({
+  schemaVersion: 4,
+  module: 'pathology',
+  disease: 'glioma',
+  reviewMargin: 0.45,
+  model: slideModel,
+  cases,
+});
+
+export const makeFlag = (patch: Partial<ReviewFlag> = {}): ReviewFlag => ({
+  finding: 'tumor_core',
+  severity: 'low_confidence',
+  reason: 'non_enhancing_tumor',
+  message: 'Paketin kendi metni.',
+  evidence: { tumor_core_voxels: 812, enhancing_voxels: 12, enhancing_threshold: 250 },
+  ...patch,
+});
+
+export const makeFigure = (id: string, patch: Partial<FigureRecord> = {}): FigureRecord => ({
+  id,
+  kind: 'figure',
+  caseId: id,
+  source: 'UCSF-PDGM',
+  split: 'locked test',
+  ruleVersion: 'uwcse-v3',
+  modelId: 'mergen-uwcse',
+  modelVersion: 'v3',
+  selectionReason: 'typical',
+  whoGrade: '4',
+  diagnosis: 'Glioblastoma, IDH-wildtype',
+  idh: 'wildtype',
+  regionVolumes: {
+    reference: { TC: 1000, WT: 4000, ET: 900 },
+    prediction: { TC: 1100, WT: 3900, ET: 950 },
+  },
+  dice: { TC: 0.91, WT: 0.93, ET: null },
+  hd95Mm: { TC: 2.5, WT: 3.5, ET: null },
+  reviewFlags: [],
+  sliceShown: 100,
+  figure: `/api/demo/modules/imaging/diseases/glioma/examples/${id}/figure`,
+  figureLayout: 'FLAIR, T1c, reference and prediction side by side',
+  ...patch,
 });
