@@ -181,6 +181,7 @@ export default function App() {
               className="theme-toggle source-toggle"
               type="button"
               data-tour="validation"
+              aria-label={t('validation.open')}
               onClick={() => setValidationOpen(true)}
             >
               <BarChart3 size={16} />
@@ -190,6 +191,7 @@ export default function App() {
               className="theme-toggle source-toggle"
               type="button"
               data-tour="data-sources"
+              aria-label={t('about.open')}
               onClick={() => setAboutOpen(true)}
             >
               <ShieldCheck size={16} />

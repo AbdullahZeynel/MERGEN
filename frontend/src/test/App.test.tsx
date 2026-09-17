@@ -331,6 +331,16 @@ describe('modules', () => {
     }
   });
 
+  it('keeps the top-bar entries named when the narrow layout drops their labels', async () => {
+    mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    // 900 px altinda etiket CSS ile gizleniyor; ad aria-label'dan geliyor.
+    for (const name of ['Doğrulama ve sınırlar', 'Veri kaynakları ve gizlilik']) {
+      const entry = screen.getAllByRole('button', { name }).find((b) => b.closest('.topbar'));
+      expect(entry).toHaveAttribute('aria-label', name);
+    }
+  });
+
   it('walks the tour through the pathology screen it is actually on', async () => {
     const user = mountModules();
     await screen.findByRole('heading', { name: 'TEST-0001' });

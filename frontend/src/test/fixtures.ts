@@ -35,6 +35,14 @@ export const makeSlide = (id: string, patch: Partial<SlideRecord> = {}): SlideRe
   agreesWithReference: true,
   needsExpertReview: false,
   attentionConcentration: { top1Share: 0.04, top10Share: 0.24, entropyNormalised: 0.65 },
+  tileGrid: {
+    tilePx: 224,
+    columns: 6,
+    rows: 2,
+    count: 12,
+    ordering: 'attention_desc',
+    micronsPerPixel: 0.5,
+  },
   assets: {
     attention: `${slideBase(id)}/images/attention`,
     top_tiles: `${slideBase(id)}/images/top_tiles`,
