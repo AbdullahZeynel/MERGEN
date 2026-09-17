@@ -1,0 +1,227 @@
+{
+  "assets": [
+    {
+      "path": "models/nnunet-brats21/downloads/Dataset002_BRATS19.zip",
+      "role": "weight_archive",
+      "status": "ok",
+      "bytes": 1155915349,
+      "sha256": "f45eff0624604333a80ca5e6ea9c71153d908a4c2082df9038051dd7c4b2491f"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth",
+      "role": "checkpoint_fold_0",
+      "status": "ok",
+      "bytes": 256125179,
+      "sha256": "82261f2482f9502249aa6eb3f05b0412a47f070afdbe91a3673c7ac5c6f55c01",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": false,
+        "weights_only_error": "UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the defa",
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "network_weights",
+          "optimizer_state",
+          "grad_scaler_state",
+          "logging",
+          "_best_ema",
+          "current_epoch",
+          "init_args",
+          "trainer_name",
+          "inference_allowed_mirroring_axes"
+        ],
+        "state_dict_key": "network_weights",
+        "n_tensors": 292,
+        "n_parameters": 88223577,
+        "first_keys": [
+          "encoder.stages.0.0.convs.0.conv.weight",
+          "encoder.stages.0.0.convs.0.conv.bias",
+          "encoder.stages.0.0.convs.0.norm.weight",
+          "encoder.stages.0.0.convs.0.norm.bias",
+          "encoder.stages.0.0.convs.0.all_modules.0.weight",
+          "encoder.stages.0.0.convs.0.all_modules.0.bias",
+          "encoder.stages.0.0.convs.0.all_modules.1.weight",
+          "encoder.stages.0.0.convs.0.all_modules.1.bias"
+        ]
+      }
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_1/checkpoint_final.pth",
+      "role": "checkpoint_fold_1",
+      "status": "ok",
+      "bytes": 256125566,
+      "sha256": "4dbab86cdfc05cc8ea595581f52cfd3343a9257be1d17653d5cda7c5377854af",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": false,
+        "weights_only_error": "UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the defa",
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "network_weights",
+          "optimizer_state",
+          "grad_scaler_state",
+          "logging",
+          "_best_ema",
+          "current_epoch",
+          "init_args",
+          "trainer_name",
+          "inference_allowed_mirroring_axes"
+        ],
+        "state_dict_key": "network_weights",
+        "n_tensors": 292,
+        "n_parameters": 88223577,
+        "first_keys": [
+          "encoder.stages.0.0.convs.0.conv.weight",
+          "encoder.stages.0.0.convs.0.conv.bias",
+          "encoder.stages.0.0.convs.0.norm.weight",
+          "encoder.stages.0.0.convs.0.norm.bias",
+          "encoder.stages.0.0.convs.0.all_modules.0.weight",
+          "encoder.stages.0.0.convs.0.all_modules.0.bias",
+          "encoder.stages.0.0.convs.0.all_modules.1.weight",
+          "encoder.stages.0.0.convs.0.all_modules.1.bias"
+        ]
+      }
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_2/checkpoint_final.pth",
+      "role": "checkpoint_fold_2",
+      "status": "ok",
+      "bytes": 256125758,
+      "sha256": "2cdbd76a570e1dd8a0a956b2fad111ec0fd1918947b95a42017a51a35ad1f912",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": false,
+        "weights_only_error": "UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the defa",
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "network_weights",
+          "optimizer_state",
+          "grad_scaler_state",
+          "logging",
+          "_best_ema",
+          "current_epoch",
+          "init_args",
+          "trainer_name",
+          "inference_allowed_mirroring_axes"
+        ],
+        "state_dict_key": "network_weights",
+        "n_tensors": 292,
+        "n_parameters": 88223577,
+        "first_keys": [
+          "encoder.stages.0.0.convs.0.conv.weight",
+          "encoder.stages.0.0.convs.0.conv.bias",
+          "encoder.stages.0.0.convs.0.norm.weight",
+          "encoder.stages.0.0.convs.0.norm.bias",
+          "encoder.stages.0.0.convs.0.all_modules.0.weight",
+          "encoder.stages.0.0.convs.0.all_modules.0.bias",
+          "encoder.stages.0.0.convs.0.all_modules.1.weight",
+          "encoder.stages.0.0.convs.0.all_modules.1.bias"
+        ]
+      }
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_3/checkpoint_final.pth",
+      "role": "checkpoint_fold_3",
+      "status": "ok",
+      "bytes": 256125438,
+      "sha256": "1ecc782979c1453c88b99b8c8874567f19da837f5e58ebe5e31b89179427296f",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": false,
+        "weights_only_error": "UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the defa",
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "network_weights",
+          "optimizer_state",
+          "grad_scaler_state",
+          "logging",
+          "_best_ema",
+          "current_epoch",
+          "init_args",
+          "trainer_name",
+          "inference_allowed_mirroring_axes"
+        ],
+        "state_dict_key": "network_weights",
+        "n_tensors": 292,
+        "n_parameters": 88223577,
+        "first_keys": [
+          "encoder.stages.0.0.convs.0.conv.weight",
+          "encoder.stages.0.0.convs.0.conv.bias",
+          "encoder.stages.0.0.convs.0.norm.weight",
+          "encoder.stages.0.0.convs.0.norm.bias",
+          "encoder.stages.0.0.convs.0.all_modules.0.weight",
+          "encoder.stages.0.0.convs.0.all_modules.0.bias",
+          "encoder.stages.0.0.convs.0.all_modules.1.weight",
+          "encoder.stages.0.0.convs.0.all_modules.1.bias"
+        ]
+      }
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_4/checkpoint_final.pth",
+      "role": "checkpoint_fold_4",
+      "status": "ok",
+      "bytes": 256125566,
+      "sha256": "7343742da28ba31058fdfb695d1ba37301687244ed16b5eea26f03df446da5ab",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": false,
+        "weights_only_error": "UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the defa",
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "network_weights",
+          "optimizer_state",
+          "grad_scaler_state",
+          "logging",
+          "_best_ema",
+          "current_epoch",
+          "init_args",
+          "trainer_name",
+          "inference_allowed_mirroring_axes"
+        ],
+        "state_dict_key": "network_weights",
+        "n_tensors": 292,
+        "n_parameters": 88223577,
+        "first_keys": [
+          "encoder.stages.0.0.convs.0.conv.weight",
+          "encoder.stages.0.0.convs.0.conv.bias",
+          "encoder.stages.0.0.convs.0.norm.weight",
+          "encoder.stages.0.0.convs.0.norm.bias",
+          "encoder.stages.0.0.convs.0.all_modules.0.weight",
+          "encoder.stages.0.0.convs.0.all_modules.0.bias",
+          "encoder.stages.0.0.convs.0.all_modules.1.weight",
+          "encoder.stages.0.0.convs.0.all_modules.1.bias"
+        ]
+      }
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/plans.json",
+      "role": "plans",
+      "status": "ok",
+      "bytes": 8484,
+      "sha256": "504b6278db2aee6b8dacf8d4ac21578a906f8184f4cdf652d23053ade0852b64"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset.json",
+      "role": "dataset_json",
+      "status": "ok",
+      "bytes": 11689851,
+      "sha256": "26b3f6909a4417df27d13b169c2eece4839752aed03448ead08cbba1ab74d1eb"
+    },
+    {
+      "path": "models/nnunet-brats21/weights/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/dataset_fingerprint.json",
+      "role": "dataset_fingerprint",
+      "status": "ok",
+      "bytes": 11370262,
+      "sha256": "11efc1e87cccc53407dd11373f0415b1fecababcbe44e75e95e74e28d1e0f05f"
+    }
+  ],
+  "environment": {
+    "python": "3.14.4",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "data_root": "<MERGEN_DATA_ROOT>",
+    "checked_at_utc": "2026-09-14T14:05:55+00:00",
+    "torch": "2.14.0+cu130",
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 5060 Ti"
+  },
+  "all_ok": true
+}

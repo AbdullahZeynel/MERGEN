@@ -1,0 +1,47 @@
+{
+  "weights": [
+    0.425,
+    0.697,
+    0.447
+  ],
+  "test_ids_n": 100,
+  "rules": [
+    {
+      "rule": "temel (kural yok)",
+      "tc_min": 0,
+      "n_present": 64,
+      "n_absent": 36,
+      "dice_present": 0.816212198564348,
+      "silent": 25,
+      "silent_rate": 0.6944444444444444,
+      "tc_overall": 0.7723758070811827,
+      "wt": 0.9261522569889723,
+      "et": 0.8830241994315865
+    },
+    {
+      "rule": "TC_MIN=250",
+      "tc_min": 250,
+      "n_present": 64,
+      "n_absent": 36,
+      "dice_present": 0.8112569556005491,
+      "silent": 30,
+      "silent_rate": 0.8333333333333334,
+      "tc_overall": 0.8192044515843514,
+      "wt": 0.9261522569889723,
+      "et": 0.8830241994315865
+    },
+    {
+      "rule": "TC_MIN=500",
+      "tc_min": 500,
+      "n_present": 64,
+      "n_absent": 36,
+      "dice_present": 0.8079929523058238,
+      "silent": 30,
+      "silent_rate": 0.8333333333333334,
+      "tc_overall": 0.8171154894757272,
+      "wt": 0.9261522569889723,
+      "et": 0.8830241994315865
+    }
+  ],
+  "note": "Kural 102 vakalık keşif havuzunda seçildi; burada ortak test kümesinde bir kez okundu."
+}

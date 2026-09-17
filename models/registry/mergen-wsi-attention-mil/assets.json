@@ -1,0 +1,37 @@
+{
+  "model_id": "mergen-wsi-attention-mil",
+  "data_root_placeholder": "<MERGEN_DATA_ROOT>",
+  "generated": "2026-09-14",
+  "assets": [
+    {
+      "path": "pathology/datasets/tcga_glioma/manifests/cohort.tsv",
+      "role": "cohort_manifest",
+      "format": "tsv",
+      "source": "https://portal.gdc.cancer.gov/ (files API: https://api.gdc.cancer.gov/files)",
+      "model_id": "mergen-wsi-attention-mil",
+      "bytes": 180478,
+      "sha256": "f8308659a4386e19d1227da55ecd64965a58afb28a0790aa033c9ffba43f6a73",
+      "status": "present"
+    },
+    {
+      "path": "pathology/datasets/tcga_glioma/manifests/gdc_manifest_full.txt",
+      "role": "gdc_manifest",
+      "format": "tsv",
+      "source": "https://portal.gdc.cancer.gov/ (files API: https://api.gdc.cancer.gov/files)",
+      "model_id": "mergen-wsi-attention-mil",
+      "bytes": 117562,
+      "sha256": "4ba5a17e8a53645fbd0d770a21d95c4d9fe47d1f0505ec6a119b2a74b7acaeb8",
+      "status": "present"
+    },
+    {
+      "path": "pathology/datasets/tcga_glioma/metadata/data_clinical_sample.txt",
+      "role": "labels",
+      "format": "tsv",
+      "source": "https://github.com/cBioPortal/datahub/tree/04f170590dbd1ac6e49c2d334decb4dbdb4c14b9/public/lgggbm_tcga_pub",
+      "model_id": "mergen-wsi-attention-mil",
+      "bytes": 374033,
+      "sha256": "cf622c83218f6a1a6f02a5e2cc8cc5c365ec90c71193faa693e113c5326e45ac",
+      "status": "present"
+    }
+  ]
+}

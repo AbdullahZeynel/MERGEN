@@ -1,0 +1,52 @@
+{
+  "assets": [
+    {
+      "path": "models/swin-unetr-brats21/downloads/fold0_f48_ep300_4gpu_dice0_8854.zip",
+      "role": "weight_archive",
+      "status": "ok",
+      "bytes": 231022652,
+      "sha256": "47ba479743f9d5151654d1232d3e8d3aa68d7e9d68a837ef7b8c644329293d63"
+    },
+    {
+      "path": "models/swin-unetr-brats21/weights/fold0_f48_ep300_4gpu_dice0_8854/model.pt",
+      "role": "checkpoint_fold_0",
+      "status": "ok",
+      "bytes": 256368326,
+      "sha256": "1083e1585263a73919a5ecfee9403989ca4bfd2ec70308679667bd23b53714b4",
+      "torch": {
+        "torch_version": "2.14.0+cu130",
+        "weights_only": false,
+        "weights_only_error": "UnpicklingError: Weights only load failed. This file can still be loaded, to do so you have two options, \u001b[1mdo those steps only if you trust the source of the checkpoint\u001b[0m. \n\t(1) In PyTorch 2.6, we changed the defa",
+        "top_level_type": "dict",
+        "top_level_keys": [
+          "epoch",
+          "best_acc",
+          "state_dict"
+        ],
+        "state_dict_key": "state_dict",
+        "n_tensors": 159,
+        "n_parameters": 63133133,
+        "first_keys": [
+          "swinViT.patch_embed.proj.weight",
+          "swinViT.patch_embed.proj.bias",
+          "swinViT.layers1.0.blocks.0.norm1.weight",
+          "swinViT.layers1.0.blocks.0.norm1.bias",
+          "swinViT.layers1.0.blocks.0.attn.relative_position_bias_table",
+          "swinViT.layers1.0.blocks.0.attn.relative_position_index",
+          "swinViT.layers1.0.blocks.0.attn.qkv.weight",
+          "swinViT.layers1.0.blocks.0.attn.qkv.bias"
+        ]
+      }
+    }
+  ],
+  "environment": {
+    "python": "3.14.4",
+    "platform": "Linux-7.0.0-31-generic-x86_64-with-glibc2.43",
+    "data_root": "<MERGEN_DATA_ROOT>",
+    "checked_at_utc": "2026-09-14T14:05:55+00:00",
+    "torch": "2.14.0+cu130",
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 5060 Ti"
+  },
+  "all_ok": true
+}

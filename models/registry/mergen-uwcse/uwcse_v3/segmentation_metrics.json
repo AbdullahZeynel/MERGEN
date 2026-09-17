@@ -1,0 +1,665 @@
+{
+  "run": "uwcse_v3",
+  "task": "segmentation",
+  "split": "test",
+  "dataset": "UCSF-PDGM v5, BraTS21 segmentasyon kohortu dışı vakalar",
+  "n": 172,
+  "n_val_for_weights": 30,
+  "val_selection": "WHO grade'e orantılı tabakalı (WHO CNS Grade)",
+  "n_safe_cases_available": 202,
+  "split_seed": 42,
+  "regions": [
+    "TC",
+    "WT",
+    "ET"
+  ],
+  "variants": {
+    "nnUNet": {
+      "TC": {
+        "mean": 0.5894970930232557,
+        "std": 0.4478473988777411,
+        "median": 0.90785,
+        "ci95_low": 0.5212151453488372,
+        "ci95_high": 0.6569218023255814
+      },
+      "WT": {
+        "mean": 0.9286697674418605,
+        "std": 0.10334066988077631,
+        "median": 0.9589,
+        "ci95_low": 0.9106930377906975,
+        "ci95_high": 0.9422706540697673
+      },
+      "ET": {
+        "mean": 0.5962459302325581,
+        "std": 0.42678793004817056,
+        "median": 0.86215,
+        "ci95_low": 0.5298903052325581,
+        "ci95_high": 0.6583930377906977
+      },
+      "Mean": {
+        "mean": 0.7048081395348837,
+        "std": 0.2832482523299666,
+        "median": 0.8813,
+        "ci95_low": 0.6617145784883721,
+        "ci95_high": 0.7466722674418605
+      },
+      "delta_vs_best_single": {
+        "mean": -0.15579941860465116,
+        "ci95_low": -0.19581946220930233,
+        "ci95_high": -0.12059860465116284,
+        "wins": 0,
+        "n": 172
+      }
+    },
+    "SwinUNETR": {
+      "TC": {
+        "mean": 0.7616802325581394,
+        "std": 0.37683988419541453,
+        "median": 0.963,
+        "ci95_low": 0.7073101889534883,
+        "ci95_high": 0.8172966424418603
+      },
+      "WT": {
+        "mean": 0.907446511627907,
+        "std": 0.1404557050300179,
+        "median": 0.94295,
+        "ci95_low": 0.8838763808139536,
+        "ci95_high": 0.9264514389534885
+      },
+      "ET": {
+        "mean": 0.8261627906976744,
+        "std": 0.3003049027751012,
+        "median": 0.9388000000000001,
+        "ci95_low": 0.7814478052325583,
+        "ci95_high": 0.8681580523255814
+      },
+      "Mean": {
+        "mean": 0.8317639534883721,
+        "std": 0.21557901221110545,
+        "median": 0.93015,
+        "ci95_low": 0.7992660755813952,
+        "ci95_high": 0.863680319767442
+      },
+      "delta_vs_best_single": {
+        "mean": -0.028843604651162792,
+        "ci95_low": -0.045936308139534886,
+        "ci95_high": -0.014916148255813956,
+        "wins": 0,
+        "n": 172
+      }
+    },
+    "V0_Naive": {
+      "TC": {
+        "mean": 0.7564063953488372,
+        "std": 0.37984691024413797,
+        "median": 0.9642999999999999,
+        "ci95_low": 0.699912136627907,
+        "ci95_high": 0.8112294767441858
+      },
+      "WT": {
+        "mean": 0.9174837209302327,
+        "std": 0.12598780769050036,
+        "median": 0.95095,
+        "ci95_low": 0.8970403488372092,
+        "ci95_high": 0.9339995930232557
+      },
+      "ET": {
+        "mean": 0.8129610465116278,
+        "std": 0.3151449439943693,
+        "median": 0.9398,
+        "ci95_low": 0.7658637209302324,
+        "ci95_high": 0.8594113226744188
+      },
+      "Mean": {
+        "mean": 0.8289470930232556,
+        "std": 0.2205123858895036,
+        "median": 0.9353,
+        "ci95_low": 0.7957459156976744,
+        "ci95_high": 0.8616561191860465
+      },
+      "delta_vs_best_single": {
+        "mean": -0.031660465116279075,
+        "ci95_low": -0.04842191860465117,
+        "ci95_high": -0.01667409883720931,
+        "wins": 78,
+        "n": 172
+      }
+    },
+    "V1_CSW": {
+      "TC": {
+        "mean": 0.7631308139534884,
+        "std": 0.3761984662435667,
+        "median": 0.9645,
+        "ci95_low": 0.7088298691860466,
+        "ci95_high": 0.8190736482558139
+      },
+      "WT": {
+        "mean": 0.9298656976744185,
+        "std": 0.1031322873765069,
+        "median": 0.9599500000000001,
+        "ci95_low": 0.9119104360465117,
+        "ci95_high": 0.9433528343023255
+      },
+      "ET": {
+        "mean": 0.8276395348837209,
+        "std": 0.2997710351511164,
+        "median": 0.9417,
+        "ci95_low": 0.7828986191860464,
+        "ci95_high": 0.8696665697674419
+      },
+      "Mean": {
+        "mean": 0.8402116279069766,
+        "std": 0.211801599714872,
+        "median": 0.9365,
+        "ci95_low": 0.808581351744186,
+        "ci95_high": 0.8714226162790696
+      },
+      "delta_vs_best_single": {
+        "mean": -0.02039593023255814,
+        "ci95_low": -0.03459639534883722,
+        "ci95_high": -0.008473604651162795,
+        "wins": 88,
+        "n": 172
+      }
+    },
+    "V2_CSW+UNC": {
+      "TC": {
+        "mean": 0.7640011627906979,
+        "std": 0.37550457624676925,
+        "median": 0.965,
+        "ci95_low": 0.709780988372093,
+        "ci95_high": 0.8198685465116279
+      },
+      "WT": {
+        "mean": 0.9287912790697673,
+        "std": 0.10328539456534092,
+        "median": 0.9572,
+        "ci95_low": 0.9104928488372093,
+        "ci95_high": 0.9422053488372093
+      },
+      "ET": {
+        "mean": 0.8285017441860465,
+        "std": 0.2991231809227782,
+        "median": 0.9427000000000001,
+        "ci95_low": 0.7839926162790699,
+        "ci95_high": 0.8702461918604651
+      },
+      "Mean": {
+        "mean": 0.8404308139534884,
+        "std": 0.2116784528654741,
+        "median": 0.93865,
+        "ci95_low": 0.8086310755813954,
+        "ci95_high": 0.8715229941860466
+      },
+      "delta_vs_best_single": {
+        "mean": -0.02017674418604652,
+        "ci95_low": -0.0344070784883721,
+        "ci95_high": -0.008085901162790699,
+        "wins": 88,
+        "n": 172
+      }
+    },
+    "V3_CSW+PP": {
+      "TC": {
+        "mean": 0.8121203488372094,
+        "std": 0.33995231209065785,
+        "median": 0.97085,
+        "ci95_low": 0.7612501744186047,
+        "ci95_high": 0.8600823255813954
+      },
+      "WT": {
+        "mean": 0.9298651162790698,
+        "std": 0.10317451152606137,
+        "median": 0.9599500000000001,
+        "ci95_low": 0.9119067005813954,
+        "ci95_high": 0.9433585465116279
+      },
+      "ET": {
+        "mean": 0.855754069767442,
+        "std": 0.26708711182866457,
+        "median": 0.9512499999999999,
+        "ci95_low": 0.8142342005813955,
+        "ci95_high": 0.8926253052325581
+      },
+      "Mean": {
+        "mean": 0.8659116279069767,
+        "std": 0.1938716579261704,
+        "median": 0.94965,
+        "ci95_low": 0.8364790261627907,
+        "ci95_high": 0.8938251889534884
+      },
+      "delta_vs_best_single": {
+        "mean": 0.005304069767441858,
+        "ci95_low": -0.01374594476744186,
+        "ci95_high": 0.026159404069767436,
+        "wins": 89,
+        "n": 172
+      }
+    },
+    "V4_UWCSE_Full": {
+      "TC": {
+        "mean": 0.8126354651162792,
+        "std": 0.33960209028953603,
+        "median": 0.9714499999999999,
+        "ci95_low": 0.7617576744186046,
+        "ci95_high": 0.8606623401162788
+      },
+      "WT": {
+        "mean": 0.9288069767441861,
+        "std": 0.10328547368264042,
+        "median": 0.9572499999999999,
+        "ci95_low": 0.9104894912790699,
+        "ci95_high": 0.9422181686046511
+      },
+      "ET": {
+        "mean": 0.8563563953488371,
+        "std": 0.2669333478250377,
+        "median": 0.9517,
+        "ci95_low": 0.8150280087209301,
+        "ci95_high": 0.8931064970930233
+      },
+      "Mean": {
+        "mean": 0.8659313953488372,
+        "std": 0.1938991332171681,
+        "median": 0.9509000000000001,
+        "ci95_low": 0.8366120203488373,
+        "ci95_high": 0.8939303197674418
+      },
+      "delta_vs_best_single": {
+        "mean": 0.00532383720930232,
+        "ci95_low": -0.013765741279069776,
+        "ci95_high": 0.026055566860465066,
+        "wins": 89,
+        "n": 172
+      }
+    }
+  },
+  "by_region_presence": {
+    "nnUNet": {
+      "TC": {
+        "present": {
+          "n": 109,
+          "mean": 0.8476467889908257,
+          "median": 0.9562,
+          "ci95_low": 0.7976603899082567,
+          "ci95_high": 0.8937995183486238
+        },
+        "absent": {
+          "n": 63,
+          "silent_rate": 0.14285714285714285,
+          "n_silent": 9
+        }
+      },
+      "WT": {
+        "present": {
+          "n": 172,
+          "mean": 0.9286697674418605,
+          "median": 0.9589,
+          "ci95_low": 0.9106930377906975,
+          "ci95_high": 0.9422706540697673
+        },
+        "absent": {
+          "n": 0,
+          "silent_rate": null
+        }
+      },
+      "ET": {
+        "present": {
+          "n": 106,
+          "mean": 0.835417924528302,
+          "median": 0.9129,
+          "ci95_low": 0.7967726650943396,
+          "ci95_high": 0.8704001650943398
+        },
+        "absent": {
+          "n": 66,
+          "silent_rate": 0.21212121212121213,
+          "n_silent": 14
+        }
+      }
+    },
+    "SwinUNETR": {
+      "TC": {
+        "present": {
+          "n": 109,
+          "mean": 0.8165963302752293,
+          "median": 0.9487,
+          "ci95_low": 0.757432866972477,
+          "ci95_high": 0.8713775229357796
+        },
+        "absent": {
+          "n": 63,
+          "silent_rate": 0.6666666666666666,
+          "n_silent": 42
+        }
+      },
+      "WT": {
+        "present": {
+          "n": 172,
+          "mean": 0.907446511627907,
+          "median": 0.94295,
+          "ci95_low": 0.8838763808139536,
+          "ci95_high": 0.9264514389534885
+        },
+        "absent": {
+          "n": 0,
+          "silent_rate": null
+        }
+      },
+      "ET": {
+        "present": {
+          "n": 106,
+          "mean": 0.8122641509433962,
+          "median": 0.91275,
+          "ci95_low": 0.7639253066037737,
+          "ci95_high": 0.8579268867924527
+        },
+        "absent": {
+          "n": 66,
+          "silent_rate": 0.8484848484848485,
+          "n_silent": 56
+        }
+      }
+    },
+    "V0_Naive": {
+      "TC": {
+        "present": {
+          "n": 109,
+          "mean": 0.8266229357798165,
+          "median": 0.9519,
+          "ci95_low": 0.7701902064220183,
+          "ci95_high": 0.8782211697247706
+        },
+        "absent": {
+          "n": 63,
+          "silent_rate": 0.6349206349206349,
+          "n_silent": 40
+        }
+      },
+      "WT": {
+        "present": {
+          "n": 172,
+          "mean": 0.9174837209302327,
+          "median": 0.95095,
+          "ci95_low": 0.8970403488372092,
+          "ci95_high": 0.9339995930232557
+        },
+        "absent": {
+          "n": 0,
+          "silent_rate": null
+        }
+      },
+      "ET": {
+        "present": {
+          "n": 106,
+          "mean": 0.8191443396226414,
+          "median": 0.916,
+          "ci95_low": 0.7725313915094338,
+          "ci95_high": 0.8642595990566035
+        },
+        "absent": {
+          "n": 66,
+          "silent_rate": 0.803030303030303,
+          "n_silent": 53
+        }
+      }
+    },
+    "V4_UWCSE_Full": {
+      "TC": {
+        "present": {
+          "n": 109,
+          "mean": 0.8144339449541285,
+          "median": 0.9505,
+          "ci95_low": 0.7543814678899082,
+          "ci95_high": 0.8705670183486236
+        },
+        "absent": {
+          "n": 63,
+          "silent_rate": 0.8095238095238095,
+          "n_silent": 51
+        }
+      },
+      "WT": {
+        "present": {
+          "n": 172,
+          "mean": 0.9288069767441861,
+          "median": 0.9572499999999999,
+          "ci95_low": 0.9104894912790699,
+          "ci95_high": 0.9422181686046511
+        },
+        "absent": {
+          "n": 0,
+          "silent_rate": null
+        }
+      },
+      "ET": {
+        "present": {
+          "n": 106,
+          "mean": 0.8140877358490566,
+          "median": 0.91495,
+          "ci95_low": 0.7658929245283019,
+          "ci95_high": 0.8604166037735849
+        },
+        "absent": {
+          "n": 66,
+          "silent_rate": 0.9242424242424242,
+          "n_silent": 61
+        }
+      }
+    }
+  },
+  "fitted_weights": {
+    "TC": 0.425,
+    "WT": 0.6966666666666669,
+    "ET": 0.4466666666666666
+  },
+  "case_ids": {
+    "val": [
+      "UCSF-PDGM-0076",
+      "UCSF-PDGM-0082",
+      "UCSF-PDGM-0121",
+      "UCSF-PDGM-0152",
+      "UCSF-PDGM-0172",
+      "UCSF-PDGM-0232",
+      "UCSF-PDGM-0237",
+      "UCSF-PDGM-0243",
+      "UCSF-PDGM-0247",
+      "UCSF-PDGM-0256",
+      "UCSF-PDGM-0265",
+      "UCSF-PDGM-0302",
+      "UCSF-PDGM-0308",
+      "UCSF-PDGM-0318",
+      "UCSF-PDGM-0331",
+      "UCSF-PDGM-0352",
+      "UCSF-PDGM-0389",
+      "UCSF-PDGM-0398",
+      "UCSF-PDGM-0401",
+      "UCSF-PDGM-0402",
+      "UCSF-PDGM-0432",
+      "UCSF-PDGM-0441",
+      "UCSF-PDGM-0449",
+      "UCSF-PDGM-0460",
+      "UCSF-PDGM-0461",
+      "UCSF-PDGM-0477",
+      "UCSF-PDGM-0484",
+      "UCSF-PDGM-0495",
+      "UCSF-PDGM-0499",
+      "UCSF-PDGM-0501"
+    ],
+    "test": [
+      "UCSF-PDGM-0005",
+      "UCSF-PDGM-0008",
+      "UCSF-PDGM-0012",
+      "UCSF-PDGM-0018",
+      "UCSF-PDGM-0026",
+      "UCSF-PDGM-0031",
+      "UCSF-PDGM-0035",
+      "UCSF-PDGM-0040",
+      "UCSF-PDGM-0047",
+      "UCSF-PDGM-0049",
+      "UCSF-PDGM-0056",
+      "UCSF-PDGM-0058",
+      "UCSF-PDGM-0064",
+      "UCSF-PDGM-0071",
+      "UCSF-PDGM-0072",
+      "UCSF-PDGM-0078",
+      "UCSF-PDGM-0083",
+      "UCSF-PDGM-0089",
+      "UCSF-PDGM-0091",
+      "UCSF-PDGM-0102",
+      "UCSF-PDGM-0105",
+      "UCSF-PDGM-0107",
+      "UCSF-PDGM-0113",
+      "UCSF-PDGM-0123",
+      "UCSF-PDGM-0129",
+      "UCSF-PDGM-0136",
+      "UCSF-PDGM-0141",
+      "UCSF-PDGM-0153",
+      "UCSF-PDGM-0154",
+      "UCSF-PDGM-0155",
+      "UCSF-PDGM-0161",
+      "UCSF-PDGM-0165",
+      "UCSF-PDGM-0166",
+      "UCSF-PDGM-0182",
+      "UCSF-PDGM-0197",
+      "UCSF-PDGM-0201",
+      "UCSF-PDGM-0208",
+      "UCSF-PDGM-0214",
+      "UCSF-PDGM-0215",
+      "UCSF-PDGM-0229",
+      "UCSF-PDGM-0231",
+      "UCSF-PDGM-0233",
+      "UCSF-PDGM-0234",
+      "UCSF-PDGM-0235",
+      "UCSF-PDGM-0236",
+      "UCSF-PDGM-0238",
+      "UCSF-PDGM-0239",
+      "UCSF-PDGM-0240",
+      "UCSF-PDGM-0241",
+      "UCSF-PDGM-0242",
+      "UCSF-PDGM-0244",
+      "UCSF-PDGM-0245",
+      "UCSF-PDGM-0246",
+      "UCSF-PDGM-0248",
+      "UCSF-PDGM-0249",
+      "UCSF-PDGM-0250",
+      "UCSF-PDGM-0251",
+      "UCSF-PDGM-0252",
+      "UCSF-PDGM-0253",
+      "UCSF-PDGM-0254",
+      "UCSF-PDGM-0255",
+      "UCSF-PDGM-0257",
+      "UCSF-PDGM-0258",
+      "UCSF-PDGM-0259",
+      "UCSF-PDGM-0260",
+      "UCSF-PDGM-0261",
+      "UCSF-PDGM-0262",
+      "UCSF-PDGM-0263",
+      "UCSF-PDGM-0264",
+      "UCSF-PDGM-0266",
+      "UCSF-PDGM-0267",
+      "UCSF-PDGM-0268",
+      "UCSF-PDGM-0269",
+      "UCSF-PDGM-0270",
+      "UCSF-PDGM-0272",
+      "UCSF-PDGM-0274",
+      "UCSF-PDGM-0277",
+      "UCSF-PDGM-0279",
+      "UCSF-PDGM-0281",
+      "UCSF-PDGM-0282",
+      "UCSF-PDGM-0283",
+      "UCSF-PDGM-0284",
+      "UCSF-PDGM-0285",
+      "UCSF-PDGM-0286",
+      "UCSF-PDGM-0288",
+      "UCSF-PDGM-0295",
+      "UCSF-PDGM-0298",
+      "UCSF-PDGM-0300",
+      "UCSF-PDGM-0303",
+      "UCSF-PDGM-0304",
+      "UCSF-PDGM-0305",
+      "UCSF-PDGM-0306",
+      "UCSF-PDGM-0307",
+      "UCSF-PDGM-0314",
+      "UCSF-PDGM-0326",
+      "UCSF-PDGM-0327",
+      "UCSF-PDGM-0329",
+      "UCSF-PDGM-0332",
+      "UCSF-PDGM-0335",
+      "UCSF-PDGM-0339",
+      "UCSF-PDGM-0344",
+      "UCSF-PDGM-0346",
+      "UCSF-PDGM-0349",
+      "UCSF-PDGM-0351",
+      "UCSF-PDGM-0356",
+      "UCSF-PDGM-0357",
+      "UCSF-PDGM-0365",
+      "UCSF-PDGM-0367",
+      "UCSF-PDGM-0383",
+      "UCSF-PDGM-0388",
+      "UCSF-PDGM-0396",
+      "UCSF-PDGM-0399",
+      "UCSF-PDGM-0403",
+      "UCSF-PDGM-0407",
+      "UCSF-PDGM-0409",
+      "UCSF-PDGM-0416",
+      "UCSF-PDGM-0420",
+      "UCSF-PDGM-0422",
+      "UCSF-PDGM-0431",
+      "UCSF-PDGM-0435",
+      "UCSF-PDGM-0436",
+      "UCSF-PDGM-0437",
+      "UCSF-PDGM-0438",
+      "UCSF-PDGM-0439",
+      "UCSF-PDGM-0440",
+      "UCSF-PDGM-0442",
+      "UCSF-PDGM-0443",
+      "UCSF-PDGM-0444",
+      "UCSF-PDGM-0445",
+      "UCSF-PDGM-0446",
+      "UCSF-PDGM-0448",
+      "UCSF-PDGM-0450",
+      "UCSF-PDGM-0452",
+      "UCSF-PDGM-0455",
+      "UCSF-PDGM-0456",
+      "UCSF-PDGM-0457",
+      "UCSF-PDGM-0463",
+      "UCSF-PDGM-0465",
+      "UCSF-PDGM-0468",
+      "UCSF-PDGM-0469",
+      "UCSF-PDGM-0471",
+      "UCSF-PDGM-0473",
+      "UCSF-PDGM-0474",
+      "UCSF-PDGM-0475",
+      "UCSF-PDGM-0476",
+      "UCSF-PDGM-0478",
+      "UCSF-PDGM-0482",
+      "UCSF-PDGM-0483",
+      "UCSF-PDGM-0485",
+      "UCSF-PDGM-0486",
+      "UCSF-PDGM-0487",
+      "UCSF-PDGM-0489",
+      "UCSF-PDGM-0490",
+      "UCSF-PDGM-0491",
+      "UCSF-PDGM-0500",
+      "UCSF-PDGM-0502",
+      "UCSF-PDGM-0504",
+      "UCSF-PDGM-0505",
+      "UCSF-PDGM-0506",
+      "UCSF-PDGM-0511",
+      "UCSF-PDGM-0513",
+      "UCSF-PDGM-0519",
+      "UCSF-PDGM-0521",
+      "UCSF-PDGM-0528",
+      "UCSF-PDGM-0530",
+      "UCSF-PDGM-0535",
+      "UCSF-PDGM-0536",
+      "UCSF-PDGM-0537",
+      "UCSF-PDGM-0538",
+      "UCSF-PDGM-0539",
+      "UCSF-PDGM-0540",
+      "UCSF-PDGM-0541"
+    ]
+  },
+  "note": "nnU-Net ve Swin UNETR BraTS21 Training üzerinde eğitildi; bu vakalar o kohortun dışındadır, dolayısıyla bağımsız testtir. Ağırlıklar yalnız val vakalarında uyduruldu. Ortalama Dice tek başına yanıltıcıdır: test vakalarının üçte birinde referansta hiç tümör çekirdeği/kontrast tutan bölge yoktur (kontrast tutmayan düşük dereceli gliomalar), orada Dice 'örtüşme' değil 'susabildin mi' sorusunu ölçer. by_region_presence bunu ayırır."
+}

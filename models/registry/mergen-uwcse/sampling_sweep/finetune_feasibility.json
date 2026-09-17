@@ -1,0 +1,39 @@
+{
+  "question": "Kontrast tutmayan düşük dereceli veriyle nnU-Net'i ince ayar yapmak ne kadar sürer, yapmalı mıyız?",
+  "compute_measured_on_this_machine": {
+    "gpu": "RTX 5060 Ti 16 GB",
+    "config": "nnUNetPlans 3d_fullres, batch 2, patch [128,160,112], fp16",
+    "network_parameters_millions": 30.8,
+    "seconds_per_iteration": 0.367,
+    "peak_vram_gib": 9.0,
+    "hours_per_fold": {
+      "scratch_1000_epochs": 25.5,
+      "finetune_250_epochs": 6.4,
+      "finetune_100_epochs": 2.5
+    },
+    "hours_five_folds": {
+      "scratch_1000_epochs": 127.5,
+      "finetune_250_epochs": 31.9,
+      "finetune_100_epochs": 12.7
+    }
+  },
+  "verdict": "compute ucuz, veri erisilebilir, ama hedef tanimsiz",
+  "blocking_issue": "Ince ayarin ogretecegi sey 'kontrast tutmayan tumoru cekirdek mi odem mi saymak' kararidir.      Literatur bu sinirin tanimli olmadigini soyluyor: BraTS 2017'den itibaren NET bolmesi ayri      segmente edilmekten vazgecildi ve radyologlar arasinda uzerinde uzlasi yok. Baska bir      veri kumesiyle egitmek konvansiyonu degistirir, tutarsizligi cozmez.",
+  "recommendation": "Simdilik yapilmasin. Ucuz onlemler (tabakali agirlik + TC_MIN + bayrak) hatayi 11/36'dan 1/36 isaretsiz vakaya indirdi; ince ayar haftalarca veri erisimi ve 13-32 saat hesap karsiliginda tanimsiz bir hedefe kosar.",
+  "when_to_revisit": [
+    "Kurum ici etiketlenmis dusuk dereceli vaka seti olustugunda (kendi konvansiyonumuzu sabitleyebiliriz)",
+    "Bayraklanan vakalarda doktor geri bildirimi biriktiginde (gercek hedef o geri bildirim olur)",
+    "UPENN-GBM gibi setler ise yaramaz: hepsi yuksek dereceli, sorun dusuk derecede"
+  ],
+  "status": "B_PLANI — simdilik uygulanmiyor, tetikleyicisi olustugunda yeniden degerlendirilecek",
+  "decided": "2026-09-16",
+  "plan_a_in_effect": {
+    "measures": [
+      "grade'e orantili tabakali agirlik olcumu (uwcse_v2/v3)",
+      "TC_MIN=250 minimum cekirdek hacmi kurali",
+      "review_flags: kontrast tutmayan tumorde cekirdek iddiasi bayraklanir"
+    ],
+    "measured_result": "cekirdegi olmayan 36 test vakasinda 11 yanlis cekirdek -> 1 isaretsiz kalan",
+    "wired_into": "models/imaging/ensemble_inference.py, vaka basina review_flags.json yazar"
+  }
+}

@@ -1,0 +1,123 @@
+{
+  "model_id": "dinov2-vitb14",
+  "environment": {
+    "python": "3.14.4",
+    "torch": "2.14.0+cu130",
+    "cuda_available": true,
+    "checked_at_utc": "2026-09-14T14:27:43+00:00",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti",
+    "gpu_total_mib": 15847
+  },
+  "settings": {
+    "slides": [
+      "<MERGEN_DATA_ROOT>/pathology/datasets/tcga_glioma/raw/full/d9182d57-bf3b-4371-915b-40ef854c1152/TCGA-E1-A7Z3-01Z-00-DX1.1CB2A0F0-0A5C-4DD1-8CD9-8FDBD0CAEC74.svs",
+      "<MERGEN_DATA_ROOT>/pathology/datasets/tcga_glioma/raw/full/1b130f0f-385e-48c7-8704-3c1f727f5154/TCGA-DB-A64R-01Z-00-DX1.0A2B114A-F7CA-4D94-A7E4-CA482F92B214.svs",
+      "<MERGEN_DATA_ROOT>/pathology/datasets/tcga_glioma/raw/full/c1ff21e1-1289-4d95-8da2-a82573494a81/TCGA-S9-A7IX-01Z-00-DX1.41EFC469-2139-44A6-AE48-76304EBD3F58.svs"
+    ],
+    "out": "<MERGEN_DATA_ROOT>/runs/smoke-2026-09-14/dinov2_wsi",
+    "max_tiles": 4096,
+    "tile": 224,
+    "target_mpp": 0.5,
+    "min_tissue": 0.6,
+    "batch": 64,
+    "seed": 20260914
+  },
+  "per_slide": [
+    {
+      "slide": "TCGA-E1-A7Z3-01Z-00-DX1.1CB2A0F0-0A5C-4DD1-8CD9-8FDBD0CAEC74.svs",
+      "bytes": 870435358,
+      "dimensions_level0": [
+        105139,
+        53260
+      ],
+      "base_mpp": 0.25,
+      "app_mag": "40.000000",
+      "level_used": 0,
+      "level_downsample": 1.0,
+      "level_mpp": 0.25,
+      "read_px": 448,
+      "tile_px": 224,
+      "tissue_tiles_total": 6912,
+      "tiles_embedded": 4096,
+      "thumbnail_tissue_fraction": 0.2521,
+      "seconds_open_and_mask": 0.56,
+      "seconds_read": 61.18,
+      "seconds_embed": 8.24,
+      "seconds_total_tiles": 69.428,
+      "tiles_per_s_end_to_end": 59.0,
+      "tiles_per_s_read_only": 67.0,
+      "tiles_per_s_embed_only": 497.1,
+      "peak_allocated_mib": 785,
+      "peak_reserved_mib": 1090,
+      "embedding_shape": [
+        4096,
+        768
+      ],
+      "embedding_file_bytes": 6291584
+    },
+    {
+      "slide": "TCGA-DB-A64R-01Z-00-DX1.0A2B114A-F7CA-4D94-A7E4-CA482F92B214.svs",
+      "bytes": 1058088638,
+      "dimensions_level0": [
+        89639,
+        52712
+      ],
+      "base_mpp": 0.247,
+      "app_mag": "40",
+      "level_used": 0,
+      "level_downsample": 1.0,
+      "level_mpp": 0.247,
+      "read_px": 453,
+      "tile_px": 224,
+      "tissue_tiles_total": 12010,
+      "tiles_embedded": 4096,
+      "thumbnail_tissue_fraction": 0.5242,
+      "seconds_open_and_mask": 0.41,
+      "seconds_read": 72.24,
+      "seconds_embed": 8.04,
+      "seconds_total_tiles": 80.293,
+      "tiles_per_s_end_to_end": 51.0,
+      "tiles_per_s_read_only": 56.7,
+      "tiles_per_s_embed_only": 509.6,
+      "peak_allocated_mib": 785,
+      "peak_reserved_mib": 1090,
+      "embedding_shape": [
+        4096,
+        768
+      ],
+      "embedding_file_bytes": 6291584
+    },
+    {
+      "slide": "TCGA-S9-A7IX-01Z-00-DX1.41EFC469-2139-44A6-AE48-76304EBD3F58.svs",
+      "bytes": 345442115,
+      "dimensions_level0": [
+        111551,
+        33378
+      ],
+      "base_mpp": 0.2527,
+      "app_mag": "40",
+      "level_used": 0,
+      "level_downsample": 1.0,
+      "level_mpp": 0.2527,
+      "read_px": 443,
+      "tile_px": 224,
+      "tissue_tiles_total": 3166,
+      "tiles_embedded": 3166,
+      "thumbnail_tissue_fraction": 0.1725,
+      "seconds_open_and_mask": 0.23,
+      "seconds_read": 15.77,
+      "seconds_embed": 6.25,
+      "seconds_total_tiles": 22.027,
+      "tiles_per_s_end_to_end": 143.7,
+      "tiles_per_s_read_only": 200.7,
+      "tiles_per_s_embed_only": 506.7,
+      "peak_allocated_mib": 785,
+      "peak_reserved_mib": 1090,
+      "embedding_shape": [
+        3166,
+        768
+      ],
+      "embedding_file_bytes": 4863104
+    }
+  ]
+}

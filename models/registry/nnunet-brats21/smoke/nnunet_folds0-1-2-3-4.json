@@ -1,0 +1,255 @@
+{
+  "model_id": "nnunet-brats21",
+  "folds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "mirroring": true,
+  "n_parameters": 30791001,
+  "model_load_seconds": 1.659,
+  "environment": {
+    "python": "3.14.4",
+    "torch": "2.14.0+cu130",
+    "cuda_available": true,
+    "checked_at_utc": "2026-09-14T14:48:52+00:00",
+    "gpu": "NVIDIA GeForce RTX 5060 Ti",
+    "gpu_total_mib": 15847
+  },
+  "cases_dir": "<MERGEN_DATA_ROOT>/datasets/msd_task01_braintumour/cases_brats_layout",
+  "note": "Smoke/sanity run. Cases come from MSD Task01 (BraTS 2016/17 origin) and likely overlap with the BraTS 2021 training data; Dice here is not an independent test result.",
+  "per_case": [
+    {
+      "case_id": "BRATS_177",
+      "dice": {
+        "TC": 0.07879295892707461,
+        "WT": 0.7810276029454112,
+        "ET": 0.0
+      },
+      "seconds": 24.93,
+      "peak_allocated_mib": 3135,
+      "peak_reserved_mib": 3330,
+      "pred_volume_ml": {
+        "TC": 2.29,
+        "WT": 11.46,
+        "ET": 1.8
+      },
+      "gt_volume_ml": {
+        "TC": 0.09,
+        "WT": 12.85,
+        "ET": 0.0
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_211",
+      "dice": {
+        "TC": 0.7757659103063641,
+        "WT": 0.70532730489483,
+        "ET": 0.8274834084537034
+      },
+      "seconds": 22.75,
+      "peak_allocated_mib": 1492,
+      "peak_reserved_mib": 1930,
+      "pred_volume_ml": {
+        "TC": 15.95,
+        "WT": 33.3,
+        "ET": 14.01
+      },
+      "gt_volume_ml": {
+        "TC": 23.32,
+        "WT": 58.27,
+        "ET": 14.17
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_240",
+      "dice": {
+        "TC": 0.9225175793735351,
+        "WT": 0.8908408270503004,
+        "ET": 0.9143070974179868
+      },
+      "seconds": 11.691,
+      "peak_allocated_mib": 1465,
+      "peak_reserved_mib": 1908,
+      "pred_volume_ml": {
+        "TC": 71.01,
+        "WT": 165.05,
+        "ET": 68.77
+      },
+      "gt_volume_ml": {
+        "TC": 79.16,
+        "WT": 194.25,
+        "ET": 59.5
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_293",
+      "dice": {
+        "TC": 0.8804692082111437,
+        "WT": 0.9315274873939244,
+        "ET": 0.901553744268976
+      },
+      "seconds": 23.178,
+      "peak_allocated_mib": 1506,
+      "peak_reserved_mib": 1944,
+      "pred_volume_ml": {
+        "TC": 7.73,
+        "WT": 67.03,
+        "ET": 7.49
+      },
+      "gt_volume_ml": {
+        "TC": 9.33,
+        "WT": 63.06,
+        "ET": 8.22
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_319",
+      "dice": {
+        "TC": 0.969993171136671,
+        "WT": 0.9280242200868764,
+        "ET": 0.9029031809973608
+      },
+      "seconds": 12.063,
+      "peak_allocated_mib": 1465,
+      "peak_reserved_mib": 1906,
+      "pred_volume_ml": {
+        "TC": 37.77,
+        "WT": 78.5,
+        "ET": 18.56
+      },
+      "gt_volume_ml": {
+        "TC": 36.91,
+        "WT": 73.44,
+        "ET": 17.43
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_342",
+      "dice": {
+        "TC": 0.8960863697705803,
+        "WT": 0.7551312264587992,
+        "ET": 0.7856238926853961
+      },
+      "seconds": 22.88,
+      "peak_allocated_mib": 1497,
+      "peak_reserved_mib": 1936,
+      "pred_volume_ml": {
+        "TC": 3.21,
+        "WT": 20.41,
+        "ET": 1.91
+      },
+      "gt_volume_ml": {
+        "TC": 3.46,
+        "WT": 29.24,
+        "ET": 2.04
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_378",
+      "dice": {
+        "TC": 0.9381149756712921,
+        "WT": 0.9372580488708212,
+        "ET": 0.8336341023264888
+      },
+      "seconds": 22.458,
+      "peak_allocated_mib": 1499,
+      "peak_reserved_mib": 1936,
+      "pred_volume_ml": {
+        "TC": 27.93,
+        "WT": 56.33,
+        "ET": 23.5
+      },
+      "gt_volume_ml": {
+        "TC": 27.56,
+        "WT": 57.08,
+        "ET": 17.51
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    },
+    {
+      "case_id": "BRATS_382",
+      "dice": {
+        "TC": 0.9247855058577588,
+        "WT": 0.8753388013959503,
+        "ET": 0.8642455925699349
+      },
+      "seconds": 21.494,
+      "peak_allocated_mib": 1495,
+      "peak_reserved_mib": 1934,
+      "pred_volume_ml": {
+        "TC": 11.03,
+        "WT": 25.8,
+        "ET": 8.36
+      },
+      "gt_volume_ml": {
+        "TC": 11.93,
+        "WT": 30.65,
+        "ET": 9.62
+      },
+      "pred_label_values": [
+        0,
+        1,
+        2,
+        4
+      ]
+    }
+  ],
+  "summary": {
+    "dice_TC_mean": 0.7983,
+    "dice_TC_median": 0.9093,
+    "dice_TC_n": 8,
+    "dice_WT_mean": 0.8506,
+    "dice_WT_median": 0.8831,
+    "dice_WT_n": 8,
+    "dice_ET_mean": 0.7537,
+    "dice_ET_median": 0.8489,
+    "dice_ET_n": 8,
+    "seconds_mean": 20.18,
+    "peak_allocated_mib_max": 3135,
+    "peak_reserved_mib_max": 3330
+  }
+}

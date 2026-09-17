@@ -1,0 +1,27 @@
+{
+  "model_id": "nnunet-brats21",
+  "generated": "2026-09-14",
+  "data": {
+    "training": {
+      "dataset": "BraTS 2021 training set",
+      "cases": 1251,
+      "source": "Zenodo açıklaması 'trained on the BRATS 2021 dataset'; BraTS 2021 eğitim kümesi 1.251 vaka (Baid et al. 2021)",
+      "split": "nnU-Net iç 5-fold çapraz doğrulama (fold başına ≈%80 eğitim / %20 doğrulama)"
+    },
+    "validation": {
+      "note": "Her fold'un kendi doğrulama bölümü; ayrı bağımsız test kümesi Zenodo kaydında bildirilmemiştir."
+    },
+    "labels": {
+      "0": "background",
+      "1": "dataset.json adı 'edema' (predictor doğrulamasına göre BraTS NCR)",
+      "2": "dataset.json adı 'nonenhancing' (predictor doğrulamasına göre BraTS ED)",
+      "3": "empty (kullanılmıyor)",
+      "4": "enhancing (ET)"
+    },
+    "notes": [
+      "dataset.json 'numTraining' alanı 80.064 dosya listeler; bu kanal-bazlı dosya sayısıdır, vaka sayısı değildir.",
+      "Klasör adı Dataset002_BRATS19 olsa da kaynak kaydı BraTS 2021'dir."
+    ]
+  },
+  "overlap_with_local_tcga_cohort": null
+}

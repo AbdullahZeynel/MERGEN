@@ -173,6 +173,7 @@ betikleri değerlendirme yapar; bunlar servis komutu değildir.
 | `mergen_executor/` | GPU hostunda işi spool'dan alıp adaptöre veren executor; ağ ve token yok |
 | `mergen_spool/` | Dispatcher ile executor arasındaki yerel spool sözleşmesi |
 | `mergen_imaging/` | İzole model venv'inde çalışan canlı Swin UNETR runner'ı |
+| `models/registry/` | Model kayıt defteri: köken, lisans, veri dağılımı, kaynaklı metrikler, ürün/referans ayrımı |
 | `models/imaging/` | Görüntü algoritmaları, çıkarım ve değerlendirme betikleri |
 | `infra/` | VPS, Caddy, Tailscale ve CI koruması |
 | `docs/PLAN.md` | Mimari kararlar ve çalışma sırası |

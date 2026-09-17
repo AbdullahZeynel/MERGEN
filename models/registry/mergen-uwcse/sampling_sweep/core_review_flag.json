@@ -1,0 +1,14 @@
+{
+  "rule": "tumor_core işaretlenmişse ve öngörülen ET hacmi <= 500 voxel ise 'düşük güvenli bulgu' bayrağı",
+  "implemented_in": "uwcse_ensemble.review_flags(seg_lab, et_max=CORE_REVIEW_ET_MAX)",
+  "chosen_on": "102 vakalık keşif havuzu (ortak test kümesine dokunulmadan)",
+  "selection": "ET eşiği 500: sahtelerin %71'i yakalanıyor; 1000'e çıkarınca yakalama artmıyor ama yanlış uyarı ikiye katlanıyor",
+  "exploration_pool": {"spurious_caught": "5/7", "true_cores_wrongly_flagged": "3/60"},
+  "common_test_readout": {"spurious_caught": "5/6", "true_cores_wrongly_flagged": "2/60", "n_test": 100},
+  "cumulative_effect_on_common_test": {
+    "spurious_cores_before_any_fix": "11/36",
+    "after_stratified_weights_and_TC_MIN": "6/36",
+    "after_flag_still_unflagged": "1/36"
+  },
+  "note": "Bayrak bulguyu silmez, işaretler; gerekçesini ve sayıları da döndürür ki arayüz nedenini gösterebilsin."
+}

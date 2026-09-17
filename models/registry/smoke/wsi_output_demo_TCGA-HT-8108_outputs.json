@@ -1,0 +1,34 @@
+{
+  "patient_id": "TCGA-HT-8108",
+  "true_class": "A",
+  "subtype": "IDHmut-non-codel",
+  "grade": "G2",
+  "tissue_tiles_total": 6274,
+  "tiles_used": 6000,
+  "dinov2": {
+    "embedding_shape": [
+      6000,
+      768
+    ],
+    "kmeans_cluster_sizes": [
+      652,
+      1731,
+      1083,
+      795,
+      735,
+      1004
+    ]
+  },
+  "p19qnet": {
+    "p_1pNET": 0.9942,
+    "p_19qNET": 0.9916,
+    "p_codeleted_logistic": 0.1327,
+    "predicted_class": "A",
+    "tile_score_1p_min_max": [
+      -4.75,
+      0.974
+    ]
+  },
+  "seconds": 20.2,
+  "gpu_peak_mib": 1155
+}

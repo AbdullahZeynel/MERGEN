@@ -1,0 +1,8 @@
+{
+  "model_id": "legacy-esm2-xgboost",
+  "generated": "2026-09-14",
+  "upstream_reported": [],
+  "upstream_note": "Yeniden üretilmiş split ve metrik yoktur.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

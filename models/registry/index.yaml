@@ -1,0 +1,179 @@
+schema_version: 2
+generated: 2026-09-14
+data_root: "<MERGEN_DATA_ROOT>"
+readiness_rule: source+license+version+hash+environment+smoke_test+local_evaluation
+status_legend:
+  trained_val_evaluated: MERGEN tarafından eğitildi ve kilitli doğrulama bölmesinde değerlendirildi (results/); test bölmesi henüz açılmadı.
+  coefficients_fitted_evaluated: Öğrenilen ağırlığı olmayan birleştirme kuralı; katsayıları ayrı bir doğrulama kümesinde sabitlendi ve bağımsız vakalarda değerlendirildi (results/).
+  trained_evaluated: MERGEN tarafından eğitildi; doğrulama ve test bölmelerinde değerlendirildi (results/).
+  smoke_tested: Ağırlıklar doğrulandı ve model bu makinede gerçek girdiyle uçtan uca çalıştırıldı (smoke/ altındaki JSON); bağımsız klinik değerlendirme değildir.
+  weights_verified: "Ağırlıklar indirildi, boyut ve SHA-256 kaydedildi; çalışma ortamı/smoke inference/yerel değerlendirme kapıları ayrı raporlanır."
+  weights_verified_dependencies_gated: Ağırlıklar doğrulandı; ancak çıkarım zinciri erişim onaylı (gated) bir encoder veya derleme gerektiren bağımlılık ister ve depo lisansı belirsizdir.
+  weights_verified_license_unclear: "Ağırlıklar doğrulandı; depoda açık lisans yok, ürün paketine alınmadan izin/lisans netleşmeli."
+  gated_access_required: "Ağırlık, kullanıcı hesabıyla koşul kabulü gerektirir; indirilmedi."
+  metadata_only: Yayımlanmış görev checkpointi yok; yalnız etiket/split meta verileri alındı.
+  code_reference: Ağırlık içermeyen referans kod.
+  to_train: MERGEN tarafından eğitilecek görev modeli.
+  missing_local_evaluation: "Kod ve bağımlılıklar var, MERGEN sonucu yok."
+  deferred: Çekirdek kapsam dışında.
+components:
+  - id: nnunet-brats21
+    domain: mri
+    kind: segmentation_model
+    origin: external_pretrained
+    status: smoke_tested
+    product_role: primary_mri_expert
+    card: nnunet-brats21/MODEL_CARD.md
+    assets_present: 9
+    assets_expected: 9
+    bytes_present: 2459611453
+  - id: swin-unetr-brats21
+    domain: mri
+    kind: segmentation_model
+    origin: external_pretrained
+    status: smoke_tested
+    product_role: secondary_mri_expert
+    card: swin-unetr-brats21/MODEL_CARD.md
+    assets_present: 2
+    assets_expected: 2
+    bytes_present: 487390978
+  - id: mergen-uwcse
+    domain: mri
+    kind: ensemble_rule
+    origin: team_component
+    status: coefficients_fitted_evaluated
+    product_role: primary_mri_output
+    card: mergen-uwcse/MODEL_CARD.md
+    assets_present: 0
+    assets_expected: 0
+    bytes_present: 0
+  - id: dinov2-vitb14
+    domain: pathology
+    kind: frozen_encoder
+    origin: external_pretrained
+    status: smoke_tested
+    product_role: wsi_tile_encoder
+    card: dinov2-vitb14/MODEL_CARD.md
+    assets_present: 2
+    assets_expected: 2
+    bytes_present: 349248373
+  - id: mergen-wsi-attention-mil
+    domain: pathology
+    kind: slide_classifier
+    origin: team_trained
+    status: trained_evaluated
+    product_role: primary_wsi_output
+    card: mergen-wsi-attention-mil/MODEL_CARD.md
+    assets_present: 3
+    assets_expected: 3
+    bytes_present: 672073
+  - id: tum-radio-path-moe-mamba
+    domain: multimodal
+    kind: subtype_classifier
+    origin: external_pretrained
+    status: weights_verified_dependencies_gated
+    product_role: ready_aog_candidate
+    card: tum-radio-path-moe-mamba/MODEL_CARD.md
+    assets_present: 22
+    assets_expected: 22
+    bytes_present: 11385291
+  - id: gmap
+    domain: pathology
+    kind: molecular_marker_predictor
+    origin: external_pretrained
+    status: weights_verified_dependencies_gated
+    product_role: phase2_candidate
+    card: gmap/MODEL_CARD.md
+    assets_present: 8
+    assets_expected: 8
+    bytes_present: 148820015
+  - id: iucompath-glioma-subtyping
+    domain: pathology
+    kind: benchmark_framework
+    origin: literature_reference
+    status: metadata_only
+    product_role: offline_benchmark
+    card: iucompath-glioma-subtyping/MODEL_CARD.md
+    assets_present: 18
+    assets_expected: 18
+    bytes_present: 2351522
+  - id: 1p19qnet
+    domain: pathology
+    kind: molecular_marker_predictor
+    origin: external_pretrained
+    status: smoke_tested
+    product_role: redundant_reference
+    card: 1p19qnet/MODEL_CARD.md
+    assets_present: 5
+    assets_expected: 5
+    bytes_present: 516125
+  - id: roam
+    domain: pathology
+    kind: subtype_classifier
+    origin: external_pretrained
+    status: weights_verified
+    product_role: offline_reference
+    card: roam/MODEL_CARD.md
+    assets_present: 7
+    assets_expected: 7
+    bytes_present: 175896675
+  - id: mil-pretrained
+    domain: pathology
+    kind: pretrained_mil_initialization
+    origin: external_pretrained
+    status: weights_verified_license_unclear
+    product_role: optional_initialization
+    card: mil-pretrained/MODEL_CARD.md
+    assets_present: 12
+    assets_expected: 12
+    bytes_present: 67030877
+  - id: attention-deep-mil
+    domain: pathology
+    kind: reference_code
+    origin: literature_reference
+    status: code_reference
+    product_role: architecture_reference
+    card: attention-deep-mil/MODEL_CARD.md
+    assets_present: 3
+    assets_expected: 3
+    bytes_present: 9226
+  - id: prov-gigapath
+    domain: pathology
+    kind: frozen_encoder
+    origin: external_pretrained
+    status: gated_access_required
+    product_role: dependency_of_tum
+    card: prov-gigapath/MODEL_CARD.md
+    assets_present: 0
+    assets_expected: 0
+    bytes_present: 0
+  - id: uni
+    domain: pathology
+    kind: frozen_encoder
+    origin: external_pretrained
+    status: gated_access_required
+    product_role: dependency_of_gmap
+    card: uni/MODEL_CARD.md
+    assets_present: 0
+    assets_expected: 0
+    bytes_present: 0
+  - id: legacy-esm2-xgboost
+    domain: genomics
+    kind: variant_classifier
+    origin: team_component
+    status: deferred
+    product_role: out_of_core_scope
+    card: legacy-esm2-xgboost/MODEL_CARD.md
+    assets_present: 0
+    assets_expected: 0
+    bytes_present: 0
+  - id: doctor-rag
+    domain: knowledge
+    kind: retrieval_augmented_assistant
+    origin: team_component
+    status: deferred
+    product_role: phase3_doctor_assistant
+    card: doctor-rag/MODEL_CARD.md
+    assets_present: 0
+    assets_expected: 0
+    bytes_present: 0

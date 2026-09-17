@@ -1,0 +1,60 @@
+{
+  "args": {
+    "split": "<MERGEN_DATA_ROOT>/pathology/splits/splits_v1.json",
+    "cohort": "<MERGEN_DATA_ROOT>/pathology/datasets/tcga_glioma/manifests/cohort.tsv",
+    "features_dir": "<MERGEN_DATA_ROOT>/pathology/features/dinov2_vitb14_224_0.5mpp",
+    "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/mil_v1",
+    "epochs": 100,
+    "lr": 0.0001,
+    "weight_decay": 0.0001,
+    "bag_size": 4096,
+    "eval_tiles": null,
+    "hidden": 256,
+    "attn_dim": 128,
+    "dropout": 0.25,
+    "patience": 15,
+    "save_every": 5,
+    "seed": 20260914,
+    "resume": "auto",
+    "workers": 4,
+    "allow_missing_features": true,
+    "min_tiles": 100,
+    "train_patients": null,
+    "val_patients": null
+  },
+  "split_hash": "0633057adff56968",
+  "split_file": "<MERGEN_DATA_ROOT>/pathology/splits/splits_v1.json",
+  "features_dir": "<MERGEN_DATA_ROOT>/pathology/features/dinov2_vitb14_224_0.5mpp",
+  "model": {
+    "in_dim": 768,
+    "hidden": 256,
+    "attn_dim": 128,
+    "n_classes": 3,
+    "dropout": 0.25
+  },
+  "n_train": 524,
+  "n_val": 115,
+  "class_counts_train": {
+    "A": 178,
+    "O": 112,
+    "G": 234
+  },
+  "class_counts_val": {
+    "A": 38,
+    "O": 25,
+    "G": 52
+  },
+  "qc_min_tiles": 100,
+  "qc_excluded_train": {
+    "TCGA-19-1385": "low_tissue (30 tiles < 100)",
+    "TCGA-19-1389": "no_features (no tissue detected)",
+    "TCGA-19-1390": "no_features (no tissue detected)",
+    "TCGA-19-1786": "low_tissue (3 tiles < 100)",
+    "TCGA-19-1789": "low_tissue (31 tiles < 100)",
+    "TCGA-19-1791": "no_features (no tissue detected)",
+    "TCGA-19-2621": "low_tissue (21 tiles < 100)",
+    "TCGA-HT-7483": "low_tissue (12 tiles < 100)"
+  },
+  "qc_excluded_val": {},
+  "created": "2026-09-14T19:26:59+00:00"
+}

@@ -1,0 +1,206 @@
+{
+  "mode": "fixed",
+  "seeds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "folds": 1,
+  "hyperparameters": {
+    "epochs": 100,
+    "bag_size": 4096,
+    "patience": 15,
+    "min_tiles": 100
+  },
+  "test_split_used": false,
+  "runs": [
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/seeds_v1/seed1",
+      "n_val": 115,
+      "best_epoch": 23,
+      "metrics": {
+        "macro_f1": 0.8522196757490875,
+        "balanced_accuracy": 0.8555735492577597,
+        "auroc_macro_ovr": 0.9395497913392651,
+        "mcc": 0.7836356468397057,
+        "accuracy": 0.8608695652173913
+      },
+      "seed": 1
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/seeds_v1/seed2",
+      "n_val": 115,
+      "best_epoch": 24,
+      "metrics": {
+        "macro_f1": 0.8855677364290981,
+        "balanced_accuracy": 0.8948987854251013,
+        "auroc_macro_ovr": 0.9526969054337475,
+        "mcc": 0.8413017987129809,
+        "accuracy": 0.8956521739130435
+      },
+      "seed": 2
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/seeds_v1/seed3",
+      "n_val": 115,
+      "best_epoch": 10,
+      "metrics": {
+        "macro_f1": 0.8414829067660294,
+        "balanced_accuracy": 0.841565452091768,
+        "auroc_macro_ovr": 0.9519374777269515,
+        "mcc": 0.7827683821001528,
+        "accuracy": 0.8608695652173913
+      },
+      "seed": 3
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/seeds_v1/seed4",
+      "n_val": 115,
+      "best_epoch": 35,
+      "metrics": {
+        "macro_f1": 0.8843237807943689,
+        "balanced_accuracy": 0.8859379217273954,
+        "auroc_macro_ovr": 0.9526683725631093,
+        "mcc": 0.8376626312414152,
+        "accuracy": 0.8956521739130435
+      },
+      "seed": 4
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/seeds_v1/seed5",
+      "n_val": 115,
+      "best_epoch": 19,
+      "metrics": {
+        "macro_f1": 0.8559029360232532,
+        "balanced_accuracy": 0.8594601889338732,
+        "auroc_macro_ovr": 0.952234938550728,
+        "mcc": 0.7990162801690338,
+        "accuracy": 0.8695652173913043
+      },
+      "seed": 5
+    }
+  ],
+  "per_seed": {},
+  "qc_excluded": {
+    "TCGA-19-1385": "low_tissue (30 tiles < 100)",
+    "TCGA-19-1389": "no_features (no tissue detected)",
+    "TCGA-19-1390": "no_features (no tissue detected)",
+    "TCGA-19-1786": "low_tissue (3 tiles < 100)",
+    "TCGA-19-1789": "low_tissue (31 tiles < 100)",
+    "TCGA-19-1791": "no_features (no tissue detected)",
+    "TCGA-19-2621": "low_tissue (21 tiles < 100)",
+    "TCGA-HT-7483": "low_tissue (12 tiles < 100)"
+  },
+  "over_seeds": {
+    "macro_f1": {
+      "mean": 0.8638994071523675,
+      "std": 0.019934459473830247,
+      "values": [
+        0.8522,
+        0.8856,
+        0.8415,
+        0.8843,
+        0.8559
+      ]
+    },
+    "balanced_accuracy": {
+      "mean": 0.8674871794871795,
+      "std": 0.022193068417070184,
+      "values": [
+        0.8556,
+        0.8949,
+        0.8416,
+        0.8859,
+        0.8595
+      ]
+    },
+    "auroc_macro_ovr": {
+      "mean": 0.9498174971227602,
+      "std": 0.005748534723605446,
+      "values": [
+        0.9395,
+        0.9527,
+        0.9519,
+        0.9527,
+        0.9522
+      ]
+    },
+    "mcc": {
+      "mean": 0.8088769478126577,
+      "std": 0.028705399192130145,
+      "values": [
+        0.7836,
+        0.8413,
+        0.7828,
+        0.8377,
+        0.799
+      ]
+    },
+    "accuracy": {
+      "mean": 0.8765217391304349,
+      "std": 0.017820783940799317,
+      "values": [
+        0.8609,
+        0.8957,
+        0.8609,
+        0.8957,
+        0.8696
+      ]
+    }
+  },
+  "seed_ensemble_val": {
+    "metrics": {
+      "macro_f1": 0.8861452161342211,
+      "balanced_accuracy": 0.8857759784075574,
+      "auroc_macro_ovr": 0.9583787401682139,
+      "mcc": 0.837465853734069,
+      "accuracy": 0.8956521739130435
+    },
+    "confusion_matrix": [
+      [
+        31,
+        3,
+        4
+      ],
+      [
+        2,
+        22,
+        1
+      ],
+      [
+        1,
+        1,
+        50
+      ]
+    ],
+    "bootstrap_ci95": {
+      "macro_f1": {
+        "ci95_low": 0.8145599462277547,
+        "ci95_high": 0.944207392023353,
+        "n_boot": 1000
+      },
+      "balanced_accuracy": {
+        "ci95_low": 0.8177883392526113,
+        "ci95_high": 0.9431587517253278,
+        "n_boot": 1000
+      },
+      "auroc_macro_ovr": {
+        "ci95_low": 0.9235962208417011,
+        "ci95_high": 0.9852573002187087,
+        "n_boot": 1000
+      },
+      "mcc": {
+        "ci95_low": 0.7425294980651397,
+        "ci95_high": 0.9193891900937587,
+        "n_boot": 1000
+      },
+      "accuracy": {
+        "ci95_low": 0.8347826086956521,
+        "ci95_high": 0.9478260869565217,
+        "n_boot": 1000
+      }
+    }
+  }
+}

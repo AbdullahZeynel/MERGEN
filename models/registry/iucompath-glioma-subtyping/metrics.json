@@ -1,0 +1,30 @@
+{
+  "model_id": "iucompath-glioma-subtyping",
+  "generated": "2026-09-14",
+  "upstream_reported": [
+    {
+      "task": "aog_subtyping",
+      "cohort": "TCGA (eğitim kohortu, hold-out)",
+      "metric": "AUC (en iyi FM+AM+çoklu büyütme)",
+      "value": 0.9795,
+      "source": "Innani S, Bell WR, Nasrallah MP, Baheti B, Bakas S. AI-driven WHO 2021 classification of gliomas based only on H&E-stained slides. Neuro-Oncology 2026;28(1):282–296. https://doi.org/10.1093/neuonc/noaf189 (PMID 40888157)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "EBRAINS (dış set 1)",
+      "metric": "AUC",
+      "value": 0.963,
+      "source": "Innani S, Bell WR, Nasrallah MP, Baheti B, Bakas S. AI-driven WHO 2021 classification of gliomas based only on H&E-stained slides. Neuro-Oncology 2026;28(1):282–296. https://doi.org/10.1093/neuonc/noaf189 (PMID 40888157)"
+    },
+    {
+      "task": "aog_subtyping",
+      "cohort": "IPD-Brain (dış set 2)",
+      "metric": "AUC",
+      "value": 0.9261,
+      "source": "Innani S, Bell WR, Nasrallah MP, Baheti B, Bakas S. AI-driven WHO 2021 classification of gliomas based only on H&E-stained slides. Neuro-Oncology 2026;28(1):282–296. https://doi.org/10.1093/neuonc/noaf189 (PMID 40888157)"
+    }
+  ],
+  "upstream_note": "Balanced accuracy, precision, recall ve F1 ekte raporlanır; tam metin açık erişimli değildir.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

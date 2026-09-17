@@ -1,0 +1,8 @@
+{
+  "model_id": "mil-pretrained",
+  "generated": "2026-09-14",
+  "upstream_reported": [],
+  "upstream_note": "Glioma görevine ait metrik yoktur; A/O/G sınıflandırıcı başlığı yeniden eğitilmeden kullanılamaz.",
+  "mergen_reproduced": [],
+  "mergen_note": "Yerel değerlendirme henüz üretilmedi."
+}

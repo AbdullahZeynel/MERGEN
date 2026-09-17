@@ -1,0 +1,222 @@
+{
+  "mode": "kfold",
+  "seeds": [
+    1
+  ],
+  "folds": 5,
+  "hyperparameters": {
+    "epochs": 100,
+    "bag_size": 4096,
+    "patience": 15,
+    "min_tiles": 100
+  },
+  "test_split_used": false,
+  "runs": [
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold0",
+      "n_val": 128,
+      "best_epoch": 19,
+      "metrics": {
+        "macro_f1": 0.833788181558664,
+        "balanced_accuracy": 0.8282680607242011,
+        "auroc_macro_ovr": 0.9378748333344635,
+        "mcc": 0.7680597854787781,
+        "accuracy": 0.8515625
+      },
+      "seed": 1,
+      "fold": 0,
+      "n_train": 511
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold1",
+      "n_val": 128,
+      "best_epoch": 19,
+      "metrics": {
+        "macro_f1": 0.8255527551838698,
+        "balanced_accuracy": 0.8348728305958991,
+        "auroc_macro_ovr": 0.9429420458917382,
+        "mcc": 0.7467689878560081,
+        "accuracy": 0.8359375
+      },
+      "seed": 1,
+      "fold": 1,
+      "n_train": 511
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold2",
+      "n_val": 128,
+      "best_epoch": 29,
+      "metrics": {
+        "macro_f1": 0.8603733815115929,
+        "balanced_accuracy": 0.8531648889666025,
+        "auroc_macro_ovr": 0.9541399930772384,
+        "mcc": 0.7927385620145782,
+        "accuracy": 0.8671875
+      },
+      "seed": 1,
+      "fold": 2,
+      "n_train": 511
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold3",
+      "n_val": 128,
+      "best_epoch": 8,
+      "metrics": {
+        "macro_f1": 0.8085082212488657,
+        "balanced_accuracy": 0.7977939033630589,
+        "auroc_macro_ovr": 0.9156849681218647,
+        "mcc": 0.7306626036648255,
+        "accuracy": 0.828125
+      },
+      "seed": 1,
+      "fold": 3,
+      "n_train": 511
+    },
+    {
+      "run_dir": "<MERGEN_DATA_ROOT>/pathology/runs/cv_v1/seed1/fold4",
+      "n_val": 127,
+      "best_epoch": 12,
+      "metrics": {
+        "macro_f1": 0.8037815470337595,
+        "balanced_accuracy": 0.7890959094549466,
+        "auroc_macro_ovr": 0.9040621579789265,
+        "mcc": 0.7194467828305394,
+        "accuracy": 0.8188976377952756
+      },
+      "seed": 1,
+      "fold": 4,
+      "n_train": 512
+    }
+  ],
+  "per_seed": {
+    "1": {
+      "per_fold": {
+        "macro_f1": {
+          "mean": 0.8264008173073503,
+          "std": 0.022589842075477783,
+          "values": [
+            0.8338,
+            0.8256,
+            0.8604,
+            0.8085,
+            0.8038
+          ]
+        },
+        "balanced_accuracy": {
+          "mean": 0.8206391186209416,
+          "std": 0.026625189931004798,
+          "values": [
+            0.8283,
+            0.8349,
+            0.8532,
+            0.7978,
+            0.7891
+          ]
+        },
+        "auroc_macro_ovr": {
+          "mean": 0.9309407996808463,
+          "std": 0.020527512537222736,
+          "values": [
+            0.9379,
+            0.9429,
+            0.9541,
+            0.9157,
+            0.9041
+          ]
+        },
+        "mcc": {
+          "mean": 0.7515353443689458,
+          "std": 0.02940589880814571,
+          "values": [
+            0.7681,
+            0.7468,
+            0.7927,
+            0.7307,
+            0.7194
+          ]
+        },
+        "accuracy": {
+          "mean": 0.8403420275590552,
+          "std": 0.019203488420815734,
+          "values": [
+            0.8516,
+            0.8359,
+            0.8672,
+            0.8281,
+            0.8189
+          ]
+        }
+      },
+      "oof": {
+        "n": 639,
+        "metrics": {
+          "macro_f1": 0.8268648797518083,
+          "balanced_accuracy": 0.820755042470371,
+          "auroc_macro_ovr": 0.9286747348719185,
+          "mcc": 0.7491928347200245,
+          "accuracy": 0.8403755868544601
+        },
+        "per_class_f1": {
+          "A": 0.8045454545454546,
+          "O": 0.7829457364341085,
+          "G": 0.8931034482758621
+        },
+        "confusion_matrix": [
+          [
+            177,
+            13,
+            26
+          ],
+          [
+            27,
+            101,
+            9
+          ],
+          [
+            20,
+            7,
+            259
+          ]
+        ],
+        "bootstrap_ci95": {
+          "macro_f1": {
+            "ci95_low": 0.7934461586586048,
+            "ci95_high": 0.8573243448608662,
+            "n_boot": 1000
+          },
+          "balanced_accuracy": {
+            "ci95_low": 0.7863586873731495,
+            "ci95_high": 0.8522450994485556,
+            "n_boot": 1000
+          },
+          "auroc_macro_ovr": {
+            "ci95_low": 0.9102657917405648,
+            "ci95_high": 0.9456439847941166,
+            "n_boot": 1000
+          },
+          "mcc": {
+            "ci95_low": 0.7028229633017289,
+            "ci95_high": 0.7926156457071136,
+            "n_boot": 1000
+          },
+          "accuracy": {
+            "ci95_low": 0.8121674491392801,
+            "ci95_high": 0.8685446009389671,
+            "n_boot": 1000
+          }
+        }
+      }
+    }
+  },
+  "qc_excluded": {
+    "TCGA-19-1385": "low_tissue (30 tiles < 100)",
+    "TCGA-19-1389": "no_features (no tissue detected)",
+    "TCGA-19-1390": "no_features (no tissue detected)",
+    "TCGA-19-1786": "low_tissue (3 tiles < 100)",
+    "TCGA-19-1789": "low_tissue (31 tiles < 100)",
+    "TCGA-19-1791": "no_features (no tissue detected)",
+    "TCGA-19-2621": "low_tissue (21 tiles < 100)",
+    "TCGA-HT-7483": "low_tissue (12 tiles < 100)"
+  },
+  "pool_size": 639
+}

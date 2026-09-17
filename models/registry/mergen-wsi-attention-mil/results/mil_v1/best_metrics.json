@@ -1,0 +1,5 @@
+{
+  "best_epoch": 23,
+  "best_val_macro_f1": 0.8808338717319207,
+  "history_len": 39
+}
