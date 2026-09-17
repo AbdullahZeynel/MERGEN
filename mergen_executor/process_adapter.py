@@ -17,6 +17,9 @@ from mergen_executor.sandbox import supported
 
 _SHA = re.compile(r"^[0-9a-f]{64}$")
 _MODULE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.]*$")
+# The only verdicts a runner may report for itself (contracts/MODEL_RUNNER.md).
+# Anything else it writes is an unreadable response, not a diagnosis.
+_RUNNER_CODES = frozenset({"input-invalid", "resource-exhausted"})
 
 
 class ProcessImagingAdapter(ImagingAdapter):
@@ -65,7 +68,10 @@ class ProcessImagingAdapter(ImagingAdapter):
                     raise ValueError
             with tempfile.TemporaryDirectory(prefix="mergen-preflight-") as output:
                 try:
-                    self._invoke({"operation": "preflight", "modelRoot": str(self.root)}, Path(output), None, 30)
+                    self._invoke({"operation": "preflight", "modelRoot": str(self.root),
+                                  "modelId": self.model_id,
+                                  "modelVersion": self.model_version}, Path(output), None,
+                                 min(max(self.timeout, 30), 300))
                 except AdapterFailure:
                     raise ValueError from None
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
@@ -114,6 +120,8 @@ class ProcessImagingAdapter(ImagingAdapter):
                 raise ValueError
             payload = json.loads(raw)
             response.unlink()
+            if payload.get("error") in _RUNNER_CODES:
+                raise AdapterFailure(payload["error"])
             name = payload["result"]
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
             raise AdapterFailure("inference-failed") from None

@@ -31,6 +31,11 @@ Dört MR modalitesinden (T1, T1c, T2, FLAIR) nnU-Net ve Swin UNETR
 tahminlerinin UWCSE ile birleştirildiği bir topluluk. Çıktı BraTS etiket
 şemasında üç bölgedir: kontrast tutan tümör, nekrotik çekirdek ve ödem.
 
+Ekrandaki hazır demo vakaları bu topluluktan gelir. Canlı GPU yolu bugün
+yalnız Swin UNETR fold-0'ı çalıştırır; sonuçlar bu nedenle farklı model
+kimliği taşır (`swin-unetr-brats21` yerine demo `uwcse-full`) ve topluluk
+çıktısıyla aynı sayılmaz.
+
 Arayüz her kesiti üç düzlemde gezdirir, tahmin ile referans etiketini ayrı
 katman olarak açıp kapatır ve tümör yüzeylerini WebGL ile döndürülebilir bir
 modele çevirir. Modelin çevresindeki saydam kabuk MR ön planından yaklaşık
@@ -49,7 +54,9 @@ Hazır demo yolu uçtan uca çalışır: tarayıcı yalnızca genel API ile konu
 API disk yollarını hiç görmez, demo dosyalarını yalnız loopback'e bağlı
 salt-okunur bir MCP servisi üzerinden okur. Canlı analiz yolunun VPS tarafı
 (oturum, kuyruk, worker kontrol API'si, temizlik) hazırdır. GPU tarafında
-dispatcher yazıldı; executor ve model adaptörleri henüz bağlanmamıştır.
+dispatcher, executor ve izole Swin UNETR runner yazılmıştır; runner sentetik
+bir fixture ile gerçek GPU üzerinde ölçülmüştür, VPS kuyruğuyla uçtan uca kabul
+testi henüz yapılmamıştır.
 
 ```mermaid
 flowchart LR
@@ -65,10 +72,10 @@ flowchart LR
         STATE[("Oturum durumu<br/>SQLite kuyruğu · geçici dosyalar")]
     end
 
-    subgraph GPU["GPU sunucusu · kurulmadı"]
+    subgraph GPU["GPU sunucusu · staged, VPS kabulü bekliyor"]
         W["Dispatcher<br/>iş çek · lease · aktarım"]
         X["Executor"]
-        IMG["Görüntü çıkarımı<br/>nnU-Net + Swin UNETR + UWCSE"]
+        IMG["Görüntü çıkarımı<br/>Swin UNETR fold-0 · izole"]
     end
 
     U -->|HTTPS| CADDY
@@ -86,9 +93,11 @@ flowchart LR
     class GPU,W,X,IMG planlanan
 ```
 
-Kesikli çizgiler henüz çalışır durumda olmayan parçaları gösterir: dispatcher
-ve executor yazıldı ama bir hostta çalışmıyor, gerçek model adaptörü yok. Geçici
-oturum dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
+Kesikli çizgiler henüz canlı açılmamış yolu gösterir: servisler GPU hostunda
+staged durumdadır ve enable edilmemiştir. Model runner'ı sentetik bir fixture
+ile gerçek GPU üzerinde uçtan uca çalıştı; kalan iş VPS kuyruğuyla uçtan uca
+kabul. Geçici oturum dosyalarını bir systemd zamanlayıcısı süresi dolunca
+siler.
 
 | Bileşen | Durum |
 |---|---|
@@ -96,8 +105,8 @@ oturum dosyalarını bir systemd zamanlayıcısı süresi dolunca siler.
 | Genel API — hazır demo uçları | Çalışıyor |
 | Demo MCP (salt okunur, loopback) | Çalışıyor |
 | Oturum, iş kuyruğu, worker kontrol API'si, temizlik | Yazıldı, worker'sız |
-| GPU dispatcher, executor ve yerel spool sözleşmesi | Yazıldı; sahte adaptörle test edildi, gerçek hostta denenmedi |
-| Canlı görüntü model adaptörü | Planlanan (G4) |
+| GPU dispatcher, executor ve yerel spool sözleşmesi | Yazıldı ve hostta staged; servisler henüz açılmadı |
+| Canlı Swin UNETR model runner | Gerçek GPU'da sentetik fixture ile uçtan uca çalıştı; VPS kuyruğuyla kabul bekliyor |
 | Sohbet asistanı | Ertelendi |
 
 ### Hazır demo paketi
@@ -163,6 +172,7 @@ betikleri değerlendirme yapar; bunlar servis komutu değildir.
 | `mergen_dispatcher/` | GPU hostunda VPS'ten iş çeken dispatcher; model çalıştırmaz |
 | `mergen_executor/` | GPU hostunda işi spool'dan alıp adaptöre veren executor; ağ ve token yok |
 | `mergen_spool/` | Dispatcher ile executor arasındaki yerel spool sözleşmesi |
+| `mergen_imaging/` | İzole model venv'inde çalışan canlı Swin UNETR runner'ı |
 | `models/imaging/` | Görüntü algoritmaları, çıkarım ve değerlendirme betikleri |
 | `infra/` | VPS, Caddy, Tailscale ve CI koruması |
 | `docs/PLAN.md` | Mimari kararlar ve çalışma sırası |

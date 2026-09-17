@@ -10,6 +10,7 @@ içindedir; bu dosya yalnız neyin ne olduğunu söyler.
 | `audit-host.sh` | Dağıtım, dosya sistemi, şifreleme, NVIDIA, Tailscale, hesap, dizin ve Python envanteri | Hayır |
 | `check-snapshot-layout.sh` | Runtime dizininin kök snapshot'ına giremeyeceğini kanıtlamaya çalışır | Hayır |
 | `verify-gpu-runtime.sh` | Verilen venv'de sürücü, PyTorch ve gerçek bir GPU tensor turu | Hayır |
+| `imaging-model-manifest.example.json` | G4-B model kimliği ve doğrulanan checkpoint boyut/SHA-256 referansı | Hayır |
 | `install-base.sh` | Hesap, grup, dizin ve boş env dosyaları | Yalnız `--apply` ile |
 | `sysusers.d/mergen.conf` | İki yetkisiz servis hesabı ve ortak okuma grubu | `systemd-sysusers` uygularsa |
 | `tmpfiles.d/mergen.conf` | Dizin sözleşmesi ve modlar | `systemd-tmpfiles` uygularsa |

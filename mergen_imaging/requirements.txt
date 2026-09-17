@@ -1,0 +1,8 @@
+# Install torch separately from the official CUDA wheel index selected for the
+# host. These versions are the reviewed G4-B model environment.
+torch==2.14.0
+monai==1.6.0
+nibabel==5.4.2
+numpy==2.5.3
+scikit-image==0.26.0
+einops==0.8.2

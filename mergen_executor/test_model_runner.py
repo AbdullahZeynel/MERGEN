@@ -34,6 +34,10 @@ def main() -> int:
             while True:
                 time.sleep(1)
         (output / "child.pid").write_text(str(child))
+    elif request["operation"] == "run" and behavior.startswith("report:"):
+        (output / ".adapter-response.json").write_text(
+            json.dumps({"error": behavior.split(":", 1)[1]}), encoding="utf-8")
+        return 0
     if request["operation"] == "run":
         (output / "result.zip").write_bytes(b"test-result")
     (output / ".adapter-response.json").write_text(

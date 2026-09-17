@@ -40,8 +40,9 @@ Executor çalıştırıcıyı aşağıdaki biçimde başlatır:
 
 Tek bir JSON istek stdin'den gelir. `operation` değeri `preflight` veya `run`'dır.
 Run isteği iş kimliğini, hastalık slug'ını, model/input/output dizinlerini, dört
-modalite yolunu, model kimliğini ve azami sonuç boyutunu taşır. Bu yolların veya
-iş verisinin loglanması sözleşme dışıdır.
+modalite yolunu, model kimliğini ve azami sonuç boyutunu taşır. Preflight isteği
+de model kimliğini taşır; runner kendi sabit kimliğiyle uyuşmayan manifesti
+reddeder. Bu yolların veya iş verisinin loglanması sözleşme dışıdır.
 
 Çalıştırıcı yanıtı `outputDir/.adapter-response.json` dosyasına en fazla 4096
 baytlık JSON olarak atomik biçimde yazmalıdır:
@@ -49,6 +50,17 @@ baytlık JSON olarak atomik biçimde yazmalıdır:
 ```json
 {"result":"result.zip"}
 ```
+
+Runner kendisi için yalnız iki hata kodu bildirebilir: kaynak sınırı sonucu
+güvenle üretmeyi engellerse `{"error":"resource-exhausted"}`, girdi modelin
+sözleşmesinin dışındaysa `{"error":"input-invalid"}`. Executor bu ikisi dışında
+yazılan her kodu okunamaz yanıt sayar; runner işin gerekçesini kendisi seçemez.
+Başka hata metni, dosya yolu veya hasta metadata'sı süreç sınırından geçirilmez.
+
+Girdi sözleşmesi voxel ızgarasını da kapsar. Referans hat resample ve reorient
+etmediği için checkpoint yalnız incelenen ızgarayı görmüştür: 1 mm izotropik,
+LPS, eksen hizalı. Başka bir uzaydaki hacim aynı güvenle ve aynı yanlışlıkla
+skorlanacağından `input-invalid` ile reddedilir; sessizce yeniden örneklenmez.
 
 `preflight` için de aynı yanıt biçimi kullanılır; isim dikkate alınmaz. Sıfırdan
 farklı çıkış, eksik/geçersiz yanıt, timeout veya cancel başarısızlıktır. Executor
@@ -68,3 +80,16 @@ yanlış model kimliği veya geçersiz ZIP başarılı sayılmaz.
 Landlock okuma erişimini sınırlandırmaz. Runner kodu ve bağımlılıkları güvenilir
 kabul edilir; ayrı uid/mount namespace ile okuma izolasyonu bu sözleşmenin v1
 kapsamında değildir.
+
+Yazma kapatmasının tek istisnası NVIDIA compute düğümleridir. CUDA sürücüsü
+`/dev/nvidiactl`, `/dev/nvidia-uvm`, `/dev/nvidia-uvm-tools` ve `/dev/nvidia0`
+düğümlerini `O_RDWR` açmak zorundadır; kural verilmezse sürücü hiç başlamaz ve
+runner "GPU yok" diye kapanır — GPU'su olmayan bir hosttan ayırt edilemeyen bir
+belirti. Her düğüm tek tek adlandırılır ve yalnız dosya hakları taşır, dolayısıyla
+`/dev` altında komşu düğüm açılamaz, yeni giriş yaratılamaz, düğüm silinemez.
+Liste unit dosyasının `DeviceAllow` satırlarıyla aynı olmak zorundadır.
+
+Swin checkpoint'i SHA-256 ile doğrulandıktan sonra yüklenir. Yayımlanmış dosya
+NumPy scalar metadata içerdiği için PyTorch `weights_only=True` ile açılamaz;
+`weights_only=False` yalnız doğrulanmış, operatörce yerleştirilmiş bu dosyada ve
+Landlock sınırı kurulmuş alt süreçte kullanılır.

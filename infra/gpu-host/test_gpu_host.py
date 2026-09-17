@@ -522,6 +522,14 @@ class SystemdExamples(unittest.TestCase):
         self.assertIn("EnvironmentFile=/etc/mergen/executor.env", text)
         self.assertNotIn("dispatcher.env", text)
 
+    def test_executor_opens_only_the_reviewed_nvidia_compute_nodes(self):
+        text = read(HERE / "systemd" / "mergen-executor.service.example")
+        self.assertIn("DevicePolicy=closed", text)
+        self.assertIn("PrivateDevices=false", text)
+        for node in ("nvidia0", "nvidiactl", "nvidia-uvm", "nvidia-uvm-tools"):
+            self.assertIn(f"DeviceAllow=/dev/{node} rw", text)
+        self.assertNotIn("DeviceAllow=/dev/dri", text)
+
     def test_both_units_drop_privileges_and_limit_resources(self):
         for name in ("mergen-dispatcher", "mergen-executor"):
             text = read(HERE / "systemd" / f"{name}.service.example")

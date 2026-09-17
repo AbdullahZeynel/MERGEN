@@ -69,6 +69,14 @@ class YakalanmamasiGerekenler(unittest.TestCase):
     def test_belge_ip_araligi(self):
         self.assertEqual(kurallar("örnek: 192.0.2.10 ve 203.0.113.7"), set())
 
+    def test_surum_sabiti_adres_degil(self):
+        self.assertEqual(kurallar("cuda-toolkit==13.0.3.0\nnvidia-cudnn-cu13==9.24.0.43"), set())
+
+    def test_tek_esittir_hala_adres(self):
+        # Only a version pin is exempt; an assignment is still an address.
+        self.assertIn("public-ip", kurallar("HOST=203.0.114.9"))  # repo-guard: allow
+        self.assertIn("public-ip", kurallar("worker 13.0.3.0"))  # repo-guard: allow
+
     def test_bos_ornek_degerler(self):
         self.assertEqual(kurallar('TOKEN=""\nAPI_KEY="<VPS_TOKEN>"\nPASSWORD="changeme"'), set())
 

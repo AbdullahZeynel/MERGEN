@@ -312,7 +312,8 @@ Görüntü bağımlılıklarını ayrı ve kilitli bir venv'de tut.
 sudo -u mergen python3 -m venv /srv/mergen-models/venv/imaging
 ```
 
-Yolu `/etc/mergen/executor.env` içindeki `MERGEN_IMAGING_VENV` alanına yaz.
+Henüz `executor.env`'yi değiştirme; ortam ve fixture testi bitince 16. adımda
+etkinleştirilecek.
 
 ### 13. CUDA uyumlu PyTorch
 
@@ -321,11 +322,19 @@ Yolu `/etc/mergen/executor.env` içindeki `MERGEN_IMAGING_VENV` alanına yaz.
 kadar gereksiz yüzlerce megabayt ve bir sürüm çakışması kaynağıdır.
 
 ```bash
-/srv/mergen-models/venv/imaging/bin/pip install torch --index-url <pytorch-cuda-index>
+sudo -u mergen /srv/mergen-models/venv/imaging/bin/pip install \
+  torch==2.14.0 --index-url <resmi-pytorch-cuda-index>
+sudo -u mergen /srv/mergen-models/venv/imaging/bin/pip install \
+  -r <depo-klonu>/mergen_imaging/requirements.lock
 ```
 
 Doğru index URL'sini kurulum anında pytorch.org'dan al; CUDA sürümüne göre
 değişir ve burada sabitlemek yanlış olur.
+
+Release de aynı `requirements.lock` dosyasını taşır ve runner her preflight'ta
+kurulu sürümleri o dosyayla karşılaştırır: bu venv release'den saparsa executor
+`imaging` capability'sini hiç ilan etmez. Bu yüzden 16. adımdaki release ile
+aynı commit'ten kurulum yap.
 
 **`nvcc` ne zaman gerekir?** Yalnız bir paket kurulum sırasında CUDA kaynağı
 derliyorsa. Belirtisi açıktır: `pip install` sırasında `nvcc: command not
@@ -351,19 +360,34 @@ yazdırmaz.
 
 Ağırlıklar Git'te değildir ve olmayacaktır
 ([`LOCAL_ASSETS.md`](LOCAL_ASSETS.md)). `/srv/mergen-models` altına sürümlü
-yerleştir ve checksum kaydet:
+yerleştir ve sürümlü manifesti yanında tut:
 
 ```
 /srv/mergen-models/
-  imaging/nnunet/<sürüm>/...
-  imaging/swinunetr/<sürüm>/...
-  MANIFEST.sha256
+  venv/imaging/...
+  imaging/swin-unetr-brats21/fold0-f48-ep300/
+    manifest.json
+    pretrained_models/model.pt
 ```
 
 Dizin `mergen:mergen-svc` 0750'dir: servisler okur, yalnız bakım hesabı yazar.
 G4-A executor'ı bir ağırlığı kullanmadan önce yol, boyut ve SHA-256 değerini
 model kökündeki `manifest.json` ile doğrular. Bu manifestin kesin biçimi ve
 runner protokolü [`contracts/MODEL_RUNNER.md`](contracts/MODEL_RUNNER.md)'dedir.
+Checkpoint Git'ten gelmez; güvenilir kaynaktan hosta ayrıca aktarılır. Örnek
+manifesti gerçek model dizinine `manifest.json` adıyla kopyala:
+
+```bash
+MODEL_DIR=/srv/mergen-models/imaging/swin-unetr-brats21/fold0-f48-ep300
+sudo -u mergen install -d -m 0750 "$MODEL_DIR/pretrained_models"
+sudo -u mergen install -m 0640 <checkpoint-path> "$MODEL_DIR/pretrained_models/model.pt"
+sudo -u mergen install -m 0640 infra/gpu-host/imaging-model-manifest.example.json \
+  "$MODEL_DIR/manifest.json"
+sha256sum "$MODEL_DIR/pretrained_models/model.pt"
+```
+
+Çıktı manifestteki hash ile birebir aynı, `stat -c %s` sonucu `256368326`
+olmalıdır. Checkpoint veya manifest symlink olmamalıdır.
 
 ### 16. Servis staging'i ve release geçişi (başlatmadan)
 
@@ -373,7 +397,8 @@ release olarak kurulur. Unit örnekleri bu düzeni bekler:
 
 ```
 /opt/mergen/releases/<sürüm>/src/         backend/archive_io.py, backend/live_contracts.py,
-                                          mergen_spool/, mergen_dispatcher/, mergen_executor/
+                                          mergen_spool/, mergen_dispatcher/, mergen_executor/,
+                                          mergen_imaging/
 /opt/mergen/releases/<sürüm>/units/       bu release'in iki unit dosyası
 /opt/mergen/releases/<sürüm>/dispatcher/  venv: yalnız mergen_dispatcher/requirements.txt
 /opt/mergen/releases/<sürüm>/executor/    venv: yalnız mergen_executor/requirements.txt
@@ -452,13 +477,49 @@ sudo bash infra/gpu-host/verify-services.sh --after
 `ln -sfn` kullanma: eski bağlantıyı silip yenisini yazar, arada `current` yoktur.
 Servisler çalışıyorsa önce durdurulur, geçişten sonra birlikte başlatılır.
 
-İki servis de G4-B'den önce `enable` edilmez. Bu sürümde gerçek görüntü runner'ı yoktur:
-executor `executor.json`'a hiçbir yetenek yazmaz, dispatcher da bu yüzden VPS'e
-yetenek bildirmez ve iş almaz. Executor unit'i ağ ve GPU cihazı açmaz; NVIDIA cihaz
-izinleri G4-B gerçek runner'ıyla eklenir. G4-A ayrı süreç/venv, süreç grubu
-sonlandırma, checksum preflight ve Landlock ile yalnız `work/output`'a yazma
-sınırını hazırlar; gerçek model içermez. Şu an başlatılması gereken tek servis
-`tailscaled`.
+Gerçek runner kurulmadan ve aşağıdaki fixture testi geçmeden iki servisi enable
+etme. G4-B unit'i yalnız `/dev/nvidia0`, `/dev/nvidiactl`, `/dev/nvidia-uvm` ve
+`/dev/nvidia-uvm-tools` cihazlarını açar; ağ namespace'i kapalı kalır. Dört yolun
+hostta gerçek karakter cihazı olduğunu `stat` ile doğrula.
+
+Fixture sentetiktir; gerçek hasta verisini bu smoke komutunda kullanma. Üreteci
+model venv'iyle çalıştır — dört hacmi incelenen ızgarada, 0700 bir dizine yazar:
+
+```bash
+sudo -u mergen /srv/mergen-models/venv/imaging/bin/python \
+  -m mergen_imaging.make_fixture /var/lib/mergen/executor/anonymous-fixture
+```
+
+Kendi kimliksiz verini kullanacaksan dosya adları `T1.nii.gz`, `T1CE.nii.gz`,
+`T2.nii.gz`, `FLAIR.nii.gz` olmalı ve dördü de 1 mm izotropik, LPS, eksen hizalı
+aynı affine'i taşımalıdır; runner başka bir uzayı `input-invalid` ile reddeder.
+
+```bash
+sudo -u mergen-executor env PYTHONPATH=/opt/mergen/current/src \
+  /opt/mergen/current/executor/bin/python -P -m mergen_executor.model_smoke \
+  --model-root /srv/mergen-models/imaging/swin-unetr-brats21/fold0-f48-ep300 \
+  --imaging-venv /srv/mergen-models/venv/imaging \
+  --fixture /var/lib/mergen/executor/anonymous-fixture
+```
+
+Kabul: `PASS isolated inference`, masaüstü kullanılabilir, `nvidia-smi` içinde
+başka süreç öldürülmemiş ve ölçülen süre/VRAM operatör kaydına yazılmıştır.
+
+Referans ölçüm (RTX 5060 Laptop, 8151 MiB, sürücü CUDA 13.0, torch 2.14.0+cu130,
+boşta 126 MiB): çıkarım 41 s, preflight dahil 57 s, **tepe VRAM 5794 MiB**. Yani
+model tek başına yaklaşık 5,7 GiB istiyor. Eşikleri buradan türet, tahminle
+değil: `MERGEN_GPU_MAX_MEMORY_USED_MB`, kartın toplamından bu tepe değeri ve bir
+güvenlik payını çıkardıktan sonra kalan miktarı aşmamalıdır — 8 GiB'lık bu kartta
+2000 MiB civarı. Daha yüksek bir eşik, başlaması OOM ile bitecek bir işe izin
+verir. Kendi hostunda ölçümü tekrarla; sayılar donanıma bağlıdır.
+
+Ardından `/etc/mergen/executor.env` içinde model kökü, venv ve ölçümle seçilen
+iki GPU eşiğini doldur. `verify-services.sh --after` ve executor'ı tek başına
+başlat; `/var/lib/mergen/runtime/executor.json` yalnız preflight geçerse
+`imaging` capability taşımalıdır. Preflight GPU'yu açtığı için masaüstü meşgulse
+başarısız olabilir: executor bunu kalıcı saymaz, `MERGEN_PREFLIGHT_RETRY_SECONDS`
+(varsayılan 300 s) kadenzinde ve yalnız GPU boştayken yeniden dener. Dispatcher
+bundan sonra açılır.
 
 ### 17. Pause, bakım ve rollback
 

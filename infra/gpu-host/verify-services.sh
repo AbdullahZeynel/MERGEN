@@ -176,6 +176,7 @@ check_unit() {
         || fail "$label: User is not $(service_user "$service")"
     if [[ "$service" == executor ]]; then
         local problems=''
+        local expected_devices actual_devices
         grep -q 'dispatcher.env' -- "$file" && problems=' names-dispatcher.env'
         for directive in PrivateNetwork=true IPAddressDeny=any RestrictAddressFamilies=AF_UNIX; do
             grep -qx -- "$directive" "$file" || problems="$problems missing-$directive"
@@ -184,6 +185,11 @@ check_unit() {
         for key in $(unit_env_keys "$file" | control_keys); do
             problems="$problems sets-$key"
         done
+        expected_devices=$'/dev/nvidia-uvm rw\n/dev/nvidia-uvm-tools rw\n/dev/nvidia0 rw\n/dev/nvidiactl rw'
+        actual_devices="$(unit_values "$file" DeviceAllow | LC_ALL=C sort)"
+        grep -qx 'PrivateDevices=false' -- "$file" || problems="$problems missing-private-device-policy"
+        grep -qx 'DevicePolicy=closed' -- "$file" || problems="$problems missing-closed-device-policy"
+        [[ "$actual_devices" == "$expected_devices" ]] || problems="$problems unexpected-device-list"
         [[ -z "$problems" ]] && pass "$label: no network and no access to the dispatcher's configuration" \
             || fail "$label: isolation problem:$problems"
     else

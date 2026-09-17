@@ -188,8 +188,14 @@ def scan_text(path: str, text: str) -> list[Finding]:
         for host in MAGIC_DNS.findall(line):
             bulgular.append(Finding(path, number, "tailscale-host",
                                     f"{len(host)} karakterlik .ts.net adresi"))
-        for raw in IPV4.findall(line):
-            if _ip_is_public(raw):
+        for match in IPV4.finditer(line):
+            # A four-part version pin is not an address: NVIDIA and CUDA
+            # distributions routinely carry them, and a lock file would
+            # otherwise need a marker per refresh. Only `==` is exempt, so
+            # `HOST=203.0.113.7` is still an address.
+            if line[max(0, match.start() - 2):match.start()] == "==":
+                continue
+            if _ip_is_public(match.group()):
                 bulgular.append(Finding(path, number, "public-ip",
                                         "genel IPv4 adresi (yer tutucu kullanın)"))
         for name, value in SECRET_KEY.findall(line):

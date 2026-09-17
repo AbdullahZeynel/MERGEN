@@ -123,7 +123,11 @@ class Rejections(ExecutorCase):
 class AdapterVerdicts(ExecutorCase):
     def test_adapter_failures_become_contract_error_codes(self):
         outside = self.base / "outside.zip"
-        outside.write_bytes(result_zip())
+        # Kept, not rebuilt at the end: a ZIP entry carries the time it was
+        # written at two-second resolution, so regenerating the expected bytes
+        # fails whenever the loop below crosses one of those boundaries.
+        untouched = result_zip()
+        outside.write_bytes(untouched)
         cases = [("explicit code", FakeImagingAdapter("fail", code="model-unavailable"), "model-unavailable"),
                  ("unknown code", FakeImagingAdapter("fail", code="gpu-melted"), "internal-error"),
                  ("exception", FakeImagingAdapter("raise"), "inference-failed"),
@@ -142,7 +146,7 @@ class AdapterVerdicts(ExecutorCase):
                 self.assertEqual((status["state"], status["errorCode"]), ("failed", code))
                 self.assertEqual(sorted(os.listdir(directory)),
                                  ["gate", "input.zip", "job.json", "status.json"])
-        self.assertEqual(outside.read_bytes(), result_zip(), "a linked result was written through")
+        self.assertEqual(outside.read_bytes(), untouched, "a linked result was written through")
 
     def test_a_result_over_its_size_limit_is_refused(self):
         publish_job(self.root)

@@ -97,6 +97,21 @@ class ProcessAdapterTest(unittest.TestCase):
         with self.assertRaisesRegex(AdapterFailure, "inference-failed"):
             adapter.run(self.job())
 
+    def test_a_runner_may_report_only_the_two_contract_codes(self):
+        self.adapter.preflight()
+        for code in ("resource-exhausted", "input-invalid"):
+            with self.subTest(code=code):
+                (self.model / "behavior").write_text(f"report:{code}")
+                with self.assertRaisesRegex(AdapterFailure, code):
+                    self.adapter.run(self.job())
+        # A code outside the contract is an unreadable response, not a
+        # diagnosis the runner gets to choose for the job.
+        for invented in ("cancelled", "model-unavailable", "gpu-melted"):
+            with self.subTest(code=invented):
+                (self.model / "behavior").write_text(f"report:{invented}")
+                with self.assertRaisesRegex(AdapterFailure, "inference-failed"):
+                    self.adapter.run(self.job())
+
     def test_a_successful_runner_cannot_leave_a_descendant(self):
         (self.model / "behavior").write_text("descendant")
         self.adapter.preflight()

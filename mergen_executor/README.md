@@ -1,4 +1,4 @@
-# GPU executor (G3 + G4-A isolation)
+# GPU executor (G3 + G4 model boundary)
 
 GPU hostunda dispatcher'ın yayımladığı işleri teker teker çalıştıran süreç. Ağ
 istemcisi, VPS adresi veya worker token'ı yoktur; dispatcher ile yalnız
@@ -100,10 +100,19 @@ Model ağacı ve venv bu nedenle yalnız güvenilir bakım hesabınca yönetilme
 model kodu güvenilir olmalı ve hostta gerçek hasta verisi kullanılmadan önce okuma sınırı ayrıca
 değerlendirilmelidir.
 
-Bu değişiklik gerçek Swin çalıştırıcısını, NVML/CUDA model preflight'ını veya
-NVIDIA `DeviceAllow` ayarını eklemez. `MERGEN_IMAGING_VENV` boş kaldığı sürece
-adaptör yoktur ve executor capability ilan etmez; G4-B gelmeden servisleri canlı
-iş kabul edecek biçimde açmayın.
+G4-B gerçek Swin çalıştırıcısını, tam sürümlü model ortamını, CUDA/model
+preflight'ını, NVML admission kontrolünü ve dar NVIDIA `DeviceAllow` listesini
+ekler. Model venv'i etkinleştiğinde bellek/kullanım eşikleri zorunludur; NVML
+okunamazsa yeni iş başlamaz. `MERGEN_IMAGING_VENV` boş kaldığı sürece adaptör
+yoktur ve executor capability ilan etmez.
+
+Landlock kapatması dört NVIDIA compute düğümünü tek tek, yalnız dosya haklarıyla
+açar; bu kural olmadan CUDA sürücüsü hiç başlamaz ve runner GPU'su olmayan bir
+hosttan ayırt edilemeyen biçimde kapanır. Preflight de GPU'yu açtığı için
+masaüstü meşgulken başarısız olabilir: bu kalıcı sayılmaz,
+`MERGEN_PREFLIGHT_RETRY_SECONDS` kadenzinde ve yalnız pause yokken, GPU boştayken
+yeniden denenir. Gerçek GPU fixture kabulü:
+[`GPU_HOST_RUNBOOK.md`](../docs/GPU_HOST_RUNBOOK.md).
 
 ## Çalıştırma ve test
 
@@ -114,4 +123,5 @@ etiketi, durum, hata kodu ve istisna türü taşır.
 
 ```bash
 python -m unittest discover -s mergen_executor -t .
+python -m unittest discover -s mergen_imaging -t .
 ```

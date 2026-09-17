@@ -12,8 +12,7 @@
 #
 # The executor runs one job at a time on a job directory the dispatcher
 # published. It holds no token, knows no VPS address and has no network leg.
-# G4-A supplies the isolated process boundary but no real runner and opens no
-# GPU device. The NVIDIA allow-list arrives with the G4-B model runner.
+# The G4-B runner uses only the explicitly listed NVIDIA compute devices.
 
 [Unit]
 Description=MERGEN GPU model executor
@@ -41,9 +40,15 @@ RestartPreventExitStatus=2
 NoNewPrivileges=true
 CapabilityBoundingSet=
 PrivateTmp=true
-# G4-A opens no GPU device. G4-B replaces this with DevicePolicy=closed and a
-# DeviceAllow line for each NVIDIA node the host really has.
-PrivateDevices=true
+# Consumer GPUs cannot be partitioned safely by percentage. The executor first
+# applies its NVML admission thresholds, then the model child uses these nodes.
+# Missing nodes are harmless; verify-gpu-runtime checks the host before enable.
+PrivateDevices=false
+DevicePolicy=closed
+DeviceAllow=/dev/nvidia0 rw
+DeviceAllow=/dev/nvidiactl rw
+DeviceAllow=/dev/nvidia-uvm rw
+DeviceAllow=/dev/nvidia-uvm-tools rw
 ProtectSystem=strict
 ProtectHome=true
 ProtectKernelTunables=true
@@ -58,8 +63,8 @@ RestrictNamespaces=true
 RestrictRealtime=true
 RestrictSUIDSGID=true
 LockPersonality=true
-# G4-B revisits this if its CUDA stack needs writable executable memory.
-MemoryDenyWriteExecute=true
+# PyTorch/CUDA JIT needs executable mappings inside this otherwise confined unit.
+MemoryDenyWriteExecute=false
 SystemCallArchitectures=native
 SystemCallFilter=@system-service
 # No network leg at all: an empty network namespace, no IP traffic, and only

@@ -25,7 +25,11 @@ katmanları ve indirme formatlarının ayrıntılı uygulama sırası
 
 ## Kapsam sınırı
 
-Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu değildir. Arayüz, salt okunur demo API'si ve MCP çalışır; canlı oturum/kuyruk temeli geliştirme dalındadır, model adaptörleri henüz uygulanmadı. Donanım ve hız bilgileri ölçülmedikçe varsayımdır. Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
+Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegrasyonu
+değildir. Arayüz, salt okunur demo API'si, MCP ve canlı oturum/kuyruk temeli
+çalışır; izole Swin UNETR runner uygulanmıştır ancak gerçek GPU fixture ve uçtan
+uca VPS kabulü yapılmamıştır. Donanım ve hız bilgileri ölçülmedikçe varsayımdır.
+Güncel demo kurulumu: `docs/DEMO_SERVICES.md`.
 
 ## Model yerleşimi
 
