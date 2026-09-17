@@ -48,6 +48,23 @@ describe('pathology package validation', () => {
     expect(parse([wrong]).success).toBe(false);
   });
 
+  it('refuses a tile layout that is not one the slide could fill', () => {
+    // Hucreler ekranda numaralanıyor; tutmayan bir yerleşim numara uydurur.
+    const grid = { tilePx: 224, columns: 6, rows: 2, count: 12, ordering: 'attention_desc' as const, micronsPerPixel: 0.5 };
+    expect(parse([makeSlide('TEST-SLIDE-1', { tileGrid: grid })]).success).toBe(true);
+    for (const broken of [
+      { ...grid, count: 13 },
+      { ...grid, rows: 0 },
+      { ...grid, micronsPerPixel: 0 },
+      { ...grid, ordering: 'as_found' },
+    ])
+      expect(parse([makeSlide('TEST-SLIDE-1', { tileGrid: broken as never })]).success).toBe(false);
+    // Sayfa, slaytın kullandığından fazla kare iddia edemez.
+    expect(
+      parse([makeSlide('TEST-SLIDE-1', { tilesUsed: 6, tileGrid: grid })]).success,
+    ).toBe(false);
+  });
+
   it('refuses a repeated slide identity', () => {
     const slide = makeSlide('TEST-SLIDE-1');
     expect(parse([slide, slide]).success).toBe(false);

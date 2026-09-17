@@ -147,6 +147,19 @@ export const slideSchema = z
       thumbnail: z.string().optional(),
       report: z.string().optional(),
     }),
+    // En yuksek attention'li kareler tek bir montaj dosyasinda geliyor. Ekran
+    // hucreleri ancak paket yerlesimi soylerse numaralandirir; siralamasi
+    // bilinmeyen bir sayfaya sira numarasi uydurulmaz.
+    tileGrid: z
+      .object({
+        tilePx: z.number().int().positive(),
+        columns: z.number().int().positive(),
+        rows: z.number().int().positive(),
+        count: z.number().int().positive(),
+        ordering: z.literal('attention_desc'),
+        micronsPerPixel: z.number().positive(),
+      })
+      .optional(),
   })
   .superRefine((slide, ctx) => {
     for (const [kind, path] of Object.entries(slide.assets))
@@ -155,6 +168,10 @@ export const slideSchema = z
     const ranked = Object.values(slide.prediction.probabilities).sort((a, b) => b - a);
     if (slide.prediction.probabilities[slide.prediction.class] !== ranked[0])
       ctx.addIssue({ code: 'custom', message: 'Bildirilen sınıf en yüksek olasılık değil.' });
+    if (slide.tileGrid && slide.tileGrid.count !== slide.tileGrid.columns * slide.tileGrid.rows)
+      ctx.addIssue({ code: 'custom', message: 'Kare yerleşimi kendi sayısını tutmuyor.' });
+    if (slide.tileGrid && slide.tileGrid.count > slide.tilesUsed)
+      ctx.addIssue({ code: 'custom', message: 'Sayfa, slaytın kullandığından fazla kare iddia ediyor.' });
     const agrees = slide.reference && slide.prediction.class === slide.reference.class;
     if (slide.reference ? slide.agreesWithReference !== agrees : 'agreesWithReference' in slide)
       ctx.addIssue({ code: 'custom', message: 'Uyum iddiası referansla tutmuyor.' });

@@ -9,7 +9,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'mcp'))
-from prepare_demo_v4 import build  # noqa: E402
+from PIL import Image  # noqa: E402
+
+from prepare_demo_v4 import TILE_COLUMNS, TILE_PX, build  # noqa: E402
 from demo_store import DemoStore  # noqa: E402
 
 
@@ -85,12 +87,19 @@ class DemoV4Tests(unittest.TestCase):
             }],
         }))
 
-    def write_slide(self, case_id, info, images=('attention.jpg', 'top_tiles.jpg')):
+    def write_slide(self, case_id, info, images=('attention.jpg', 'top_tiles.jpg'),
+                    sheet=(TILE_COLUMNS, 2)):
         case_dir = self.wsi / case_id
         case_dir.mkdir(exist_ok=True)
         (case_dir / 'case_info.json').write_text(json.dumps(info))
         for name in images:
-            (case_dir / name).write_bytes(f'{name}-{case_id}'.encode())
+            if name == 'top_tiles.jpg':
+                # A real montage: the generator measures this file.
+                columns, rows = sheet
+                Image.new('RGB', (columns * TILE_PX, rows * TILE_PX), 'white').save(
+                    case_dir / name, 'JPEG')
+            else:
+                (case_dir / name).write_bytes(f'{name}-{case_id}'.encode())
 
     def write_figure(self, case_id, info):
         case_dir = self.mri / case_id
@@ -207,6 +216,38 @@ class DemoV4Tests(unittest.TestCase):
     def test_refuses_an_existing_output(self):
         self.output.mkdir()
         with self.assertRaisesRegex(ValueError, 'Output already exists'):
+            self.build()
+
+
+class TileSheetTests(DemoV4Tests):
+    """The sheet of top tiles is numbered on screen, so its layout is measured."""
+
+    def test_records_the_layout_it_measured(self):
+        self.write_slide('test_TCGA-AA-0001', slide_info('TCGA-AA-0001'))
+        self.build()
+        store = DemoStore(self.output)
+        case = store.collections[('pathology', 'glioma')]['cases']['test_TCGA-AA-0001']
+        self.assertEqual(case['tileGrid'], {
+            'tilePx': TILE_PX, 'columns': TILE_COLUMNS, 'rows': 2, 'count': TILE_COLUMNS * 2,
+            'ordering': 'attention_desc', 'micronsPerPixel': 0.5})
+
+    def test_refuses_a_sheet_that_is_not_that_montage(self):
+        for sheet in ((TILE_COLUMNS + 1, 2), (TILE_COLUMNS - 1, 1)):
+            self.write_slide('test_TCGA-AA-0001', slide_info('TCGA-AA-0001'), sheet=sheet)
+            with self.assertRaisesRegex(ValueError, 'montage'):
+                self.build()
+        # A sheet whose sides are not whole tiles is refused as well.
+        case_dir = self.wsi / 'test_TCGA-AA-0001'
+        Image.new('RGB', (TILE_COLUMNS * TILE_PX, TILE_PX + 7), 'white').save(
+            case_dir / 'top_tiles.jpg', 'JPEG')
+        with self.assertRaisesRegex(ValueError, 'montage'):
+            self.build()
+
+    def test_refuses_more_cells_than_the_slide_had_tiles(self):
+        # Otherwise an empty cell would be numbered as if a tile were there.
+        info = slide_info('TCGA-AA-0001') | {'n_tiles_used': 6}
+        self.write_slide('test_TCGA-AA-0001', info)
+        with self.assertRaisesRegex(ValueError, 'more tiles than the slide used'):
             self.build()
 
 
