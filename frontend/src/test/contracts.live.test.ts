@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { liveJobSchema, liveReportSchema, liveResultSchema } from '../data/contracts';
+import { liveJobSchema, liveReportSchema, liveResultSchema } from '../data/contracts.live';
 import { makeLiveJob, makeLiveReport, makeLiveResult, makeReviewFlag } from './fixtures';
 
 describe('live job boundary validation', () => {

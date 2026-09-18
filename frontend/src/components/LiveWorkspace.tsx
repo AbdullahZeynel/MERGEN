@@ -13,7 +13,7 @@ import {
   type LiveSession,
 } from '../data/liveClient';
 import { buildBundle, BundleRejected, MODALITIES, type Modality, type VolumeSelection } from '../data/liveBundle';
-import { liveStatusKeys, type LiveJob, type ReviewFlag } from '../data/contracts';
+import { liveStatusKeys, type LiveJob, type ReviewFlag } from '../data/contracts.live';
 import { LazyVolumeViewer } from './LazyVolumeViewer';
 import { ViewerFrame } from './ViewerFrame';
 import { useLanguage } from '../i18n';
