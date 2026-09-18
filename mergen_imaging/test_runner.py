@@ -12,13 +12,16 @@ from unittest.mock import patch
 
 from backend.archive_io import validate_result_archive
 from mergen_imaging.glb import COLORS, REGIONS, mesh_glb_bytes
-from mergen_imaging.runner import (CHANNEL_ORDER, OVERLAP, ROI, THRESHOLD, InputRejected,
-                                   ResourceLimit, _checkpoint, _failure_code,
-                                   _locked_distributions, _package_result,
-                                   _preprocessed_space, _respond, _same_geometry,
-                                   _verify_environment)
+from mergen_imaging import (MODEL_ID, MODEL_VERSION, NNUNET_FOLDS, NNUNET_MEMBER,
+                             PRODUCT_WEIGHTS, SWIN_MEMBER)
+from mergen_imaging.runner import (CHANNEL_ORDER, NNUNET_CHANNEL_ORDER, OVERLAP, ROI, THRESHOLD,
+                                   InputRejected, ResourceLimit, _failure_code,
+                                   _locked_distributions, _member_records, _members,
+                                   _package_result, _preprocessed_space, _respond,
+                                   _same_geometry, _verify_environment)
 
 JOB_ID = "e" * 32
+TRAINER = "nnUNetTrainer__nnUNetPlans__3d_fullres"
 
 
 class GlbTests(unittest.TestCase):
@@ -78,12 +81,25 @@ class RunnerContractTests(unittest.TestCase):
         self.addCleanup(temporary.cleanup)
         self.root = Path(temporary.name)
         self.request = {"jobId": JOB_ID, "disease": "glioma",
-                        "modelId": "swin-unetr-brats21", "modelVersion": "fold0-f48-ep300",
+                        "modelId": MODEL_ID, "modelVersion": MODEL_VERSION,
                         "maxResultBytes": 1024 * 1024}
 
     def test_reviewed_preprocessing_constants_do_not_drift(self):
         self.assertEqual(CHANNEL_ORDER, ("FLAIR", "T1CE", "T1", "T2"))
+        # nnU-Net trained on its own channel order; the reference wrapper feeds
+        # it T1, T1c, T2, FLAIR and the live path must not reorder them.
+        self.assertEqual(NNUNET_CHANNEL_ORDER, ("T1", "T1CE", "T2", "FLAIR"))
         self.assertEqual((ROI, OVERLAP, THRESHOLD), ((128, 128, 128), 0.6, 0.5))
+
+    def test_the_result_names_the_product_and_the_networks_behind_it(self):
+        # The live path answers as the configuration that was measured, and the
+        # report still says which networks produced it.
+        self.assertEqual((MODEL_ID, MODEL_VERSION), ("mergen-uwcse", "v3"))
+        self.assertEqual(_member_records(), [
+            {"modelId": NNUNET_MEMBER[0], "modelVersion": NNUNET_MEMBER[1],
+             "folds": [0, 1, 2, 3, 4]},
+            {"modelId": SWIN_MEMBER[0], "modelVersion": SWIN_MEMBER[1]}])
+        self.assertEqual(len(PRODUCT_WEIGHTS), 3)
 
     def test_model_environment_is_exact_and_accepts_a_cuda_local_suffix(self):
         expected = _locked_distributions()
@@ -99,13 +115,65 @@ class RunnerContractTests(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "version mismatch"):
                 _verify_environment()
 
-    def test_checkpoint_comes_from_the_single_manifest_entry(self):
-        (self.root / "manifest.json").write_text(json.dumps({
-            "checkpoints": [{"path": "pretrained/model.pt"}]}))
-        self.assertEqual(_checkpoint(self.root), self.root / "pretrained/model.pt")
-        (self.root / "manifest.json").write_text('{"checkpoints": []}')
-        with self.assertRaisesRegex(ValueError, "exactly one"):
-            _checkpoint(self.root)
+    def write_manifest(self, checkpoints) -> None:
+        (self.root / "manifest.json").write_text(json.dumps({"checkpoints": checkpoints}))
+
+    @staticmethod
+    def product_checkpoints(**changes):
+        """The manifest the operator writes for the measured ensemble."""
+        folds = [{"role": "nnunet-fold", "fold": fold,
+                  "path": f"nnunet/Dataset002_BRATS19/{TRAINER}/fold_{fold}/checkpoint_final.pth"}
+                 for fold in NNUNET_FOLDS]
+        plans = [{"role": "nnunet-plan", "path": f"nnunet/Dataset002_BRATS19/{TRAINER}/{name}"}
+                 for name in ("dataset.json", "plans.json")]
+        swin = [{"role": "swin", "path": "swin/model.pt"}]
+        return {"folds": folds, "plans": plans, "swin": swin} | changes
+
+    def test_the_manifest_has_to_describe_the_measured_ensemble(self):
+        parts = self.product_checkpoints()
+        self.write_manifest(parts["folds"] + parts["plans"] + parts["swin"])
+        members = _members(self.root)
+        self.assertEqual(members.nnunet_dir,
+                         self.root / "nnunet/Dataset002_BRATS19" / TRAINER)
+        self.assertEqual(members.nnunet_checkpoint, "checkpoint_final.pth")
+        self.assertEqual(members.swin, self.root / "swin/model.pt")
+
+    def test_an_ensemble_that_is_not_the_measured_one_is_refused(self):
+        # Each of these would run, and would be scored under the same name as
+        # the configuration the locked-test numbers belong to.
+        parts = self.product_checkpoints()
+        folds, plans, swin = parts["folds"], parts["plans"], parts["swin"]
+        renamed = [dict(item) for item in folds]
+        renamed[2]["path"] = renamed[2]["path"].replace("checkpoint_final", "checkpoint_best")
+        moved = [dict(item) for item in folds]
+        moved[1]["path"] = moved[1]["path"].replace("Dataset002_BRATS19", "Dataset003_OTHER")
+        mislabelled = [dict(item) for item in folds]
+        mislabelled[0]["fold"] = 1
+        for label, checkpoints, message in (
+                ("a missing fold", folds[:-1] + swin, "every nnU-Net fold"),
+                ("a repeated fold", folds + folds[:1] + swin, "declared once"),
+                ("a fold number outside the set", folds[:-1] + swin + [
+                    {"role": "nnunet-fold", "fold": 7,
+                     "path": f"nnunet/Dataset002_BRATS19/{TRAINER}/fold_7/checkpoint_final.pth"}],
+                 "every nnU-Net fold"),
+                ("a fold whose directory disagrees", mislabelled + swin, "directory"),
+                ("folds with different file names", renamed + swin, "different checkpoint names"),
+                ("folds in two model folders", moved + swin, "one trained model folder"),
+                ("no swin checkpoint", folds, "swin checkpoint is missing"),
+                ("two swin checkpoints", folds + swin + swin, "exactly one swin"),
+                ("an unknown role", folds + swin + [{"role": "genomics", "path": "x.pt"}],
+                 "known roles"),
+                ("a plan outside the model folder", folds + swin + [
+                    {"role": "nnunet-plan", "path": "nnunet/plans.json"}],
+                 "outside the trained model folder"),
+                ("nothing at all", [], "lists no checkpoints")):
+            with self.subTest(manifest=label):
+                self.write_manifest(checkpoints)
+                with self.assertRaisesRegex(ValueError, message):
+                    _members(self.root)
+        # The plans are optional; the ensemble is the five folds and Swin.
+        self.write_manifest(folds + swin)
+        self.assertEqual(_members(self.root).nnunet_checkpoint, "checkpoint_final.pth")
 
     def test_only_the_reviewed_voxel_grid_is_accepted(self):
         # The affine every reviewed UCSF-PDGM case carries: 1 mm, LPS.
@@ -151,8 +219,7 @@ class RunnerContractTests(unittest.TestCase):
         self.assertEqual(_package_result(self.request, self.root, files), "result.zip")
         manifest = validate_result_archive(self.root / "result.zip", 1024 * 1024,
                                            {"id": JOB_ID, "module": "imaging", "disease": "glioma"})
-        self.assertEqual((manifest.modelId, manifest.modelVersion),
-                         ("swin-unetr-brats21", "fold0-f48-ep300"))
+        self.assertEqual((manifest.modelId, manifest.modelVersion), (MODEL_ID, MODEL_VERSION))
         with zipfile.ZipFile(self.root / "result.zip") as archive:
             self.assertNotIn("input.json", archive.namelist())
 

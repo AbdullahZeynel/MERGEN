@@ -6,3 +6,6 @@ nibabel==5.4.2
 numpy==2.5.3
 scikit-image==0.26.0
 einops==0.8.2
+# nnU-Net v2 is the second ensemble member. The pinned version and the resulting
+# requirements.lock are captured on the GPU host when M5 is accepted there.
+nnunetv2>=2.5

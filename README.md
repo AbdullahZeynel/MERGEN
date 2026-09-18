@@ -31,10 +31,11 @@ Dört MR modalitesinden (T1, T1c, T2, FLAIR) nnU-Net ve Swin UNETR
 tahminlerinin UWCSE ile birleştirildiği bir topluluk. Çıktı BraTS etiket
 şemasında üç bölgedir: kontrast tutan tümör, nekrotik çekirdek ve ödem.
 
-Ekrandaki hazır demo vakaları bu topluluktan gelir. Canlı GPU yolu bugün
-yalnız Swin UNETR fold-0'ı çalıştırır; sonuçlar bu nedenle farklı model
-kimliği taşır (`swin-unetr-brats21` yerine demo `uwcse-full`) ve topluluk
-çıktısıyla aynı sayılmaz.
+Ekrandaki hazır demo vakaları bu topluluktan gelir. Canlı GPU yolunun runner'ı
+M5'te aynı ürün yapılandırmasını (`mergen-uwcse` / `v3`) tarif eder: beş nnU-Net
+foldu ile Swin fold 0 sırayla koşar ve UWCSE v3 ile birleşir. Kod ve sözleşme
+hazır, **GPU hostunda kabul edilmedi** — o koşu yapılana kadar canlı çıktı
+ölçülmüş sayılmaz (#48).
 
 Arayüz her kesiti üç düzlemde gezdirir, tahmin ile referans etiketini ayrı
 katman olarak açıp kapatır ve tümör yüzeylerini WebGL ile döndürülebilir bir
@@ -153,6 +154,7 @@ Testler:
 cd frontend && npm run check                    # vitest + typecheck + build
 python -m unittest backend.test_demo backend.test_live
 python -m unittest discover -s infra/ci -p 'test_*.py'
+cd frontend/scripts && python -m unittest discover -p 'test_*.py'   # demo paketi üreticisi
 python infra/ci/repo_guard.py                   # sır, adres ve büyük dosya taraması
 ```
 

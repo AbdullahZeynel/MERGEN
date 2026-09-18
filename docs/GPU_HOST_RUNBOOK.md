@@ -365,10 +365,18 @@ yerleştir ve sürümlü manifesti yanında tut:
 ```
 /srv/mergen-models/
   venv/imaging/...
-  imaging/swin-unetr-brats21/fold0-f48-ep300/
+  imaging/mergen-uwcse/v3/
     manifest.json
-    pretrained_models/model.pt
+    nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/
+      fold_0/checkpoint_final.pth  ... fold_4/checkpoint_final.pth
+      plans.json
+      dataset.json
+    swin/pretrained_models/model.pt
 ```
+
+Canlı yol M5'te ürün yapılandırmasıdır: beş nnU-Net foldu + Swin fold 0, UWCSE
+v3 ile birleşir. Manifest üyeleri rolleriyle sayar; eksik ya da fazla üye
+reddedilir. Görüntü venv'i ayrıca `nnunetv2` ister (`mergen_imaging/requirements.txt`).
 
 Dizin `mergen:mergen-svc` 0750'dir: servisler okur, yalnız bakım hesabı yazar.
 G4-A executor'ı bir ağırlığı kullanmadan önce yol, boyut ve SHA-256 değerini
@@ -378,16 +386,25 @@ Checkpoint Git'ten gelmez; güvenilir kaynaktan hosta ayrıca aktarılır. Örne
 manifesti gerçek model dizinine `manifest.json` adıyla kopyala:
 
 ```bash
-MODEL_DIR=/srv/mergen-models/imaging/swin-unetr-brats21/fold0-f48-ep300
-sudo -u mergen install -d -m 0750 "$MODEL_DIR/pretrained_models"
-sudo -u mergen install -m 0640 <checkpoint-path> "$MODEL_DIR/pretrained_models/model.pt"
+MODEL_DIR=/srv/mergen-models/imaging/mergen-uwcse/v3
+NNUNET_DIR="$MODEL_DIR/nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres"
+sudo -u mergen install -d -m 0750 "$MODEL_DIR/swin/pretrained_models" "$NNUNET_DIR"
+sudo -u mergen install -m 0640 <swin-checkpoint> "$MODEL_DIR/swin/pretrained_models/model.pt"
+for fold in 0 1 2 3 4; do
+  sudo -u mergen install -d -m 0750 "$NNUNET_DIR/fold_$fold"
+  sudo -u mergen install -m 0640 <nnunet-fold-$fold> "$NNUNET_DIR/fold_$fold/checkpoint_final.pth"
+done
+sudo -u mergen install -m 0640 <plans.json> "$NNUNET_DIR/plans.json"
+sudo -u mergen install -m 0640 <dataset.json> "$NNUNET_DIR/dataset.json"
 sudo -u mergen install -m 0640 infra/gpu-host/imaging-model-manifest.example.json \
   "$MODEL_DIR/manifest.json"
-sha256sum "$MODEL_DIR/pretrained_models/model.pt"
+find "$MODEL_DIR" -type f ! -name manifest.json -exec sha256sum {} +
 ```
 
-Çıktı manifestteki hash ile birebir aynı, `stat -c %s` sonucu `256368326`
-olmalıdır. Checkpoint veya manifest symlink olmamalıdır.
+Örnek manifestteki her `size`/`sha256` alanı bu çıktıyla doldurulur; Swin
+satırındaki değerler yayımlanmış dosyanınkidir (`stat -c %s` = `256368326`).
+Executor her başlangıçta hepsini yeniden doğrular. Checkpoint, plan dosyası veya
+manifest symlink olmamalıdır.
 
 ### 16. Servis staging'i ve release geçişi (başlatmadan)
 
@@ -497,7 +514,7 @@ aynı affine'i taşımalıdır; runner başka bir uzayı `input-invalid` ile red
 ```bash
 sudo -u mergen-executor env PYTHONPATH=/opt/mergen/current/src \
   /opt/mergen/current/executor/bin/python -P -m mergen_executor.model_smoke \
-  --model-root /srv/mergen-models/imaging/swin-unetr-brats21/fold0-f48-ep300 \
+  --model-root /srv/mergen-models/imaging/mergen-uwcse/v3 \
   --imaging-venv /srv/mergen-models/venv/imaging \
   --fixture /var/lib/mergen/executor/anonymous-fixture
 ```
@@ -506,8 +523,9 @@ Kabul: `PASS isolated inference`, masaüstü kullanılabilir, `nvidia-smi` için
 başka süreç öldürülmemiş ve ölçülen süre/VRAM operatör kaydına yazılmıştır.
 
 Referans ölçüm (RTX 5060 Laptop, 8151 MiB, sürücü CUDA 13.0, torch 2.14.0+cu130,
-boşta 126 MiB): çıkarım 41 s, preflight dahil 57 s, **tepe VRAM 5794 MiB**. Yani
-model tek başına yaklaşık 5,7 GiB istiyor. Eşikleri buradan türet, tahminle
+boşta 126 MiB): **Swin üyesi tek başına** çıkarım 41 s, preflight dahil 57 s,
+**tepe VRAM 5794 MiB**. M5 topluluğunda üyeler sırayla koşar ve cihaz aralarında
+boşaltılır; nnU-Net üyesinin süresi ve tepe VRAM'i bu hostta henüz ölçülmedi. Eşikleri buradan türet, tahminle
 değil: `MERGEN_GPU_MAX_MEMORY_USED_MB`, kartın toplamından bu tepe değeri ve bir
 güvenlik payını çıkardıktan sonra kalan miktarı aşmamalıdır — 8 GiB'lık bu kartta
 2000 MiB civarı. Daha yüksek bir eşik, başlaması OOM ile bitecek bir işe izin

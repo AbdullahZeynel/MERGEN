@@ -10,18 +10,35 @@ Bu dosya yerel süreç sınırını tanımlar; VPS, ağ ve dispatcher sözleşme
 ```json
 {
   "schemaVersion": 1,
-  "modelId": "swin-unetr-brats21",
-  "modelVersion": "fold0-f48-ep300",
+  "modelId": "mergen-uwcse",
+  "modelVersion": "v3",
   "runnerModule": "mergen_imaging.runner",
   "checkpoints": [
     {
-      "path": "pretrained_models/model.pt",
+      "role": "nnunet-fold",
+      "fold": 0,
+      "path": "nnunet/Dataset002_BRATS19/nnUNetTrainer__nnUNetPlans__3d_fullres/fold_0/checkpoint_final.pth",
+      "size": 123,
+      "sha256": "64 lowercase hex characters"
+    },
+    {
+      "role": "swin",
+      "path": "swin/pretrained_models/model.pt",
       "size": 123,
       "sha256": "64 lowercase hex characters"
     }
   ]
 }
 ```
+
+Canlı yol ürün yapılandırmasının kimliğini taşır: `mergen-uwcse` / `v3`. Üyeler
+manifestte rolleriyle durur — beş `nnunet-fold` (0–4, her biri `fold_N/` altında
+ve hepsi aynı dosya adıyla, aynı eğitilmiş model klasöründe), isteğe bağlı
+`nnunet-plan` girdileri (aynı klasördeki `plans.json`, `dataset.json`) ve tam bir
+`swin`. Eksik fold, tekrarlanan fold, fazladan üye ya da iki model klasörüne
+yayılmış foldlar reddedilir: hepsi çalışır ve aynı adla skorlanır ama ölçülen
+topluluk olmaz. Örnek dosya:
+[`infra/gpu-host/imaging-model-manifest.example.json`](../../infra/gpu-host/imaging-model-manifest.example.json).
 
 Model kökü, manifest, venv ve checkpoint'ler hostta yalnız güvenilir bakım
 hesabı tarafından yönetilir; servis hesaplarının yazma izni yoktur.
@@ -88,6 +105,22 @@ runner "GPU yok" diye kapanır — GPU'su olmayan bir hosttan ayırt edilemeyen 
 belirti. Her düğüm tek tek adlandırılır ve yalnız dosya hakları taşır, dolayısıyla
 `/dev` altında komşu düğüm açılamaz, yeni giriş yaratılamaz, düğüm silinemez.
 Liste unit dosyasının `DeviceAllow` satırlarıyla aynı olmak zorundadır.
+
+## Ürün kuralı ve sonuç raporu
+
+Runner iki üyeyi sırayla çalıştırır ve aralarında cihazı boşaltır: önce nnU-Net
+beş fold (ölçülen tepe 3,1 GiB), sonra Swin UNETR fold 0 (4,4 GiB). Olasılıklar
+UWCSE v3 kuralıyla birleştirilir (bölge ağırlıkları TC 0,425 / WT 0,697 /
+ET 0,447; eşik 0,5), ardından BraTS son işlemesi (küçük bileşen, ET_MIN,
+TC_MIN) uygulanır ve `review_flags` okunur. Kural kodu model venv'i içindeki
+`mergen_imaging/uwcse.py`'dedir; `models/imaging/test_live_product_rule.py` onu
+araştırma hattındaki `uwcse_ensemble.py` ile aynı hacimler üzerinde
+karşılaştırır, ayrıldıklarında CI düşer.
+
+`report.json` v2 şunları taşır: `modelId`/`modelVersion` (ürün kimliği),
+`members` (hangi ağlar ve foldlar), `rule` (ağırlıklar ve eşikler),
+`regionVolumes` (TC/WT/ET voxel), `reviewFlags` (bulgu, gerekçe, sayılar),
+`voxelCounts` ve araştırma uyarısı.
 
 Swin checkpoint'i SHA-256 ile doğrulandıktan sonra yüklenir. Yayımlanmış dosya
 NumPy scalar metadata içerdiği için PyTorch `weights_only=True` ile açılamaz;

@@ -74,6 +74,13 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -r models/imaging/requirements-test.txt
           cd models/imaging && python -m unittest discover -p 'test_*.py'
+      # Demo paketini üreten betiklerin testleri (vaka seçimi, GLB yazıcısı,
+      # mesh göçü). scipy/Pillow ister; GPU, ağırlık veya veri istemez.
+      # Dizinin içinden çağrılır: `frontend/scripts` modül adı olarak geçersiz.
+      - name: Demo paketi üretici testleri
+        run: |
+          python -m pip install --disable-pip-version-check -r frontend/scripts/requirements-demo.txt
+          cd frontend/scripts && python -m unittest discover -p 'test_*.py'
       - name: Kurulum betikleri sözdizimi
         run: |
           bash -n infra/vps/package-frontend.sh
