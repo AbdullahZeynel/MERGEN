@@ -48,6 +48,43 @@ class LockedTestMetrics(unittest.TestCase):
             )
         self.assertEqual(self.committed['pathology']['models'], 5)
 
+    def test_class_rows_are_counted_from_the_confusion_matrix(self):
+        rows = self.committed['pathology']['perClass']
+        raw = json.loads((metrics.REPO / metrics.PATHOLOGY).read_text(encoding='utf-8'))
+        matrix = raw['metrics']['confusion_matrix']
+        for index, row in enumerate(rows):
+            with self.subTest(klass=row['class']):
+                self.assertEqual(row['n'], sum(matrix[index]))
+                self.assertEqual(row['f1'],
+                                 round(raw['metrics']['per_class_f1'][row['class']],
+                                       metrics.PLACES))
+        self.assertEqual(sum(row['n'] for row in rows), self.committed['pathology']['n'])
+
+    def test_refuses_class_counts_that_do_not_add_up_to_the_split(self):
+        # A matrix that lost a case must not quietly produce a smaller table;
+        # the screen would then print class counts that contradict n=113.
+        original = metrics._load
+        raw = json.loads((metrics.REPO / metrics.PATHOLOGY).read_text(encoding='utf-8'))
+        raw['metrics']['confusion_matrix'][0][0] -= 1
+        metrics._load = lambda path: raw if path == metrics.PATHOLOGY else original(path)
+        try:
+            with self.assertRaises(ValueError):
+                metrics.per_class()
+        finally:
+            metrics._load = original
+
+    def test_the_abstention_readout_is_the_locked_test_one(self):
+        block = self.committed['pathology']['abstention']
+        raw = json.loads((metrics.REPO / block['source']).read_text(encoding='utf-8'))
+        readout = raw['abstention']['test_readout']
+        # Dogrulama bolmesinin rakamlari daha guzeldir; ekrana o gecerse
+        # bayragin gercek davranisi gizlenmis olur.
+        self.assertEqual(block['coverage'], round(readout['coverage'], metrics.PLACES))
+        self.assertNotEqual(block['coverage'],
+                            round(raw['abstention']['val']['coverage'], metrics.PLACES))
+        self.assertEqual(block['threshold'], raw['abstention']['chosen_threshold'])
+        self.assertLessEqual(block['errorsCaught'], block['errorsTotal'])
+
     def test_keeps_every_number_inside_its_own_interval(self):
         for section in ('segmentation', 'pathology'):
             table = self.committed[section].get('dice') or self.committed[section]['metrics']

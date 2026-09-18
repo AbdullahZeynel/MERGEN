@@ -92,50 +92,74 @@ function TopTiles({ slide, t }: { slide: SlideRecord; t: Translate }) {
   );
 }
 
+/** Rapordaki vaka figurunun karar paneli: sinif, referans, olasiliklar ve top-2 farki. */
 function Decision({
   slide,
   reviewMargin,
+  ensemble,
   t,
   format,
 }: {
   slide: SlideRecord;
   reviewMargin: number;
+  ensemble: boolean;
   t: Translate;
   format: Format;
 }) {
   const predicted = slide.prediction.class;
   const probabilities = slide.prediction.probabilities;
   const ranked = pathologyClasses.map((name) => probabilities[name]).sort((a, b) => b - a);
-  const margin = ranked[0] - ranked[1];
+  const gap = ranked[0] - ranked[1];
+  const locked = slide.split === 'test';
+  const decidedBy = ensemble
+    ? t('pathology.decisionEnsemble')
+    : t('pathology.decisionSingle', { version: slide.modelVersion ?? '' });
   return (
-    <section className="decision" data-tour="slide-prediction" aria-label={t('pathology.probabilities')}>
+    <section
+      className="decision"
+      data-tour="slide-prediction"
+      aria-label={t('pathology.probabilities')}
+    >
       <div className="decision-call">
-        <span className="eyebrow">{t('pathology.predicted')}</span>
+        <span className="eyebrow">
+          {t('pathology.decision')} · {decidedBy}
+        </span>
         <h3>
           <i className={`class-dot class-${predicted}`} aria-hidden="true" />
           {t(pathologyClassKeys[predicted])}
         </h3>
-        <strong className="decision-share">{format.percent(probabilities[predicted])}</strong>
+        <strong className="decision-share">{format.score(probabilities[predicted])}</strong>
       </div>
       {slide.reference && (
         <div className="decision-reference">
-          <span className="eyebrow">{t('pathology.referenceLabel')}</span>
+          <span className="eyebrow">{t('pathology.referenceHeading')}</span>
           <strong>{t(pathologyClassKeys[slide.reference.class])}</strong>
-          <span className={`agreement-pill ${slide.agreesWithReference ? 'agrees' : 'disagrees'}`}>
-            {t(slide.agreesWithReference ? 'pathology.agrees' : 'pathology.disagrees')}
+          <span className={`outcome-pill ${slide.agreesWithReference ? 'correct' : 'wrong'}`}>
+            {t(slide.agreesWithReference ? 'pathology.outcomeCorrect' : 'pathology.outcomeWrong')}
           </span>
         </div>
       )}
+      <p className="slide-context">
+        {t('pathology.grade')} {slide.whoGrade} · {slide.sourceSite} · {slide.source} ·{' '}
+        {t(locked ? 'pathology.splitLocked' : 'pathology.splitValidation')} ·{' '}
+        {t('pathology.tiles')} {format.count(slide.tilesUsed)}
+      </p>
       {/* Yanlis siniflanan vaka bir ariza degil; sonuc olarak yaziliyor. */}
       {slide.reference && !slide.agreesWithReference && (
         <p className="decision-note">{t('pathology.disagreesBody')}</p>
       )}
+      {!locked && <p className="decision-note">{t('pathology.splitValidationNote')}</p>}
       <ul className="probability-list">
         {pathologyClasses.map((name) => (
           <li key={name} className={name === predicted ? 'predicted' : ''}>
             <span className="probability-name">
               <i className={`class-dot class-${name}`} aria-hidden="true" />
               {t(pathologyClassKeys[name])}
+              {slide.reference?.class === name && (
+                <span className="reference-mark" role="img" aria-label={t('pathology.referenceMark')}>
+                  ◆
+                </span>
+              )}
             </span>
             <span className="probability-bar" aria-hidden="true">
               <i
@@ -143,28 +167,30 @@ function Decision({
                 style={{ width: `${probabilities[name] * 100}%` }}
               />
             </span>
-            <strong>{format.percent(probabilities[name])}</strong>
+            <strong>{format.score(probabilities[name])}</strong>
           </li>
         ))}
       </ul>
-      {/* Cekimserlik kurali gizli bir esik degil: pay da esik de cizilir. */}
+      {/* Cekimserlik kurali gizli bir esik degil: pay, esik ve esigin olculmus
+          sinirlari birlikte yaziliyor. */}
       <div className="margin-meter">
         <div className="margin-head">
-          <span className="eyebrow">{t('pathology.margin')}</span>
+          <span className="eyebrow">{t('pathology.gap')}</span>
           <span className={`margin-pill ${slide.needsExpertReview ? 'below' : 'above'}`}>
-            {t(slide.needsExpertReview ? 'pathology.marginBelow' : 'pathology.marginAbove')}
+            {t(slide.needsExpertReview ? 'pathology.gapBelow' : 'pathology.gapAbove')}
           </span>
         </div>
         <div className="margin-track">
-          <i className="margin-fill" style={{ width: `${Math.min(margin, 1) * 100}%` }} />
+          <i className="margin-fill" style={{ width: `${Math.min(gap, 1) * 100}%` }} />
           <i className="margin-threshold" style={{ left: `${reviewMargin * 100}%` }} />
         </div>
         <p>
-          {t('pathology.marginBody', {
-            margin: format.score(margin, 2),
+          {t('pathology.gapBody', {
+            margin: format.score(gap),
             threshold: format.score(reviewMargin, 2),
           })}
         </p>
+        <p className="margin-limit">{t('pathology.gapLimit')}</p>
       </div>
       {slide.needsExpertReview && (
         <section className="flag-band" aria-label={t('pathology.review')}>
@@ -178,58 +204,55 @@ function Decision({
   );
 }
 
-function Attention({
+/** Rapordaki (b) paneli: harita ne gosterir, ne gostermez. */
+function MapReading({
   slide,
+  ensemble,
   t,
   format,
 }: {
   slide: SlideRecord;
+  ensemble: boolean;
   t: Translate;
   format: Format;
 }) {
-  const { top1Share, top10Share, entropyNormalised } = slide.attentionConcentration;
+  const attention = slide.attention;
   return (
-    <section className="attention-card panel" aria-label={t('pathology.attentionSpread')}>
-      <h3>{t('pathology.attentionSpread')}</h3>
+    <section className="map-reading panel" aria-label={t('pathology.mapReading')}>
+      <h3>{t('pathology.mapReading')}</h3>
       <div className="heat-scale" aria-hidden="true">
         <span>{t('pathology.heatLow')}</span>
         <i />
         <span>{t('pathology.heatHigh')}</span>
       </div>
-      <p className="heat-note">
-        <span className="sr-only">{t('pathology.heatScale')}: </span>
-        {t('pathology.heatBody')}
+      <p className="map-caption">
+        {t('pathology.mapCaption', {
+          tiles: format.count(attention?.tilesEvaluated ?? slide.tilesUsed),
+          scale: t(
+            attention?.scale === 'within_slide_percentile'
+              ? 'pathology.scalePercentile'
+              : 'pathology.scaleRaw',
+          ),
+        })}
       </p>
-      <dl>
-        <div>
-          <dt>{t('pathology.top1')}</dt>
-          <dd>{format.percent(top1Share)}</dd>
-        </div>
-        <div>
-          <dt>{t('pathology.top10')}</dt>
-          <dd>{format.percent(top10Share)}</dd>
-        </div>
-        <div>
-          <dt>{t('pathology.entropy')}</dt>
-          <dd>{format.score(entropyNormalised, 2)}</dd>
-        </div>
-        <div>
-          <dt>{t('pathology.tiles')}</dt>
-          <dd>{format.count(slide.tilesUsed)}</dd>
-        </div>
-      </dl>
-      {slide.tilesUsed > 10 && (
-        <p className="attention-read">
-          {t('pathology.top10Body', {
-            share: format.percent(top10Share),
-            rest: format.count(slide.tilesUsed - 10),
+      <ul className="map-notes">
+        <li>{t('pathology.mapNotSegmentation')}</li>
+        <li>{t('pathology.mapNotFinding')}</li>
+        <li>{t('pathology.mapIsAttention')}</li>
+      </ul>
+      {attention?.scale !== 'within_slide_percentile' && (
+        <p className="map-limit">{t('pathology.mapRawNote')}</p>
+      )}
+      {attention && (
+        <p className="map-limit">
+          {t('pathology.attentionFrom', {
+            version: attention.modelVersion,
+            decision: ensemble
+              ? t('pathology.decisionEnsemble')
+              : t('pathology.decisionSingle', { version: slide.modelVersion ?? '' }),
           })}
         </p>
       )}
-      <div className="notice">
-        <Info size={16} />
-        <span>{t('pathology.notice')}</span>
-      </div>
     </section>
   );
 }
@@ -246,27 +269,42 @@ export function PathologyWorkspace({
   const t = useT();
   const format = useFormat();
   const grid = slide.tileGrid;
+  const ensemble = slide.predictionSource
+    ? slide.predictionSource === 'ensemble_cv_v1'
+    : model.ensemble;
+  const concentration = slide.attentionConcentration;
   return (
     <div className="pathology-module">
-      <Decision slide={slide} reviewMargin={reviewMargin} t={t} format={format} />
+      <Decision
+        slide={slide}
+        reviewMargin={reviewMargin}
+        ensemble={ensemble}
+        t={t}
+        format={format}
+      />
       <div className="slide-row">
-        <ViewerFrame title={t('pathology.slide')} icon={<Microscope size={18} />} tour="slide-viewer">
+        <ViewerFrame title={t('pathology.mapTitle')} icon={<Microscope size={18} />} tour="slide-viewer">
           <div className="slide-stage">
             <div className="slide-meta">
               <span>{slide.id}</span>
               <strong>{t('cases.slideModality')}</strong>
             </div>
+            {/* Ham agirlik renderi neredeyse hicbir sey gostermez; goruntunun
+                kendisi bunu soylemezse ekran onu raporun figuru gibi sunar. */}
+            {slide.attention?.scale !== 'within_slide_percentile' && (
+              <span className="slide-warning">{t('pathology.mapRawBadge')}</span>
+            )}
             <SlideImage
               src={slide.assets.attention}
               alt={t('pathology.slideAlt', { id: slide.id })}
             />
           </div>
         </ViewerFrame>
-        <Attention slide={slide} t={t} format={format} />
+        <MapReading slide={slide} ensemble={ensemble} t={t} format={format} />
       </div>
       <section className="tiles-panel panel" aria-label={t('pathology.topTiles')}>
         <div className="panel-heading">
-          <span>{t('pathology.topTiles')}</span>
+          <span>{t('pathology.tilesHeading')}</span>
           {grid && (
             <small>
               {t('pathology.tileScale', {
@@ -280,34 +318,29 @@ export function PathologyWorkspace({
         <TopTiles slide={slide} t={t} />
         {grid && <p className="tiles-note">{t('pathology.tileOrder')}</p>}
       </section>
-      <section className="slide-facts panel">
-        <div>
-          <span className="eyebrow">{t('pathology.patient')}</span>
-          <strong>{slide.patientId}</strong>
-        </div>
-        <div>
-          <span className="eyebrow">{t('case.sourceEyebrow')}</span>
-          <strong>{slide.source}</strong>
-        </div>
-        <div>
-          <span className="eyebrow">{t('pathology.site')}</span>
-          <strong>{slide.sourceSite}</strong>
-        </div>
-        <div>
-          <span className="eyebrow">{t('pathology.grade')}</span>
-          <strong>{slide.whoGrade}</strong>
-        </div>
-        <div>
-          <span className="eyebrow">{t('pathology.split')}</span>
-          <strong>{slide.split}</strong>
-        </div>
+      <section className="slide-statistics panel" aria-label={t('pathology.attentionSpread')}>
+        <p className="statistics-note">
+          <Info size={15} /> {t('pathology.concentrationNote')}
+        </p>
+        <dl>
+          <div>
+            <dt>{t('pathology.top1')}</dt>
+            <dd>{format.percent(concentration.top1Share)}</dd>
+          </div>
+          <div>
+            <dt>{t('pathology.top10')}</dt>
+            <dd>{format.percent(concentration.top10Share)}</dd>
+          </div>
+          <div>
+            <dt>{t('pathology.entropy')}</dt>
+            <dd>{format.score(concentration.entropyNormalised, 2)}</dd>
+          </div>
+        </dl>
       </section>
-      {/* Manifestin kendi notu paketin dilinde yazili; ekran ayni olguyu
-          kendi sozlugunden, model surumunu veri olarak koyarak yaziyor. */}
       <p className="model-note">
         <span className="eyebrow">{t('pathology.modelNote')}</span>{' '}
-        {t(model.ensemble ? 'pathology.modelEnsemble' : 'pathology.modelSingle', {
-          version: model.version,
+        {t(ensemble ? 'pathology.modelEnsemble' : 'pathology.modelSingle', {
+          version: slide.modelVersion ?? model.version,
         })}
         {slide.assets.report && (
           <a href={slide.assets.report} target="_blank" rel="noreferrer noopener">

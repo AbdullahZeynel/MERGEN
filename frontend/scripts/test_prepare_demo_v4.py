@@ -66,6 +66,7 @@ class DemoV4Tests(unittest.TestCase):
             'TCGA-BB-0002', split='val', reference='O', predicted='A',
             probabilities={'A': 0.53, 'O': 0.46, 'G': 0.01}))
         self.write_figure('UCSF-PDGM-0231', figure_info('UCSF-PDGM-0231'))
+        self.calibration = self.write_calibration()
 
     def write_package(self, case_id='MRI-1'):
         collection = self.package / 'imaging/glioma'
@@ -107,8 +108,16 @@ class DemoV4Tests(unittest.TestCase):
         (case_dir / 'case_info.json').write_text(json.dumps(info))
         (case_dir / 'overlay.png').write_bytes(f'figure-{case_id}'.encode())
 
+    def write_calibration(self, threshold=0.45, metric='top2_gap_on_raw_ensemble_probs',
+                          name='calibration.json') -> Path:
+        path = self.root / name
+        path.write_text(json.dumps({
+            'abstention': {'metric': metric, 'chosen_threshold': threshold},
+        }), encoding='utf-8')
+        return path
+
     def build(self, output=None):
-        return build(self.package, self.wsi, self.mri, output or self.output)
+        return build(self.package, self.wsi, self.mri, output or self.output, self.calibration)
 
     def test_produces_a_package_the_store_accepts(self):
         summary = self.build()
@@ -217,6 +226,117 @@ class DemoV4Tests(unittest.TestCase):
         self.output.mkdir()
         with self.assertRaisesRegex(ValueError, 'Output already exists'):
             self.build()
+
+
+class ProductPredictionTests(DemoV4Tests):
+    """The product model is the ensemble; the map is the single network."""
+
+    HEADER = 'patient_id,label,pred,p_A,p_O,p_G\n'
+
+    def write_predictions(self, rows, name='predictions_test.csv') -> Path:
+        path = self.root / name
+        path.write_text(self.HEADER + ''.join(rows), encoding='utf-8')
+        return path
+
+    def build_with(self, rows):
+        return build(self.package, self.wsi, self.mri, self.output, self.calibration,
+                     self.write_predictions(rows))
+
+    def test_the_case_is_reported_with_the_ensemble_probabilities(self):
+        self.write_slide('test_TCGA-AA-0001', slide_info('TCGA-AA-0001'))
+        # Tek ag O demis; urun toplulugu ayni sinifi baska olasilikla veriyor.
+        self.build_with(['TCGA-AA-0001,O,O,0.3000,0.4000,0.3000\n'])
+        store = DemoStore(self.output)
+        collection = store.collections[('pathology', 'glioma')]
+        case = collection['cases']['test_TCGA-AA-0001']
+        self.assertEqual(case['predictionSource'], 'ensemble_cv_v1')
+        self.assertEqual(case['prediction']['probabilities'],
+                         {'A': 0.3, 'O': 0.4, 'G': 0.3})
+        self.assertEqual(case['singleModel']['probabilities'], {'A': 0.02, 'O': 0.96, 'G': 0.02})
+        self.assertEqual(case['modelVersion'], 'ensemble_cv_v1')
+        # Cekimserlik urun olasiliklarindan yeniden hesaplanir: fark 0,1 < 0,45.
+        self.assertTrue(case['needsExpertReview'])
+        # Harita her zaman tek agdan gelir ve kayit bunu soyler.
+        self.assertEqual(case['attention'], {'modelId': 'mergen-wsi-attention-mil',
+                                             'modelVersion': 'mil_v1',
+                                             'tilesEvaluated': 4096, 'scale': 'raw_weight'})
+        manifest = json.loads((self.output / 'pathology/glioma/manifest.json').read_text())
+        self.assertEqual((manifest['model']['version'], manifest['model']['ensemble']),
+                         ('ensemble_cv_v1', True))
+        self.assertNotIn('note', manifest['model'])
+        # Paketin tasidigi aciklama haritayi cizen aga aittir, karari verene degil.
+        self.assertEqual(manifest['attentionModel'], {
+            'id': 'mergen-wsi-attention-mil', 'version': 'mil_v1', 'ensemble': False,
+            'note': 'Example MIL, single network'})
+
+    def test_a_case_with_no_ensemble_row_keeps_the_single_network(self):
+        self.write_slide('test_TCGA-AA-0001', slide_info('TCGA-AA-0001'))
+        self.build_with(['TCGA-ZZ-9999,O,O,0.1000,0.8000,0.1000\n'])
+        case = DemoStore(self.output).collections[('pathology', 'glioma')]['cases'][
+            'test_TCGA-AA-0001']
+        self.assertEqual(case['predictionSource'], 'mil_v1')
+        self.assertNotIn('singleModel', case)
+
+    def test_a_prediction_file_that_disagrees_with_the_case_is_refused(self):
+        self.write_slide('test_TCGA-AA-0001', slide_info('TCGA-AA-0001'))
+        with self.assertRaisesRegex(ValueError, 'disagrees with the case reference'):
+            self.build_with(['TCGA-AA-0001,G,G,0.1000,0.1000,0.8000\n'])
+
+    def test_a_malformed_prediction_file_is_refused(self):
+        self.write_slide('test_TCGA-AA-0001', slide_info('TCGA-AA-0001'))
+        for rows, message in (
+            (['TCGA-AA-0001,O,O,0.3000,0.2000,0.3000\n'], 'sum to one'),
+            (['TCGA-AA-0001,O,A,0.3000,0.4000,0.3000\n'], 'highest probability'),
+            (['TCGA-AA-0001,O,O,0.3000,0.4000,0.3000\n'] * 2, 'Repeated patient'),
+        ):
+            with self.subTest(rows=message):
+                with self.assertRaisesRegex(ValueError, message):
+                    self.build_with(rows)
+        path = self.root / 'bad.csv'
+        path.write_text('patient_id,pred\nTCGA-AA-0001,O\n', encoding='utf-8')
+        with self.assertRaisesRegex(ValueError, 'Unexpected prediction columns'):
+            build(self.package, self.wsi, self.mri, self.output, self.calibration, path)
+
+
+class ReviewMarginTests(DemoV4Tests):
+    """The abstention threshold is a measured number, not a constant we carry."""
+
+    def test_the_manifest_flags_at_the_threshold_the_registry_measured(self):
+        # Fark 0,50: 0,45 esiginde bayrak kapali, 0,60 esiginde acik. Esigi
+        # koda gomen bir surum ikisinde de ayni bayragi yazardi.
+        self.write_slide('test_TCGA-AA-0001', slide_info(
+            'TCGA-AA-0001', probabilities={'A': 0.25, 'O': 0.75, 'G': 0.00}))
+        for threshold, flagged in ((0.45, False), (0.6, True)):
+            with self.subTest(threshold=threshold):
+                self.calibration = self.write_calibration(
+                    threshold, name=f'calibration-{threshold}.json')
+                output = self.root / f'out-{threshold}'
+                self.build(output)
+                manifest = json.loads(
+                    (output / 'pathology/glioma/manifest.json').read_text())
+                self.assertEqual(manifest['reviewMargin'], threshold)
+                case = next(item for item in manifest['cases']
+                            if item['id'] == 'test_TCGA-AA-0001')
+                self.assertEqual(case['needsExpertReview'], flagged)
+
+    def test_refuses_a_threshold_measured_on_another_quantity(self):
+        self.calibration = self.write_calibration(metric='max_probability')
+        with self.assertRaisesRegex(ValueError, 'another quantity'):
+            self.build()
+
+    def test_refuses_a_calibration_file_without_a_usable_threshold(self):
+        for payload, message in (
+            ({}, 'no abstention block'),
+            ({'abstention': {'metric': 'top2_gap_on_raw_ensemble_probs'}}, 'Invalid abstention'),
+            ({'abstention': {'metric': 'top2_gap_on_raw_ensemble_probs',
+                             'chosen_threshold': 0}}, 'Invalid abstention'),
+        ):
+            with self.subTest(message=message):
+                path = self.root / 'broken.json'
+                path.write_text(json.dumps(payload), encoding='utf-8')
+                self.calibration = path
+                with self.assertRaisesRegex(ValueError, message):
+                    self.build(self.root / f'out-{message[:6]}')
 
 
 class TileSheetTests(DemoV4Tests):

@@ -317,9 +317,18 @@ ve M5'te hostta yapılır.
 `frontend/scripts/prepare_demo_v4.py` paket v4'ü üretir: kök katalog şeması 3'te
 kalır, `pathology/glioma` koleksiyonu eklenir ve görüntü manifesti 4'e yükselip
 `examples` dizisini taşır. 17 Eylül arşiviyle ölçülen çıktı 246 MB: 12 slayt
-vakası (7 doğru, 5 yanlış — hepsi etiketli; 2'si top-2 farkı 0,45'in altında
+vakası (7 doğru, 5 yanlış — hepsi etiketli; 3'ü top-2 farkı 0,45'in altında
 olduğu için uzman incelemesi bayrağıyla; 8 merkez), 5 MRI figürü ve 22
 kopyalanmış görüntü vakası. Kaynak paketteki `genomics` koleksiyonu kopyalanmaz.
+
+Kararı ürün yapılandırması verir: `--slide-predictions` ile 5-fold topluluğun
+olasılıkları okunur, tek ağın kararı `singleModel` olarak kaydın içinde kalır.
+Çekimserlik eşiği `--calibration` ile kayıt defterinden gelir (betikte sabit
+yok), böylece slayttaki bayrak ile doğrulama ekranındaki eşik ayrışamaz. Isı
+haritası her zaman tek ağdan (`mil_v1`) gelir; manifest haritayı çizen ağı ayrı
+adlandırır ve kayıt haritanın hangi ölçekte çizildiğini (`raw_weight` ya da
+`within_slide_percentile`) bildirir. Bugünkü arşiv ham ağırlık renderi taşıyor;
+rapordaki figürlerin slayt içi yüzdelik ölçeği hostta yeniden üretilecek.
 
 Store her manifesti yüklerken iddiaları yeniden türetir: `needsExpertReview`
 bildirilen `reviewMargin` ile, `agreesWithReference` referansla, her varlık yolu

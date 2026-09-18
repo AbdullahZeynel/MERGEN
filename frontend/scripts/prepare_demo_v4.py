@@ -26,9 +26,25 @@ REGIONS = ('TC', 'WT', 'ET')
 SPLITS = ('train', 'val', 'test', 'locked test')
 # `review_flags()` in models/imaging/uwcse_ensemble.py writes these fields.
 FLAG_FIELDS = ('finding', 'severity', 'reason', 'message')
-# Top-two probability gap under which the slide is handed to an expert.
-REVIEW_MARGIN = 0.45
+# Top-two probability gap under which the slide is handed to an expert. The
+# number is not ours to choose: it was fitted on validation data and read out
+# once on the locked test, and the validation screen quotes that read-out. So a
+# package that decides with the ensemble reads the threshold from the same
+# registry file rather than carrying a copy that can drift away from it.
+REVIEW_MARGIN_METRIC = 'top2_gap_on_raw_ensemble_probs'
 SLIDE_MODEL = {'id': 'mergen-wsi-attention-mil', 'version': 'mil_v1', 'ensemble': False}
+# The product model is the five-fold ensemble; its per-case probabilities live in
+# the registry next to the metrics they were read out with. The attention map is
+# a different thing: it comes from the single network that can expose one, and
+# the record says so rather than letting the reader assume both are the ensemble.
+ENSEMBLE_MODEL = {'id': 'mergen-wsi-attention-mil', 'version': 'ensemble_cv_v1', 'ensemble': True}
+PREDICTION_SOURCES = ('ensemble_cv_v1', 'mil_v1')
+PREDICTION_COLUMNS = ('patient_id', 'label', 'pred', 'p_A', 'p_O', 'p_G')
+# `heatmap_review.py` colours each tile by its raw attention weight. The weights
+# sum to one over thousands of tiles, so almost every tile lands at the bottom of
+# the scale; the report's figures rank the tiles within the slide instead. The
+# package says which rendering it carries so the screen can describe it honestly.
+ATTENTION_SCALES = ('raw_weight', 'within_slide_percentile')
 FIGURE_MODEL = {'id': 'mergen-uwcse', 'version': 'v3', 'ruleVersion': 'uwcse-v3'}
 SLIDE_IMAGES = {'attention': 'attention.jpg', 'top_tiles': 'top_tiles.jpg',
                 'thumbnail': 'thumbnail.jpg'}
@@ -71,6 +87,43 @@ def _tile_grid(sheet_path: Path, case_id: str, tiles_used: int) -> dict:
         raise ValueError(f'Top tile sheet claims more tiles than the slide used: {case_id}')
     return {'tilePx': TILE_PX, 'columns': TILE_COLUMNS, 'rows': rows, 'count': count,
             'ordering': TILE_ORDERING, 'micronsPerPixel': TILE_MICRONS_PER_PIXEL}
+
+
+def read_slide_predictions(path: Path) -> dict:
+    """Per-case probabilities of the product ensemble, keyed by patient id."""
+    import csv
+
+    with path.open(encoding='utf-8', newline='') as handle:
+        rows = list(csv.DictReader(handle))
+    if not rows or tuple(rows[0]) != PREDICTION_COLUMNS:
+        raise ValueError(f'Unexpected prediction columns: {path.name}')
+    table = {}
+    for row in rows:
+        patient = row['patient_id']
+        if patient in table:
+            raise ValueError(f'Repeated patient in predictions: {patient}')
+        probabilities = {name: float(row[f'p_{name}']) for name in CLASSES}
+        if abs(sum(probabilities.values()) - 1) > 0.01:
+            raise ValueError(f'Prediction probabilities do not sum to one: {patient}')
+        declared = row['pred']
+        if declared not in CLASSES or probabilities[declared] != max(probabilities.values()):
+            raise ValueError(f'Declared class is not the highest probability: {patient}')
+        table[patient] = {'probabilities': probabilities, 'predicted': declared,
+                          'reference': row['label'] or None}
+    return table
+
+
+def read_review_margin(path: Path) -> float:
+    """The abstention threshold the registry measured, not a number we picked."""
+    calibration = _json(path).get('abstention')
+    if not isinstance(calibration, dict):
+        raise ValueError(f'Calibration file carries no abstention block: {path.name}')
+    if calibration.get('metric') != REVIEW_MARGIN_METRIC:
+        raise ValueError(f'Abstention is measured on another quantity: {path.name}')
+    margin = calibration.get('chosen_threshold')
+    if type(margin) is not float or not 0 < margin <= 1:
+        raise ValueError(f'Invalid abstention threshold: {path.name}')
+    return margin
 
 
 def _case_dirs(root: Path) -> list[Path]:
@@ -120,7 +173,8 @@ def _scores(raw, case_id: str, name: str, maximum=None):
     return {region: raw[region] for region in REGIONS}
 
 
-def slide_record(case_id: str, info: dict, module: str, disease: str) -> dict:
+def slide_record(case_id: str, info: dict, module: str, disease: str,
+                 margin: float, product: dict | None = None) -> dict:
     """One prepared slide case; the export's own claims are recomputed."""
     probabilities = _probabilities(info.get('probabilities'), case_id)
     predicted = info.get('predicted_class')
@@ -140,20 +194,38 @@ def slide_record(case_id: str, info: dict, module: str, disease: str) -> dict:
     tiles = info.get('n_tiles_used')
     if type(tiles) is not int or tiles <= 0:
         raise ValueError(f'Invalid tile count: {case_id}')
+    # Up to here the export's own claims about the single network have been
+    # recomputed. The product model is the five-fold ensemble, so when its
+    # prediction file is given the case is reported with those probabilities and
+    # the single network's stay beside them, named.
+    single = {'class': predicted, 'probabilities': probabilities}
+    source, model = 'mil_v1', SLIDE_MODEL
+    if product is not None:
+        if product['reference'] not in (None, reference):
+            raise ValueError(f'Prediction file disagrees with the case reference: {case_id}')
+        probabilities = product['probabilities']
+        predicted = product['predicted']
+        source, model = 'ensemble_cv_v1', ENSEMBLE_MODEL
     ranked = sorted(probabilities.values(), reverse=True)
     record = {
         'schemaVersion': 4, 'module': module, 'disease': disease,
         'caseId': case_id, 'id': case_id, 'patientId': patient_id,
         'source': 'TCGA', 'sourceSite': _text(info.get('source_site'), case_id, 'source site'),
         'mode': 'demo', 'status': 'demo_ready',
-        'modelId': SLIDE_MODEL['id'], 'modelVersion': SLIDE_MODEL['version'],
+        'modelId': model['id'], 'modelVersion': model['version'],
         'inputKind': 'prepared-wsi-subtyping',
         'split': split, 'whoGrade': _text(info.get('who_grade'), case_id, 'WHO grade'),
         'tilesUsed': tiles,
         'prediction': {'class': predicted, 'probabilities': probabilities},
-        'needsExpertReview': ranked[0] - ranked[1] < REVIEW_MARGIN,
+        'predictionSource': source,
+        'needsExpertReview': ranked[0] - ranked[1] < margin,
+        # The map comes from the single network whichever model decided the case.
+        'attention': {'modelId': SLIDE_MODEL['id'], 'modelVersion': SLIDE_MODEL['version'],
+                      'tilesEvaluated': tiles, 'scale': 'raw_weight'},
         'attentionConcentration': _attention(info.get('attention_concentration'), case_id),
     }
+    if product is not None:
+        record['singleModel'] = single
     if reference is not None:
         record['reference'] = {'class': reference}
         record['agreesWithReference'] = predicted == reference
@@ -235,7 +307,7 @@ def _imaging_collection(package: Path) -> tuple[Path, str]:
 
 
 def build(imaging_package: Path, wsi_cases: Path, mri_examples: Path | None,
-          output: Path) -> dict:
+          output: Path, calibration: Path, slide_predictions: Path | None = None) -> dict:
     imaging_package = imaging_package.resolve(strict=True)
     wsi_cases = wsi_cases.resolve(strict=True)
     output = output.absolute()
@@ -249,6 +321,10 @@ def build(imaging_package: Path, wsi_cases: Path, mri_examples: Path | None,
     if mri_examples is not None:
         mri_examples = mri_examples.resolve(strict=True)
         _no_symlinks(mri_examples)
+    predictions = read_slide_predictions(slide_predictions) if slide_predictions else {}
+    # Every slide record carries a flag, so every package needs the threshold the
+    # flag was measured against; there is no build without it.
+    margin = read_review_margin(calibration.resolve(strict=True))
 
     staging = Path(tempfile.mkdtemp(prefix=f'.{output.name}-', dir=output.parent))
     try:
@@ -267,7 +343,9 @@ def build(imaging_package: Path, wsi_cases: Path, mri_examples: Path | None,
             if not CASE_ID.fullmatch(case_id):
                 raise ValueError(f'Invalid case directory: {case_id}')
             info = _json(case_dir / 'case_info.json')
-            record = slide_record(case_id, info, 'pathology', 'glioma')
+            patient = info.get('patient_id')
+            product = predictions.get(patient) if isinstance(patient, str) else None
+            record = slide_record(case_id, info, 'pathology', 'glioma', margin, product)
             notes.add(_text(info.get('model'), case_id, 'model note'))
             target = pathology / 'cases' / case_id
             target.mkdir()
@@ -321,8 +399,13 @@ def build(imaging_package: Path, wsi_cases: Path, mri_examples: Path | None,
             json.dumps(imaging_manifest, indent=2, ensure_ascii=False), encoding='utf-8')
         (pathology / 'manifest.json').write_text(json.dumps({
             'schemaVersion': 4, 'module': 'pathology', 'disease': 'glioma',
-            'reviewMargin': REVIEW_MARGIN, 'classes': list(CLASSES),
-            'model': {**SLIDE_MODEL, 'note': notes.pop()},
+            'reviewMargin': margin, 'classes': list(CLASSES),
+            'model': ENSEMBLE_MODEL if predictions else SLIDE_MODEL,
+            # The attention map can only come from a single network; naming it
+            # here keeps the map and the decision from reading as one model. The
+            # export's note describes that network, so it belongs to it and not
+            # to the ensemble that decided the case.
+            'attentionModel': {**SLIDE_MODEL, 'note': notes.pop()},
             'cases': slides,
         }, indent=2, ensure_ascii=False), encoding='utf-8')
         (staging / 'catalog.json').write_text(json.dumps({
@@ -357,9 +440,14 @@ if __name__ == '__main__':
                         help='evidence export directory holding one folder per slide case')
     parser.add_argument('--mri-examples', type=Path,
                         help='evidence export directory holding the measured MRI figures')
+    parser.add_argument('--slide-predictions', type=Path,
+                        help='product ensemble predictions CSV from the model registry')
+    parser.add_argument('--calibration', type=Path, required=True,
+                        help='calibration.json the abstention threshold was read out in')
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
-    summary = build(args.imaging_package, args.wsi_cases, args.mri_examples, args.output)
+    summary = build(args.imaging_package, args.wsi_cases, args.mri_examples, args.output,
+                    args.calibration, args.slide_predictions)
     print(f"Prepared {summary['slideCases']} slide cases "
           f"({summary['slidesAgainstReference']} against the reference, "
           f"{summary['slidesNeedingReview']} for expert review, "

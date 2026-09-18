@@ -20,12 +20,18 @@
   --icon: #8792a2;
   --secondary-text: #526075;
   --panel-shadow: 0 12px 30px rgb(17 26 44 / 0.05);
+  --class-A: #2f6f9f;
+  --class-O: #b5761b;
+  --class-G: #b02a37;
   transition:
     color 160ms ease,
     background-color 160ms ease;
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
+  --class-A: #5b9dd0;
+  --class-O: #d59a3a;
+  --class-G: #e2606f;
   --page: #090f1d;
   --surface: #121a2a;
   --surface-subtle: #1b2435;
@@ -1794,16 +1800,13 @@ svg {
 }
 
 /* ── Patoloji modulu ─────────────────────────────────────────────────────
-   Kendi yuzeyi var: H&E slayti isik kutusu matinda okunur, siniflarin sabit
-   renkleri vardir ve cekimserlik esigi cizili durur. MR ekranina benzemek
-   zorunda degil; okuma sirasi karar → isi haritasi → kareler → kunye. */
+   Duzen yari final raporundaki vaka figurunu izler: once karar (sinif,
+   referans, olasiliklar, top-2 farki), sonra isi haritasi ve ne olmadigi,
+   sonra karar tasiyan kareler, en sonda slayti tarif eden sayilar. */
 .pathology-module {
   --slide-field: #edeae6;
   --slide-line: #dcd6cf;
   --slide-label: #7d7871;
-  --class-A: #2f6f9f;
-  --class-O: #b5761b;
-  --class-G: #b02a37;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -1812,9 +1815,6 @@ svg {
   --slide-field: #11151b;
   --slide-line: #232a33;
   --slide-label: #8b95a3;
-  --class-A: #5b9dd0;
-  --class-O: #d59a3a;
-  --class-G: #e2606f;
 }
 .class-dot {
   display: inline-block;
@@ -1838,7 +1838,14 @@ svg {
   background: var(--class-G);
 }
 
-/* Karar: sinif, olasiliklar, karar payi ve referans bir arada. */
+.per-class-table th[scope='row'] {
+  white-space: nowrap;
+}
+.per-class-table td {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Karar paneli. */
 .decision {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -1849,10 +1856,11 @@ svg {
   grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
   grid-template-areas:
     'call reference'
+    'context context'
     'note note'
     'probabilities margin'
     'flag flag';
-  gap: 18px 40px;
+  gap: 16px 40px;
   align-items: start;
 }
 .decision-call {
@@ -1884,21 +1892,31 @@ svg {
   font-weight: 600;
   color: var(--secondary-text);
 }
-.agreement-pill {
+.outcome-pill {
   display: inline-block;
   margin-top: 9px;
-  padding: 4px 10px;
+  padding: 4px 11px;
   border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 650;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   border: 1px solid var(--line);
   background: var(--surface-subtle);
   color: var(--secondary-text);
 }
-.agreement-pill.disagrees {
+.outcome-pill.wrong {
   border-color: var(--selected-line);
   background: var(--selected);
   color: var(--red);
+}
+.slide-context {
+  grid-area: context;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 0.72rem;
+  line-height: 1.6;
+  color: var(--muted);
 }
 .decision-note {
   grid-area: note;
@@ -1909,6 +1927,9 @@ svg {
   font-size: 0.78rem;
   line-height: 1.7;
   color: var(--secondary-text);
+}
+.decision-note + .decision-note {
+  margin-top: -4px;
 }
 .probability-list {
   grid-area: probabilities;
@@ -1932,10 +1953,14 @@ svg {
   font-weight: 650;
 }
 .probability-name {
-  /* Tani adi kisaltilmaz: gerekirse iki satira sarar. */
   display: flex;
   align-items: baseline;
   line-height: 1.45;
+}
+.reference-mark {
+  margin-left: 7px;
+  font-size: 0.6rem;
+  color: var(--red);
 }
 .probability-bar {
   height: 8px;
@@ -1957,7 +1982,7 @@ svg {
   min-width: 54px;
   text-align: right;
 }
-/* Cekimserlik kurali gorunur: dolgu karar payi, cizgi esik. */
+/* Cekimserlik kurali gorunur: dolgu top-2 farki, cizgi esik. */
 .margin-meter {
   grid-area: margin;
 }
@@ -2007,15 +2032,20 @@ svg {
   line-height: 1.65;
   color: var(--secondary-text);
 }
+.margin-limit {
+  margin-top: 8px !important;
+  font-size: 0.7rem !important;
+  color: var(--muted) !important;
+}
 .decision .flag-band {
   grid-area: flag;
   margin: 0;
 }
 
-/* Slayt: isik kutusu mati, buyutulebilir cerceve icinde. */
+/* Slayt ve haritanin okunmasi. */
 .slide-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.75fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(0, 1.75fr) minmax(300px, 1fr);
   gap: 16px;
   align-items: start;
 }
@@ -2050,6 +2080,19 @@ svg {
   text-transform: uppercase;
   color: var(--slide-label);
 }
+.slide-warning {
+  position: absolute;
+  left: 16px;
+  bottom: 12px;
+  padding: 5px 9px;
+  border-radius: 4px;
+  background: var(--red);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+
 .viewer-expanded .slide-stage {
   flex: 1;
   min-height: 0;
@@ -2060,15 +2103,13 @@ svg {
 .slide-stage .empty-state {
   padding: 40px 20px;
 }
-
-/* Attention okumasi: olcek, sayilar ve ne olmadigi. */
-.attention-card {
+.map-reading {
   padding: 18px 20px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
-.attention-card h3 {
+.map-reading h3 {
   margin: 0;
   font-size: 0.85rem;
   font-weight: 700;
@@ -2086,7 +2127,7 @@ svg {
 .heat-scale i {
   height: 9px;
   border-radius: 999px;
-  /* matplotlib jet: attention haritasi bu olcekle boyandi. */
+  /* matplotlib jet: harita bu olcekle boyandi. */
   background: linear-gradient(
     90deg,
     #00007f 0%,
@@ -2100,38 +2141,36 @@ svg {
     #7f0000 100%
   );
 }
-.heat-note,
-.attention-read {
+.map-caption {
   margin: 0;
-  font-size: 0.74rem;
-  line-height: 1.7;
-  color: var(--secondary-text);
-}
-.attention-card dl {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
-  margin: 2px 0 0;
-  padding: 14px 0 0;
-  border-top: 1px solid var(--line);
-}
-.attention-card dt {
-  font-size: 0.6rem;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-size: 0.7rem;
   color: var(--muted);
-}
-.attention-card dd {
-  margin: 6px 0 0;
-  font-size: 0.95rem;
-  font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
-.attention-card .notice {
-  margin: 2px 0 0;
+.map-notes {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  font-size: 0.75rem;
+  line-height: 1.65;
+  color: var(--secondary-text);
+}
+.map-limit {
+  margin: 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 0.7rem;
+  line-height: 1.7;
+  color: var(--muted);
+}
+.map-limit + .map-limit {
+  padding-top: 8px;
+  border-top: 0;
 }
 
-/* En yuksek attention'li kareler: montaj, numarali izgaraya bolunur. */
+/* Karar tasiyan kareler. */
 .tiles-panel {
   padding: 16px 18px 18px;
 }
@@ -2189,30 +2228,40 @@ svg {
   color: var(--secondary-text);
 }
 
-/* Kunye ve model notu. */
-.slide-facts {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  padding: 20px 0;
-  gap: 16px 0;
+/* Slayti tarif eden sayilar: guvenilirlik gostergesi degil. */
+.slide-statistics {
+  padding: 16px 20px;
 }
-.slide-facts > div {
-  padding: 0 20px;
-  border-right: 1px solid var(--line);
+.statistics-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.7;
+  color: var(--muted);
 }
-.slide-facts > div:last-child {
-  border-right: 0;
+.statistics-note svg {
+  flex: none;
+  margin-top: 2px;
 }
-.slide-facts .eyebrow {
+.slide-statistics dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 34px;
+  margin: 14px 0 0;
+}
+.slide-statistics dt {
   font-size: 0.6rem;
   letter-spacing: 0.07em;
   text-transform: uppercase;
+  color: var(--muted);
 }
-.slide-facts strong {
-  display: block;
-  margin-top: 10px;
-  font-size: 0.8rem;
+.slide-statistics dd {
+  margin: 6px 0 0;
+  font-size: 0.85rem;
   font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 .model-note {
   display: flex;
@@ -2238,9 +2287,6 @@ svg {
   .slide-row {
     grid-template-columns: minmax(0, 1fr);
   }
-  .slide-facts {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
   .tile-grid {
     grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
   }
@@ -2251,18 +2297,16 @@ svg {
     grid-template-areas:
       'call'
       'reference'
+      'context'
       'note'
       'probabilities'
       'margin'
       'flag';
-    gap: 18px;
+    gap: 16px;
   }
   .decision-reference {
     justify-self: start;
     text-align: left;
-  }
-  .slide-facts {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -2330,7 +2374,7 @@ svg {
 /* Eyebrow etiketleri sozlukte buyuk harfle yazili; yeni ekranlarin etiketleri
    de ayni goruntuyu CSS ile aliyor. */
 .decision .eyebrow,
-.slide-facts .eyebrow,
+.slide-statistics .eyebrow,
 .validation-figure .eyebrow {
   text-transform: uppercase;
 }
