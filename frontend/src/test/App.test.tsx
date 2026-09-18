@@ -216,6 +216,32 @@ describe('case workspace', () => {
     );
   });
 
+  it('does not claim nothing is uploaded while the live path takes uploads', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getAllByRole('button', { name: 'Veri kaynakları ve gizlilik' })[0]);
+    const dialog = await screen.findByRole('dialog');
+    // Iddia hazir demoyla sinirli olmali; canli yol kendi verisiyle calisiyor.
+    expect(dialog).toHaveTextContent('Hazır demo vakalarında hiçbir veri yüklenmez');
+    expect(dialog.textContent).not.toMatch(/Bu gösterimde hasta verisi yüklenmez/);
+    // Yukleme kabul eden yol, ne kadar tutuldugunu da soylemeli.
+    expect(dialog).toHaveTextContent('Canlı analiz yolu bundan ayrıdır');
+    expect(dialog).toHaveTextContent('yalnız oturum süresince tutulur');
+    expect(dialog).toHaveTextContent('silinir');
+  });
+
+  it('links the full attribution list instead of only naming the file', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getAllByRole('button', { name: 'Veri kaynakları ve gizlilik' })[0]);
+    await screen.findByRole('dialog');
+    // Dosya adini yazmak atif listesini ulasilabilir yapmiyor; baglanti olmali.
+    expect(screen.getByRole('link', { name: /ATTRIBUTIONS\.md/ })).toHaveAttribute(
+      'href',
+      'https://github.com/AbdullahZeynel/MERGEN/blob/main/docs/ATTRIBUTIONS.md',
+    );
+  });
+
   it('switches the interface language and remembers it', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
