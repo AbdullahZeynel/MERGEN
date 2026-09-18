@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, LogOut, ShieldCheck, Upload } from 'lucide-react';
+import { Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
 import {
   closeSession,
   jobStatus,
@@ -116,10 +116,19 @@ export function LiveWorkspace() {
     }
   };
 
+  const again = () => {
+    setJobId(null);
+    setSelection({});
+    setFailure(null);
+  };
+
   const pick = (modality: Modality, file: File | undefined) =>
     setSelection((current) => ({ ...current, [modality]: file }));
 
   const result = job.data?.status === 'completed' ? job.data : null;
+  // Is bittiginde (basarili ya da degil) oturum acik kalir; ayni oturumda
+  // yeni bir vaka calistirilabilir.
+  const finished = job.data !== undefined && TERMINAL.has(job.data.status);
   const chosen = MODALITIES.filter((modality) => selection[modality]).length;
 
   return (
@@ -201,6 +210,11 @@ export function LiveWorkspace() {
             </div>
           )}
           <div className="live-actions">
+            {finished && (
+              <button type="button" onClick={again}>
+                <RotateCcw size={17} /> {t('live.newAnalysis')}
+              </button>
+            )}
             <button type="button" className="ghost" onClick={leave}>
               <LogOut size={17} /> {t('live.leave')}
             </button>

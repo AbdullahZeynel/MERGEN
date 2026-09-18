@@ -207,6 +207,56 @@ describe('live workspace', () => {
     expect(calls.some((call) => call.url.endsWith('/jobs'))).toBe(false);
   });
 
+  it('runs a second case in the same session without reconnecting', async () => {
+    // Sunucu yalniz *aktif* bir isi engelliyor; bitmis is yeni analizi
+    // engellemez, yani oturumu kapatmak gerekmemeli.
+    document.cookie = 'mergen_csrf=token';
+    const finished = makeLiveJob();
+    serve(({ url, init }) => {
+      if (url.endsWith('/session') && init.method === 'POST') return json(session);
+      if (url.endsWith('/jobs'))
+        return json(
+          { jobId: finished.jobId, status: 'queued', module: 'imaging', disease: 'glioma' },
+          202,
+        );
+      return json(finished);
+    });
+    const user = mount();
+    await connect(user);
+    await chooseAll(user);
+    await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
+    await screen.findByText('Tamamlandı');
+
+    await user.click(screen.getByRole('button', { name: /Yeni analiz/ }));
+    // Erisim kapisina degil, bos yukleme formuna donulur.
+    expect(screen.queryByLabelText('Erişim kodu')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Dosya seçilmedi')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: /Analizi başlat/ })).toBeDisabled();
+  });
+
+  it('offers no new analysis while the job is still running', async () => {
+    document.cookie = 'mergen_csrf=token';
+    const running = { ...makeLiveJob(), status: 'running' as const };
+    delete (running as Partial<typeof running>).result;
+    delete (running as Partial<typeof running>).downloadUrl;
+    delete (running as Partial<typeof running>).assetUrls;
+    serve(({ url, init }) => {
+      if (url.endsWith('/session') && init.method === 'POST') return json(session);
+      if (url.endsWith('/jobs'))
+        return json(
+          { jobId: running.jobId, status: 'queued', module: 'imaging', disease: 'glioma' },
+          202,
+        );
+      return json(running);
+    });
+    const user = mount();
+    await connect(user);
+    await chooseAll(user);
+    await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
+    await screen.findByText('Model çalışıyor');
+    expect(screen.queryByRole('button', { name: /Yeni analiz/ })).not.toBeInTheDocument();
+  });
+
   it('returns to the access gate when the session is closed', async () => {
     document.cookie = 'mergen_csrf=token';
     serve(({ url, init }) => {
