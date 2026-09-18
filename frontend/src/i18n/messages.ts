@@ -56,6 +56,10 @@ export const tr = {
   'live.newAnalysis': 'Yeni analiz',
   'live.leave': 'Oturumu kapat',
   'live.uploadNote': 'Dört modalite de NIfTI (.nii veya .nii.gz) olmalı. Dosya adları sunucuya gönderilmez.',
+  'live.endsIn': 'Oturum {minutes} dakika sonra kendiliğinden kapanır.',
+  'live.endsSoon': 'Oturum {minutes} dakikadan az sürede kapanacak; sonucunuzu indirin.',
+  'live.endsUnderMinute': 'Oturum bir dakikadan kısa sürede kapanacak.',
+
   'live.volumesCaption': 'Ölçülen bölge hacimleri (voksel)',
   'live.region.TC': 'Tümör çekirdeği',
   'live.region.WT': 'Bütün tümör',
@@ -318,6 +322,10 @@ export const en: Record<MessageKey, string> = {
   'live.newAnalysis': 'New analysis',
   'live.leave': 'Close the session',
   'live.uploadNote': 'All four modalities must be NIfTI (.nii or .nii.gz). File names are not sent to the server.',
+  'live.endsIn': 'The session closes on its own in {minutes} minutes.',
+  'live.endsSoon': 'The session closes in under {minutes} minutes; download your result.',
+  'live.endsUnderMinute': 'The session closes in under a minute.',
+
   'live.volumesCaption': 'Measured region volumes (voxels)',
   'live.region.TC': 'Tumour core',
   'live.region.WT': 'Whole tumour',

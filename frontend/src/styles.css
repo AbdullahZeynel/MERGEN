@@ -1928,3 +1928,15 @@ svg {
 .live-result .live-flags {
   width: 100%;
 }
+.live-clock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+.live-clock.soon {
+  color: var(--text);
+  font-weight: 600;
+}

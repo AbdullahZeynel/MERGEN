@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Box, Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
+import { AlertTriangle, Box, Clock, Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
 import {
   closeSession,
   fetchReport,
@@ -25,6 +25,27 @@ import type { MessageKey } from '../i18n/messages';
 const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
 type Failure = { key: MessageKey; values?: Record<string, string | number> };
+
+/**
+ * Oturumun kalan omru. Bosta kalma sayaci degil: heartbeat sekme acik oldugu
+ * surece onu surekli sifirliyor, yani kullanicinin carptigi sinir mutlak sure
+ * (`MERGEN_SESSION_MAX_SECONDS`, varsayilan 30 dk). Geri sayim tarayicinin
+ * saatiyle hesaplanir, o yuzden bilgi amaclidir: oturumun gercekten bitip
+ * bitmedigine sunucu karar verir ve dusmus oturum zaten `session-expired`
+ * olarak geri gelir.
+ */
+function useRemainingSeconds(expiresAt: number | undefined): number | null {
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  useEffect(() => {
+    if (expiresAt === undefined) return;
+    const timer = setInterval(() => setNow(Date.now() / 1000), 15_000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+  if (expiresAt === undefined) return null;
+  return Math.max(0, Math.round(expiresAt - now));
+}
+
+const SOON_SECONDS = 5 * 60;
 
 const REVIEW_REASON_KEYS: Record<string, MessageKey> = {
   non_enhancing_tumor: 'live.flag.nonEnhancingTumor',
@@ -75,6 +96,7 @@ export function LiveWorkspace() {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
   const stopHeartbeat = useRef<(() => void) | null>(null);
+  const remaining = useRemainingSeconds(session?.absoluteExpiresAt);
 
   const endSession = useCallback(() => {
     stopHeartbeat.current?.();
@@ -103,6 +125,13 @@ export function LiveWorkspace() {
       if (job.error instanceof LiveError && job.error.code === 'session-expired') endSession();
     }
   }, [job.error, endSession]);
+
+  useEffect(() => {
+    if (session && remaining === 0) {
+      setFailure({ key: 'live.error.sessionExpired' });
+      endSession();
+    }
+  }, [session, remaining, endSession]);
 
   const connect = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -185,6 +214,20 @@ export function LiveWorkspace() {
       {failure && (
         <p className="live-failure" role="alert">
           {t(failure.key, failure.values)}
+        </p>
+      )}
+
+      {session && remaining !== null && remaining > 0 && (
+        <p
+          className={`live-clock ${remaining <= SOON_SECONDS ? 'soon' : ''}`}
+          role={remaining <= SOON_SECONDS ? 'alert' : 'status'}
+        >
+          <Clock size={15} aria-hidden />{' '}
+          {remaining < 60
+            ? t('live.endsUnderMinute')
+            : t(remaining <= SOON_SECONDS ? 'live.endsSoon' : 'live.endsIn', {
+                minutes: Math.ceil(remaining / 60),
+              })}
         </p>
       )}
 

@@ -363,6 +363,48 @@ describe('live workspace', () => {
     expect(screen.queryByText('12.400')).not.toBeInTheDocument();
   });
 
+  it('says how long the session has left, and warns near the end', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    serve(({ url }) =>
+      url.endsWith('/session')
+        ? json({ ...session, absoluteExpiresAt: now + 21 * 60 })
+        : json(session),
+    );
+    const user = mount();
+    await connect(user);
+    // Bosta kalma sayaci degil: heartbeat sekme acikken onu sifirliyor, gorunen
+    // sinir mutlak sure.
+    expect(screen.getByText(/21 dakika sonra kendiliğinden kapanır/)).toBeVisible();
+    expect(screen.queryByText(/indirin/)).not.toBeInTheDocument();
+  });
+
+  it('turns the remaining time into a warning in the last five minutes', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    serve(({ url }) =>
+      url.endsWith('/session')
+        ? json({ ...session, absoluteExpiresAt: now + 4 * 60 })
+        : json(session),
+    );
+    const user = mount();
+    await connect(user);
+    const notice = screen.getByText(/4 dakikadan az sürede kapanacak/);
+    expect(notice).toBeVisible();
+    expect(notice.closest('[role="alert"]')).not.toBeNull();
+  });
+
+  it('ends the session itself when its absolute lifetime runs out', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    serve(({ url }) =>
+      url.endsWith('/session') ? json({ ...session, absoluteExpiresAt: now }) : json(session),
+    );
+    const user = mount();
+    await user.type(screen.getByLabelText('Erişim kodu'), 'kod');
+    await user.click(screen.getByRole('button', { name: /Oturum aç/ }));
+    // Suresi dolmus bir oturumda yukleme formu hic acilmaz.
+    expect(await screen.findByRole('alert')).toHaveTextContent('Oturum sona erdi');
+    expect(screen.getByLabelText('Erişim kodu')).toBeInTheDocument();
+  });
+
   it('returns to the access gate when the session is closed', async () => {
     document.cookie = 'mergen_csrf=token';
     serve(({ url, init }) => {
