@@ -237,8 +237,10 @@ export const tr = {
     'Görüntüler insan katılımcılardan gelir. Veri toplama, University of California San Francisco kurumsal etik kurulunca onaylanmış ve onam muafiyeti verilmiştir; koleksiyon kimliksizleştirilmiş olarak The Cancer Imaging Archive üzerinden yayımlanır.',
   'privacy.skullStripped':
     'Yayımlanan hacimlerde kafatası ve yüz dokusu çıkarılmıştır (skull-stripped). Bu, veriyi hazırlayan ekibin ön işleme adımıdır; sonucu olarak görüntüden yüz hatları da yeniden oluşturulamaz.',
-  'privacy.noUpload':
-    'Bu gösterimde hasta verisi yüklenmez ve saklanmaz. Ekranda gördüğünüz vakalar önceden hazırlanmış, kimliksizleştirilmiş örneklerdir.',
+  'privacy.demoNoUpload':
+    'Hazır demo vakalarında hiçbir veri yüklenmez. Ekranda gördüğünüz vakalar önceden hazırlanmış, kimliksizleştirilmiş örneklerdir.',
+  'privacy.liveUpload':
+    'Canlı analiz yolu bundan ayrıdır: erişim kodu ister ve kendi yüklediğiniz hacimlerle çalışır. Bu dosyalar yalnız oturum süresince tutulur, oturum kapandığında veya süresi dolduğunda dosyalar ve iş kaydı silinir, yedeklemeye alınmaz.',
   'privacy.licence':
     'Veri kümesi CC BY 4.0 ile yayımlanır; kullanımı atıf ister. Atıflar aşağıdaki kaynaklar bölümündedir.',
   'privacy.clinical':
@@ -505,8 +507,10 @@ export const en: Record<MessageKey, string> = {
     'The images come from human participants. Data collection was approved by the University of California San Francisco institutional review board with a waiver for consent, and the collection is published de-identified through The Cancer Imaging Archive.',
   'privacy.skullStripped':
     'The published volumes have the skull and face tissue removed (skull-stripped). That was a pre-processing step by the team who prepared the data; as a consequence facial features cannot be reconstructed from the images either.',
-  'privacy.noUpload':
-    'No patient data is uploaded or stored in this demonstration. The cases on screen are prepared, de-identified examples.',
+  'privacy.demoNoUpload':
+    'Nothing is uploaded for the prepared demo cases. The cases on screen are prepared, de-identified examples.',
+  'privacy.liveUpload':
+    'The live analysis path is separate: it asks for an access code and works on volumes you upload yourself. Those files are kept only for the session; when it closes or expires the files and the job record are deleted, and they are never backed up.',
   'privacy.licence':
     'The dataset is published under CC BY 4.0 and its use requires attribution. The citations are in the credits below.',
   'privacy.clinical':
