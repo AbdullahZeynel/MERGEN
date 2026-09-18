@@ -10,12 +10,6 @@ export const demoSource: DataSource = {
   },
 };
 
-// F4: Implement the same interface with the authenticated backend contract.
-// Never fall back to demo records when a live request fails.
-export const liveSource: DataSource = {
-  async listCases() {
-    throw new Error(
-      'Canlı analiz bağlantısı henüz kurulmadı. Hazır vakalara demo modundan ulaşabilirsiniz.',
-    );
-  },
-};
+// Canli yol bir vaka listesi degil, tek bir oturum ve tek bir istir; sozlesmesi
+// data/liveClient.ts, ekrani components/LiveWorkspace.tsx icindedir. Burasi
+// yalniz hazir demo paketini okur.

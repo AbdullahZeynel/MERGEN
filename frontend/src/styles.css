@@ -1730,3 +1730,147 @@ svg {
     transition: none;
   }
 }
+
+/* Canli calisma alani ---------------------------------------------------- */
+.live-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 26px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  box-shadow: var(--panel-shadow);
+}
+.live-head h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
+}
+.live-head p,
+.live-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.5;
+}
+.live-failure {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 7px;
+  border: 1px solid var(--selected-line);
+  background: var(--selected);
+  color: var(--text);
+  font-size: 0.88rem;
+}
+.live-gate,
+.live-upload,
+.live-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+}
+.live-gate label {
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.live-gate input[type='password'] {
+  padding: 10px 12px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--surface-subtle);
+  color: var(--text);
+  font: inherit;
+}
+.live-slots {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.live-slots li {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--surface-subtle);
+}
+.live-slots label {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.live-slots input[type='file'] {
+  font-size: 0.82rem;
+  color: var(--secondary-text);
+  min-width: 0;
+}
+.live-slot-state {
+  color: var(--muted);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.live-workspace button,
+.live-download {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  border: 1px solid #dce0e7;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 650;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+.live-workspace button:hover:not(:disabled),
+.live-download:hover {
+  background: var(--hover);
+}
+.live-workspace button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.live-download {
+  border-color: var(--selected-line);
+  background: var(--selected);
+}
+.live-state {
+  margin: 0;
+  font-size: 1rem;
+}
+.live-result {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-start;
+}
+@media (max-width: 760px) {
+  .live-workspace {
+    padding: 18px;
+  }
+  .live-slots li {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  .live-slot-state {
+    white-space: normal;
+  }
+}

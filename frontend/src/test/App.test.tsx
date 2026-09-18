@@ -72,14 +72,18 @@ describe('case workspace', () => {
     expect(liste()).toHaveClass('open');
   });
 
-  it('never silently substitutes demo records for a disconnected live source', async () => {
+  it('never puts a demo record on the live path', async () => {
+    // Canli mod kendi ekranini surer ve once erisim kodu ister; hazir vaka,
+    // kesiti ya da vaka basligi o ekranda gorunemez.
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });
     await user.click(screen.getByRole('button', { name: 'Canlı analiz' }));
-    await screen.findByRole('heading', { name: 'Canlı bağlantı henüz kurulmadı' });
+    await screen.findByLabelText('Erişim kodu');
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'TEST-0001' })).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Hazır demolara dön' }));
+    expect(screen.getByText('Canlı modda hazır vaka listesi yoktur')).toBeVisible();
+    expect(screen.getByText('Canlı veriler yalnız oturum süresince tutulur')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: 'Hazır demo' }));
     await screen.findByRole('heading', { name: 'TEST-0001' });
   });
   it('filters imaging cases without inventing results', async () => {
