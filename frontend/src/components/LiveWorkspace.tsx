@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
+import { AlertTriangle, Box, Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
 import {
   closeSession,
+  fetchReport,
   jobStatus,
   LiveError,
   openSession,
@@ -12,7 +13,9 @@ import {
   type LiveSession,
 } from '../data/liveClient';
 import { buildBundle, BundleRejected, MODALITIES, type Modality, type VolumeSelection } from '../data/liveBundle';
-import { liveStatusKeys, type LiveJob } from '../data/contracts';
+import { liveStatusKeys, type LiveJob, type ReviewFlag } from '../data/contracts';
+import { LazyVolumeViewer } from './LazyVolumeViewer';
+import { ViewerFrame } from './ViewerFrame';
 import { useLanguage } from '../i18n';
 import type { MessageKey } from '../i18n/messages';
 
@@ -23,6 +26,39 @@ const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
 type Failure = { key: MessageKey; values?: Record<string, string | number> };
 
+const REVIEW_REASON_KEYS: Record<string, MessageKey> = {
+  non_enhancing_tumor: 'live.flag.nonEnhancingTumor',
+};
+
+function ReviewFlags({ flags }: { flags: ReviewFlag[] }) {
+  const { language, t } = useLanguage();
+  const number = (value: number) => value.toLocaleString(language);
+  if (flags.length === 0) return null;
+  return (
+    <ul className="live-flags">
+      {flags.map((flag, index) => {
+        const known = REVIEW_REASON_KEYS[flag.reason];
+        return (
+          <li key={`${flag.reason}-${index}`}>
+            <AlertTriangle size={17} aria-hidden />
+            <div>
+              <p>{known ? t(known) : t('live.flag.unknown')}</p>
+              <p className="live-note">
+                {t('live.flag.evidence', {
+                  core: number(flag.evidence.tumor_core_voxels),
+                  enhancing: number(flag.evidence.enhancing_voxels),
+                  threshold: number(flag.evidence.enhancing_threshold),
+                })}
+              </p>
+              {!known && <p className="live-note">{flag.message}</p>}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function failureOf(error: unknown): Failure {
   if (error instanceof BundleRejected)
     return { key: error.messageKey, values: error.modality ? { modality: error.modality } : undefined };
@@ -31,7 +67,7 @@ function failureOf(error: unknown): Failure {
 }
 
 export function LiveWorkspace() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [session, setSession] = useState<LiveSession | null>(null);
   const [accessCode, setAccessCode] = useState('');
   const [selection, setSelection] = useState<VolumeSelection>({});
@@ -126,6 +162,14 @@ export function LiveWorkspace() {
     setSelection((current) => ({ ...current, [modality]: file }));
 
   const result = job.data?.status === 'completed' ? job.data : null;
+  const reportUrl = result?.assetUrls?.['report.json'];
+  const meshUrl = result?.assetUrls?.['prediction.glb'];
+  const report = useQuery({
+    queryKey: ['live-report', reportUrl],
+    enabled: reportUrl !== undefined,
+    queryFn: ({ signal }) => fetchReport(reportUrl!, signal),
+    retry: false,
+  });
   // Is bittiginde (basarili ya da degil) oturum acik kalir; ayni oturumda
   // yeni bir vaka calistirilabilir.
   const finished = job.data !== undefined && TERMINAL.has(job.data.status);
@@ -204,6 +248,30 @@ export function LiveWorkspace() {
                   modelVersion: result.result!.modelVersion,
                 })}
               </p>
+              <ViewerFrame title={t('viewer.mesh')} icon={<Box size={18} />}>
+                <LazyVolumeViewer url={meshUrl} fallbackHint="mesh.liveFallbackHint" />
+              </ViewerFrame>
+              {report.isError ? (
+                <p className="live-note" role="status">
+                  {t('live.reportUnreadable')}
+                </p>
+              ) : report.data ? (
+                <>
+                  <table className="live-volumes">
+                    <caption>{t('live.volumesCaption')}</caption>
+                    <tbody>
+                      {(['TC', 'WT', 'ET'] as const).map((region) => (
+                        <tr key={region}>
+                          <th scope="row">{t(`live.region.${region}` as MessageKey)}</th>
+                          <td>{report.data.regionVolumes[region].toLocaleString(language)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <ReviewFlags flags={report.data.reviewFlags} />
+                  <p className="live-note">{t('live.noReference')}</p>
+                </>
+              ) : null}
               <a className="live-download" href={result.downloadUrl} download>
                 <Download size={17} /> {t('live.download')}
               </a>

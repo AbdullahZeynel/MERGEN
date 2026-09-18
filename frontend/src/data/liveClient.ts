@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { liveJobSchema, type LiveJob } from './contracts';
+import { liveJobSchema, liveReportSchema, type LiveJob, type LiveReport } from './contracts';
 import type { MessageKey } from '../i18n/messages';
 
 // Canli oturum istemcisi. Tek kural: bu dosya hicbir kosulda demo verisine
@@ -195,6 +195,23 @@ export async function submitJob(
 export async function jobStatus(jobId: string, signal?: AbortSignal): Promise<LiveJob> {
   const response = await call(`/jobs/${jobId}`, { method: 'GET', signal });
   return parsed(response, liveJobSchema);
+}
+
+/**
+ * Sonuc ZIP'inin icindeki `report.json`. Yol her zaman isin kendi varlik
+ * baglantisidir: `liveJobSchema` onu isin kanonik yoluna bagladigi icin burada
+ * gelen adres baska bir ise ait olamaz.
+ */
+export async function fetchReport(assetUrl: string, signal?: AbortSignal): Promise<LiveReport> {
+  let response: Response;
+  try {
+    response = await fetch(assetUrl, { credentials: 'same-origin', cache: 'no-store', signal });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') throw error;
+    throw new LiveError('network');
+  }
+  if (!response.ok) throw failureFor(response, false);
+  return parsed(response, liveReportSchema);
 }
 
 /**

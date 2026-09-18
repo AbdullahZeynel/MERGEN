@@ -1874,3 +1874,57 @@ svg {
     white-space: normal;
   }
 }
+.live-volumes {
+  border-collapse: collapse;
+  font-size: 0.88rem;
+  width: 100%;
+  max-width: 420px;
+}
+.live-volumes caption {
+  text-align: left;
+  padding-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+.live-volumes th,
+.live-volumes td {
+  border-bottom: 1px solid var(--line);
+  padding: 8px 4px;
+  text-align: left;
+}
+.live-volumes th {
+  font-weight: 600;
+  color: var(--secondary-text);
+}
+.live-volumes td {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.live-flags {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.live-flags li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--selected-line);
+  background: var(--selected);
+  border-radius: 7px;
+}
+.live-flags p {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+}
+.live-flags p:last-child {
+  margin-bottom: 0;
+}
+.live-result .viewer-frame,
+.live-result .live-volumes,
+.live-result .live-flags {
+  width: 100%;
+}

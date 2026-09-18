@@ -2,12 +2,13 @@ import { lazy, Suspense } from 'react';
 import { Box } from 'lucide-react';
 import { EmptyState } from './EmptyState';
 import { useT } from '../i18n';
+import type { MessageKey } from '../i18n/messages';
 
 const VolumeViewer = lazy(() =>
   import('./VolumeViewer').then((module) => ({ default: module.VolumeViewer })),
 );
 
-export function LazyVolumeViewer({ url }: { url?: string }) {
+export function LazyVolumeViewer({ url, fallbackHint }: { url?: string; fallbackHint?: MessageKey }) {
   const t = useT();
   return (
     <Suspense
@@ -21,7 +22,7 @@ export function LazyVolumeViewer({ url }: { url?: string }) {
         </div>
       }
     >
-      <VolumeViewer url={url} />
+      <VolumeViewer url={url} fallbackHint={fallbackHint} />
     </Suspense>
   );
 }

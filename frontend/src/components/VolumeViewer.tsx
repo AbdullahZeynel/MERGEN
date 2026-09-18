@@ -16,7 +16,15 @@ const labelKeys: Record<Region, MessageKey> = {
   ED: 'mesh.ED',
   BRAIN: 'mesh.BRAIN',
 };
-export function VolumeViewer({ url }: { url?: string }) {
+export function VolumeViewer({
+  url,
+  // 3D yuklenemediginde okuyucuya ne yapabilecegini soyleyen satir. Demo
+  // vakasinda 2D kesitler var, canli vakada yok; ipucu cagirana ait.
+  fallbackHint = 'mesh.fallbackHint',
+}: {
+  url?: string;
+  fallbackHint?: MessageKey;
+}) {
   const t = useT();
   const host = useRef<HTMLDivElement>(null);
   const sceneControl = useRef<{ group: THREE.Group; draw: () => void; reset: () => void } | null>(
@@ -251,7 +259,7 @@ export function VolumeViewer({ url }: { url?: string }) {
                   ? t('mesh.loadingHint')
                   : state === 'none'
                     ? t('mesh.noRegionsHint')
-                    : t('mesh.fallbackHint')}
+                    : t(fallbackHint)}
             </EmptyState>
           </div>
         )}

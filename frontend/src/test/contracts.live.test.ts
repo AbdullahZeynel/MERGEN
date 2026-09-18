@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { liveJobSchema, liveResultSchema } from '../data/contracts';
-import { makeLiveJob, makeLiveResult } from './fixtures';
+import { liveJobSchema, liveReportSchema, liveResultSchema } from '../data/contracts';
+import { makeLiveJob, makeLiveReport, makeLiveResult, makeReviewFlag } from './fixtures';
 
 describe('live job boundary validation', () => {
   it('accepts the shape the backend actually returns', () => {
@@ -93,5 +93,36 @@ describe('live job boundary validation', () => {
     for (const patch of [{ module: 'pathology' }, { disease: 'meningioma' }]) {
       expect(liveJobSchema.safeParse({ ...makeLiveJob(), ...patch }).success).toBe(false);
     }
+  });
+});
+
+describe('live report boundary validation', () => {
+  it('accepts the report the runner writes', () => {
+    expect(liveReportSchema.safeParse(makeLiveReport()).success).toBe(true);
+  });
+
+  it('refuses region volumes that do not fit inside the whole tumour', () => {
+    // TC ya da ET, WT'yi asamaz; asan bir sayi ekranda sessizce yanlis okunur.
+    for (const patch of [{ TC: 50_000 }, { ET: 50_000 }]) {
+      const report = makeLiveReport();
+      Object.assign(report.regionVolumes, patch);
+      expect(liveReportSchema.safeParse(report).success).toBe(false);
+    }
+  });
+
+  it('refuses a report from an older runner schema', () => {
+    const report = { ...makeLiveReport(), schemaVersion: 1 };
+    expect(liveReportSchema.safeParse(report).success).toBe(false);
+  });
+
+  it('keeps the evidence numbers a flag has to carry', () => {
+    const report = makeLiveReport();
+    report.reviewFlags = [makeReviewFlag()];
+    expect(liveReportSchema.safeParse(report).success).toBe(true);
+    const missing = makeLiveReport();
+    missing.reviewFlags = [
+      { ...makeReviewFlag(), evidence: {} as never },
+    ];
+    expect(liveReportSchema.safeParse(missing).success).toBe(false);
   });
 });
