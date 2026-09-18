@@ -17,11 +17,12 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { demoSource, liveSource } from './data/source';
+import { demoSource } from './data/source';
 import { statusKeys, type SourceMode, type DemoCase } from './data/contracts';
 import { useLanguage } from './i18n';
 import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
+import { LiveWorkspace } from './components/LiveWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 import { AboutDialog } from './components/AboutDialog';
 import { GuidedTour } from './tour/GuidedTour';
@@ -78,7 +79,9 @@ export default function App() {
   }, [theme]);
   const query = useQuery({
     queryKey: ['cases', mode],
-    queryFn: ({ signal }) => (mode === 'demo' ? demoSource : liveSource).listCases(signal),
+    // Canli mod kendi ekranini surer; hazir vaka listesi yalniz demo modunda cekilir.
+    enabled: mode === 'demo',
+    queryFn: ({ signal }) => demoSource.listCases(signal),
   });
   const cases = query.data ?? [];
   const filtered = cases.filter(
@@ -202,6 +205,10 @@ export default function App() {
                 {t('cases.live')}
               </button>
             </div>
+            {mode === 'live' ? (
+              <p className="list-message">{t('workspace.liveNoList')}</p>
+            ) : (
+              <>
             <label className="search-box">
               <Search size={17} />
               <span className="sr-only">{t('cases.search')}</span>
@@ -265,6 +272,8 @@ export default function App() {
                 </p>
               )}
             </div>
+              </>
+            )}
           </aside>
           <main id="workspace" className="workspace" tabIndex={-1}>
             <div className="breadcrumb">
@@ -303,32 +312,32 @@ export default function App() {
               {/* Yalnizca vaka listesi isteginin sonucu; kesit/mesh
                   istekleri ayrica hata verebilir, o yuzden metin liste diyor. */}
               <span className="service-state" role="status">
-                {query.isPending ? (
+                {mode === 'live' ? (
+                  <><ShieldCheck size={14} /> {t('workspace.liveSessionOnly')}</>
+                ) : query.isPending ? (
                   <><RefreshCw size={14} className="spin" /> {t('workspace.waiting')}</>
                 ) : query.isError ? (
-                  <>
-                    <Link2Off size={14} />{' '}
-                    {t(mode === 'demo' ? 'workspace.demoUnreachable' : 'workspace.liveDisconnected')}
-                  </>
+                  <><Link2Off size={14} /> {t('workspace.demoUnreachable')}</>
                 ) : (
-                  <>
-                    <Database size={14} />{' '}
-                    {t(mode === 'demo' ? 'workspace.demoListed' : 'workspace.liveListed')}
-                  </>
+                  <><Database size={14} /> {t('workspace.demoListed')}</>
                 )}
               </span>
-              <button
-                className="refresh"
-                aria-label={t('workspace.refresh')}
-                disabled={query.isFetching}
-                onClick={() => void query.refetch()}
-              >
-                <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
-              </button>
+              {mode === 'demo' && (
+                <button
+                  className="refresh"
+                  aria-label={t('workspace.refresh')}
+                  disabled={query.isFetching}
+                  onClick={() => void query.refetch()}
+                >
+                  <RefreshCw size={16} className={query.isFetching ? 'spin' : ''} />
+                </button>
+              )}
             </div>
             <div className="content-with-assistant">
               <div className="analysis-content">
-                {query.isPending ? (
+                {mode === 'live' ? (
+                  <LiveWorkspace />
+                ) : query.isPending ? (
                   <div className="panel loading-panel" role="status">
                     <RefreshCw className="spin" /> {t('workspace.loadingCase')}
                   </div>
@@ -336,21 +345,14 @@ export default function App() {
                   <div className="panel" role="alert">
                     <EmptyState
                       icon={<Link2Off />}
-                      title={
-                        t(mode === 'live' ? 'workspace.liveNotReadyTitle' : 'workspace.demoUnreadableTitle')
-                      }
+                      title={t('workspace.demoUnreadableTitle')}
                       action={
-                        <button
-                          className="button"
-                          onClick={() =>
-                            mode === 'live' ? changeMode('demo') : void query.refetch()
-                          }
-                        >
-                          {t(mode === 'live' ? 'workspace.backToDemo' : 'workspace.retry')}
+                        <button className="button" onClick={() => void query.refetch()}>
+                          {t('workspace.retry')}
                         </button>
                       }
                     >
-                      {t(mode === 'live' ? 'workspace.liveNeedsServices' : 'workspace.demoMissing')}
+                      {t('workspace.demoMissing')}
                     </EmptyState>
                   </div>
                 ) : !record ? (
