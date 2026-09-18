@@ -296,6 +296,32 @@ class PathologyCollectionTests(unittest.IsolatedAsyncioTestCase):
         self.write_pathology([uncertain])
         self.assertEqual(len(self.reload().collections[('pathology', 'glioma')]['cases']), 1)
 
+    async def test_a_tile_grid_must_be_a_grid_the_slide_could_fill(self):
+        # The sheet of top tiles is numbered on screen, so a declared layout that
+        # is not one — or that claims more cells than the slide had tiles — is
+        # refused rather than drawn with invented ranks.
+        grid = {'tilePx': 224, 'columns': 6, 'rows': 2, 'count': 12,
+                'ordering': 'attention_desc', 'micronsPerPixel': 0.5}
+        good = slide('SLIDE-1', {'A': 0.02, 'O': 0.96, 'G': 0.02}, 'O', 'O', False)
+        self.write_pathology([{**good, 'tilesUsed': 4096, 'tileGrid': grid}])
+        cases = self.reload().collections[('pathology', 'glioma')]['cases']
+        self.assertEqual(cases['SLIDE-1']['tileGrid'], grid)
+        for broken, tiles in (
+            ({**grid, 'count': 13}, 4096),
+            ({**grid, 'rows': 0}, 4096),
+            ({**grid, 'ordering': 'as_found'}, 4096),
+            ({**grid, 'micronsPerPixel': 0}, 4096),
+            ({k: v for k, v in grid.items() if k != 'tilePx'}, 4096),
+            (grid, 8),
+        ):
+            self.write_pathology([{**good, 'tilesUsed': tiles, 'tileGrid': broken}])
+            with self.assertRaisesRegex(ValueError, 'tile grid'):
+                self.reload()
+        # A package that says nothing about the layout stays valid; the screen
+        # then shows the sheet whole instead of numbering it.
+        self.write_pathology([good])
+        self.assertEqual(len(self.reload().collections[('pathology', 'glioma')]['cases']), 1)
+
     async def test_agreement_is_checked_against_the_reference(self):
         wrong = slide('SLIDE-2', {'A': 0.53, 'O': 0.46, 'G': 0.01}, 'A', 'O', True)
         wrong['agreesWithReference'] = True

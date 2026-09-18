@@ -21,6 +21,7 @@ PATHOLOGY_ASSETS = {
     'report': ('report.json', 'application/json'),
 }
 PATHOLOGY_IMAGES = ('attention', 'top_tiles', 'thumbnail')
+TILE_GRID_FIELDS = ('tilePx', 'columns', 'rows', 'count', 'ordering', 'micronsPerPixel')
 REGIONS = ('TC', 'WT', 'ET')
 # `models/imaging/uwcse_ensemble.review_flags()` output: a finding, why it is
 # doubted and the numbers behind it, so the interface can show the reason.
@@ -128,6 +129,20 @@ def _check_pathology_case(case, module, disease, margin):
     ranked = sorted(probabilities.values(), reverse=True)
     if case['needsExpertReview'] is not (ranked[0] - ranked[1] < margin):
         raise ValueError('Pathology review flag does not match the declared margin')
+    grid = case.get('tileGrid')
+    # The sheet of top tiles is numbered on screen, so the layout it declares has
+    # to be a layout: whole cells, and never more cells than the slide had tiles.
+    if grid is not None and (
+            not isinstance(grid, dict)
+            or set(grid) != set(TILE_GRID_FIELDS)
+            or any(type(grid[field]) is not int or grid[field] <= 0
+                   for field in ('tilePx', 'columns', 'rows', 'count'))
+            or grid['count'] != grid['columns'] * grid['rows']
+            or grid['ordering'] != 'attention_desc'
+            or not _number(grid['micronsPerPixel']) or grid['micronsPerPixel'] <= 0
+            or type(case.get('tilesUsed')) is not int
+            or grid['count'] > case['tilesUsed']):
+        raise ValueError('Pathology case declares an impossible tile grid')
 
 
 class DemoStore:

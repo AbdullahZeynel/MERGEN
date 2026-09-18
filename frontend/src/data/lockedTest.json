@@ -1,0 +1,58 @@
+{
+  "split": "locked test",
+  "segmentation": {
+    "source": "models/registry/mergen-uwcse/uwcse_v3/segmentation_metrics.json",
+    "variant": "V4_UWCSE_Full",
+    "n": 172,
+    "nValForWeights": 30,
+    "dice": {
+      "TC": {
+        "value": 0.8126,
+        "low": 0.7618,
+        "high": 0.8607
+      },
+      "WT": {
+        "value": 0.9288,
+        "low": 0.9105,
+        "high": 0.9422
+      },
+      "ET": {
+        "value": 0.8564,
+        "low": 0.815,
+        "high": 0.8931
+      },
+      "Mean": {
+        "value": 0.8659,
+        "low": 0.8366,
+        "high": 0.8939
+      }
+    }
+  },
+  "pathology": {
+    "source": "models/registry/mergen-wsi-attention-mil/results/ensemble_cv_v1/eval_test.json",
+    "models": 5,
+    "n": 113,
+    "metrics": {
+      "macroF1": {
+        "value": 0.7903,
+        "low": 0.7085,
+        "high": 0.863
+      },
+      "balancedAccuracy": {
+        "value": 0.7877,
+        "low": 0.7073,
+        "high": 0.8653
+      },
+      "auroc": {
+        "value": 0.909,
+        "low": 0.8629,
+        "high": 0.9497
+      },
+      "mcc": {
+        "value": 0.6957,
+        "low": 0.5807,
+        "high": 0.8008
+      }
+    }
+  }
+}

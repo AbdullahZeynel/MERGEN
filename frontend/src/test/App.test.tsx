@@ -1,9 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import App from '../App';
-import { makeCase } from './fixtures';
+import { makeCase, makeSlide, makeSlideManifest } from './fixtures';
 import { withLanguage } from './render';
 
 afterEach(() => {
@@ -18,6 +18,29 @@ function mount(payload: unknown = { version: 2, cases }, { firstVisit = false } 
   // Ilk ziyaret tanitimi bir modal; cogu test onu gormemis bir ziyaretci varsayar.
   if (!firstVisit) window.localStorage.setItem('mergen-guide', 'answered');
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => payload }));
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  render(
+    withLanguage(
+      <QueryClientProvider client={client}>
+        <App />
+      </QueryClientProvider>,
+    ),
+  );
+  return userEvent.setup();
+}
+
+const slides = [makeSlide('TEST-SLIDE-1'), makeSlide('TEST-SLIDE-2')];
+// Iki modul iki ayri uctan okuyor; testte istek adrese gore yanitlanir.
+function mountModules({ slidesOk = true } = {}) {
+  window.localStorage.setItem('mergen-guide', 'answered');
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string) =>
+      String(url).includes('/modules/pathology/')
+        ? { ok: slidesOk, json: async () => makeSlideManifest(slides) }
+        : { ok: true, json: async () => ({ version: 2, cases }) },
+    ),
+  );
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   render(
     withLanguage(
@@ -248,5 +271,103 @@ describe('case workspace', () => {
     await user.click(reference);
     expect(screen.queryByAltText('Model tahmini segmentasyon maskesi')).not.toBeInTheDocument();
     expect(screen.getByAltText('Referans segmentasyon maskesi')).toBeVisible();
+  });
+});
+
+describe('modules', () => {
+  it('lists the pathology collection once the module is switched', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Patoloji' }));
+    await screen.findByRole('heading', { name: 'TEST-SLIDE-1' });
+    expect(screen.getByRole('button', { name: /TEST-SLIDE-2/ })).toBeVisible();
+    // Modalite etiketi slayta ait; MR vakalari listede kalmaz.
+    const sidebar = screen.getByRole('complementary', { name: 'Vakalar' });
+    expect(within(sidebar).getAllByText('H&E tüm-slayt')).toHaveLength(2);
+    expect(screen.queryByRole('button', { name: /TEST-0001/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the selected slide, its attention map and its probabilities', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Patoloji' }));
+    await screen.findByRole('heading', { name: 'TEST-SLIDE-1' });
+    expect(screen.getByAltText(/TEST-SLIDE-1 slaytında attention/)).toBeVisible();
+    await user.click(screen.getByRole('button', { name: /TEST-SLIDE-2/ }));
+    expect(screen.getByAltText(/TEST-SLIDE-2 slaytında attention/)).toHaveAttribute(
+      'src',
+      '/api/demo/modules/pathology/diseases/glioma/cases/TEST-SLIDE-2/images/attention',
+    );
+    // Kesit gezintisi patoloji ekraninda yok; MR denetimleri sizmiyor.
+    expect(screen.queryByRole('slider', { name: 'Kesit seç' })).not.toBeInTheDocument();
+  });
+
+  it('never offers demo slides as a live pathology result', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Patoloji' }));
+    await screen.findByRole('heading', { name: 'TEST-SLIDE-1' });
+    await user.click(screen.getByRole('button', { name: 'Canlı analiz' }));
+    await screen.findByRole('heading', { name: 'Canlı patoloji yolu bağlı değil' });
+    expect(screen.queryByRole('button', { name: /TEST-SLIDE-1/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Hazır demolara dön' }));
+    await screen.findByRole('heading', { name: 'TEST-SLIDE-1' });
+  });
+
+  it('says a malformed pathology package is unreadable instead of drawing it', async () => {
+    const user = mountModules({ slidesOk: false });
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Patoloji' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Demo paketi okunamadı');
+  });
+
+  it('keeps the plumbing off the pathology screen too', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Patoloji' }));
+    await screen.findByRole('heading', { name: 'TEST-SLIDE-1' });
+    for (const leak of ['MCP', 'VPS', 'spool', 'dispatcher']) {
+      expect(document.body.textContent).not.toContain(leak);
+    }
+  });
+
+  it('keeps the top-bar entries named when the narrow layout drops their labels', async () => {
+    mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    // 900 px altinda etiket CSS ile gizleniyor; ad aria-label'dan geliyor.
+    for (const name of ['Doğrulama ve sınırlar', 'Veri kaynakları ve gizlilik']) {
+      const entry = screen.getAllByRole('button', { name }).find((b) => b.closest('.topbar'));
+      expect(entry).toHaveAttribute('aria-label', name);
+    }
+  });
+
+  it('walks the tour through the pathology screen it is actually on', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getByRole('button', { name: 'Patoloji' }));
+    await screen.findByRole('heading', { name: 'TEST-SLIDE-1' });
+    await user.click(screen.getByRole('button', { name: 'Tanıtımı başlat' }));
+    const seen: string[] = [];
+    for (let guard = 0; guard < 14; guard += 1) {
+      seen.push(screen.getByRole('dialog').querySelector('h2')!.textContent!);
+      const next = screen.queryByRole('button', { name: 'İleri' });
+      if (!next) break;
+      await user.click(next);
+    }
+    // Patoloji ekranindaki adimlar gorunur, MR'a ozgu adimlar atlanir.
+    expect(seen).toEqual(expect.arrayContaining(['İki modül', 'Sınıf olasılıkları', 'Doğrulama ve sınırlar']));
+    expect(seen).not.toContain('Segmentasyon katmanları');
+  });
+
+  it('opens the validation section from the top bar and from the footer', async () => {
+    const user = mountModules();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    const entries = screen.getAllByRole('button', { name: 'Doğrulama ve sınırlar' });
+    expect(entries).toHaveLength(2);
+    expect(entries[0].closest('.topbar')).not.toBeNull();
+    await user.click(entries[0]);
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toHaveTextContent('kilitli test');
+    expect(dialog).toHaveTextContent('Üç uyarı bu sayılarla birlikte geçerlidir');
   });
 });

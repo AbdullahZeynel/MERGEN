@@ -17,6 +17,8 @@ import shutil
 import tempfile
 from pathlib import Path
 
+from PIL import Image
+
 CASE_ID = re.compile(r'^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$')
 COLLECTION_ID = re.compile(r'^[a-z0-9][a-z0-9-]{0,63}$')
 CLASSES = ('A', 'O', 'G')
@@ -30,6 +32,15 @@ SLIDE_MODEL = {'id': 'mergen-wsi-attention-mil', 'version': 'mil_v1', 'ensemble'
 FIGURE_MODEL = {'id': 'mergen-uwcse', 'version': 'v3', 'ruleVersion': 'uwcse-v3'}
 SLIDE_IMAGES = {'attention': 'attention.jpg', 'top_tiles': 'top_tiles.jpg',
                 'thumbnail': 'thumbnail.jpg'}
+# The top-tile sheet is a montage, not a picture: `heatmap_review.py` sorts the
+# tiles by attention, takes the top k and pastes them row by row into a
+# six-column sheet of 224 px tiles read at 0.5 µm/px. The interface may only
+# number the cells if the sheet really has that shape, so it is measured here
+# and the layout travels with the record.
+TILE_PX = 224
+TILE_COLUMNS = 6
+TILE_MICRONS_PER_PIXEL = 0.5
+TILE_ORDERING = 'attention_desc'
 ATTENTION_FIELDS = {'top1_share': 'top1Share', 'top10_share': 'top10Share',
                     'entropy_normalised': 'entropyNormalised'}
 
@@ -45,6 +56,21 @@ def _text(value, case_id: str, field: str) -> str:
     if not isinstance(value, str) or not value:
         raise ValueError(f'Missing {field}: {case_id}')
     return value
+
+
+def _tile_grid(sheet_path: Path, case_id: str, tiles_used: int) -> dict:
+    """Measure the top-tile sheet; refuse to describe a sheet of another shape."""
+    with Image.open(sheet_path) as sheet:
+        width, height = sheet.size
+    if width % TILE_PX or height % TILE_PX or width // TILE_PX != TILE_COLUMNS or height == 0:
+        raise ValueError(f'Top tiles are not a {TILE_COLUMNS}x{TILE_PX} px montage: {case_id}')
+    rows = height // TILE_PX
+    count = TILE_COLUMNS * rows
+    # A cell the slide never filled would be numbered as a tile; refuse that.
+    if count > tiles_used:
+        raise ValueError(f'Top tile sheet claims more tiles than the slide used: {case_id}')
+    return {'tilePx': TILE_PX, 'columns': TILE_COLUMNS, 'rows': rows, 'count': count,
+            'ordering': TILE_ORDERING, 'micronsPerPixel': TILE_MICRONS_PER_PIXEL}
 
 
 def _case_dirs(root: Path) -> list[Path]:
@@ -257,6 +283,8 @@ def build(imaging_package: Path, wsi_cases: Path, mri_examples: Path | None,
                 assets[kind] = f'{prefix}/images/{kind}'
             assets['report'] = f'{prefix}/report'
             record['assets'] = assets
+            record['tileGrid'] = _tile_grid(target / SLIDE_IMAGES['top_tiles'], case_id,
+                                            record['tilesUsed'])
             (target / 'report.json').write_text(json.dumps(
                 {'schemaVersion': 4, 'case': record, 'sourceCaseInfo': info},
                 indent=2, ensure_ascii=False), encoding='utf-8')

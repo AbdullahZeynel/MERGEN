@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
+  BarChart3,
   ChevronRight,
   Database,
   FolderOpen,
@@ -17,13 +18,23 @@ import {
   Sun,
   X,
 } from 'lucide-react';
-import { demoSource, liveSource } from './data/source';
-import { statusKeys, type SourceMode, type CaseRecord } from './data/contracts';
+import { demoSlides, demoSource, liveSlides, liveSource } from './data/source';
+import {
+  moduleKeys,
+  modules,
+  statusKeys,
+  type CaseStatus,
+  type Module,
+  type SourceMode,
+} from './data/contracts';
 import { useLanguage } from './i18n';
+import type { MessageKey } from './i18n/messages';
 import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
+import { PathologyWorkspace } from './components/PathologyWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 import { AboutDialog } from './components/AboutDialog';
+import { ValidationDialog } from './components/ValidationDialog';
 import { GuidedTour } from './tour/GuidedTour';
 import { GuideLauncher, rememberAnswered, shouldNudge } from './tour/GuideLauncher';
 import { TOUR_SPIN_EVENT } from './tour/steps';
@@ -33,6 +44,13 @@ const assistantEnabled = false;
 // styles.css icindeki dar ekran kirilma noktasiyla ayni deger.
 const DAR_EKRAN = 760;
 type Theme = 'light' | 'dark';
+// Liste iki modulde de ayni satiri ciziyor; modul yalnizca kaydin nereden
+// geldigini ve yanindaki modalite etiketini degistiriyor.
+interface ListItem {
+  id: string;
+  status: CaseStatus;
+  modality: MessageKey;
+}
 
 function initialTheme(): Theme {
   const saved = window.localStorage.getItem('mergen-theme');
@@ -44,6 +62,7 @@ export default function App() {
   const { language, setLanguage, t } = useLanguage();
   const [theme, setTheme] = useState<Theme>(initialTheme);
   const [mode, setMode] = useState<SourceMode>('demo');
+  const [module, setModule] = useState<Module>('imaging');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
@@ -52,6 +71,7 @@ export default function App() {
   // her iki genislikte de ayni durumu cevirir.
   const [casesOpen, setCasesOpen] = useState(() => window.innerWidth > DAR_EKRAN);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [validationOpen, setValidationOpen] = useState(false);
   // Tur raydaki dugmeden her zaman acilir; ilk ziyarette dugmenin ustunde bir
   // davet belirir ve verilen cevap (evet ya da simdi degil) hatirlanir.
   const [tourOpen, setTourOpen] = useState(false);
@@ -76,30 +96,50 @@ export default function App() {
     document.documentElement.style.colorScheme = theme;
     window.localStorage.setItem('mergen-theme', theme);
   }, [theme]);
-  const query = useQuery({
+  const imagingQuery = useQuery({
     queryKey: ['cases', mode],
     queryFn: ({ signal }) => (mode === 'demo' ? demoSource : liveSource).listCases(signal),
+    enabled: module === 'imaging',
   });
-  const cases = query.data ?? [];
-  const filtered = cases.filter(
-    (c) =>
-      c.id.toLowerCase().includes(search.toLowerCase().trim()) &&
-      (filter === 'all' || c.status === filter),
+  const slideQuery = useQuery({
+    queryKey: ['slides', mode],
+    queryFn: ({ signal }) => (mode === 'demo' ? demoSlides : liveSlides).listSlides(signal),
+    enabled: module === 'pathology',
+  });
+  const query = module === 'imaging' ? imagingQuery : slideQuery;
+  const cases = imagingQuery.data ?? [];
+  const manifest = slideQuery.data ?? null;
+  const slides = manifest?.cases ?? [];
+  const items: ListItem[] =
+    module === 'imaging'
+      ? cases.map((c) => ({ id: c.id, status: c.status, modality: 'cases.modality' }))
+      : slides.map((s) => ({ id: s.id, status: s.status, modality: 'cases.slideModality' }));
+  const filtered = items.filter(
+    (item) =>
+      item.id.toLowerCase().includes(search.toLowerCase().trim()) &&
+      (filter === 'all' || item.status === filter),
   );
-  const record = filtered.find((c) => c.id === selectedId) ?? filtered[0] ?? null;
-  const imagingIndex = record
-    ? cases.findIndex((candidate) => candidate.id === record.id)
-    : -1;
-  const nextMeshUrl = imagingIndex >= 0
-    ? cases.slice(imagingIndex + 1).find((candidate) => candidate.mesh)?.mesh
-    : undefined;
-  const changeMode = (value: SourceMode) => {
-    setMode(value);
+  const selected = filtered.find((item) => item.id === selectedId) ?? filtered[0] ?? null;
+  const record = cases.find((c) => c.id === selected?.id) ?? null;
+  const slide = slides.find((s) => s.id === selected?.id) ?? null;
+  const imagingIndex = record ? cases.findIndex((candidate) => candidate.id === record.id) : -1;
+  const nextMeshUrl =
+    imagingIndex >= 0
+      ? cases.slice(imagingIndex + 1).find((candidate) => candidate.mesh)?.mesh
+      : undefined;
+  const clearSelection = () => {
     setSelectedId(null);
     setSearch('');
     setFilter('all');
   };
-
+  const changeMode = (value: SourceMode) => {
+    setMode(value);
+    clearSelection();
+  };
+  const changeModule = (value: Module) => {
+    setModule(value);
+    clearSelection();
+  };
   return (
     <div className="app">
       <a className="skip-link" href="#workspace">
@@ -140,7 +180,18 @@ export default function App() {
             <button
               className="theme-toggle source-toggle"
               type="button"
+              data-tour="validation"
+              aria-label={t('validation.open')}
+              onClick={() => setValidationOpen(true)}
+            >
+              <BarChart3 size={16} />
+              <span>{t('validation.open')}</span>
+            </button>
+            <button
+              className="theme-toggle source-toggle"
+              type="button"
               data-tour="data-sources"
+              aria-label={t('about.open')}
               onClick={() => setAboutOpen(true)}
             >
               <ShieldCheck size={16} />
@@ -175,7 +226,7 @@ export default function App() {
           >
             <div className="sidebar-title">
               <h1>
-                {t('cases.title')} <span>{cases.length.toString().padStart(2, '0')}</span>
+                {t('cases.title')} <span>{items.length.toString().padStart(2, '0')}</span>
               </h1>
               <button
                 className="icon-button mobile-only"
@@ -186,6 +237,18 @@ export default function App() {
               </button>
             </div>
             <p className="sidebar-description">{t('cases.pick')}</p>
+            <div className="module-switch segmented" data-tour="module-switch" aria-label={t('modules.label')}>
+              {modules.map((name) => (
+                <button
+                  key={name}
+                  className={module === name ? 'selected' : ''}
+                  aria-pressed={module === name}
+                  onClick={() => changeModule(name)}
+                >
+                  {t(moduleKeys[name])}
+                </button>
+              ))}
+            </div>
             <div className="source-switch segmented" data-tour="source-switch" aria-label={t('cases.sourceLabel')}>
               <button
                 className={mode === 'demo' ? 'selected' : ''}
@@ -232,13 +295,13 @@ export default function App() {
                   {t('cases.loading')}
                 </p>
               ) : (
-                filtered.map((c) => (
+                filtered.map((item) => (
                   <button
-                    key={c.id}
-                    className={`case-item ${record?.id === c.id ? 'selected' : ''}`}
-                    aria-pressed={record?.id === c.id}
+                    key={item.id}
+                    className={`case-item ${selected?.id === item.id ? 'selected' : ''}`}
+                    aria-pressed={selected?.id === item.id}
                     onClick={() => {
-                      setSelectedId(c.id);
+                      setSelectedId(item.id);
                       // Dar ekranda liste calisma alaninin ustune biniyor;
                       // secimden sonra kapaniyor. Genis ekranda acik kaliyor.
                       if (window.innerWidth <= DAR_EKRAN) setCasesOpen(false);
@@ -248,11 +311,11 @@ export default function App() {
                       <FolderOpen size={20} />
                     </span>
                     <span className="case-item-text">
-                      <strong>{c.id}</strong>
-                      <span>{t('cases.modality')}</span>
+                      <strong>{item.id}</strong>
+                      <span>{t(item.modality)}</span>
                       <span className="status-pill">
                         <span />
-                        {t(statusKeys[c.status])}
+                        {t(statusKeys[item.status])}
                       </span>
                     </span>
                     <ChevronRight size={15} />
@@ -277,13 +340,17 @@ export default function App() {
               </button>
               <span>{t('workspace.breadcrumb')}</span>
               <ChevronRight size={14} />
-              <strong>{record?.id ?? t(mode === 'demo' ? 'cases.demo' : 'cases.live')}</strong>
+              <span>{t(moduleKeys[module])}</span>
+              <ChevronRight size={14} />
+              <strong>{selected?.id ?? t(mode === 'demo' ? 'cases.demo' : 'cases.live')}</strong>
             </div>
             <div className="workspace-title">
               <div>
-                <span className="eyebrow">{t('workspace.eyebrow')}</span>
-                <h2>{record?.id ?? t('workspace.emptyTitle')}</h2>
-                {!record && <p>{t('workspace.emptyBody')}</p>}
+                <span className="eyebrow">
+                  {t(module === 'imaging' ? 'workspace.eyebrow' : 'pathology.eyebrow')}
+                </span>
+                <h2>{selected?.id ?? t('workspace.emptyTitle')}</h2>
+                {!selected && <p>{t('workspace.emptyBody')}</p>}
               </div>
               {assistantEnabled && (
                 <button
@@ -336,9 +403,13 @@ export default function App() {
                   <div className="panel" role="alert">
                     <EmptyState
                       icon={<Link2Off />}
-                      title={
-                        t(mode === 'live' ? 'workspace.liveNotReadyTitle' : 'workspace.demoUnreadableTitle')
-                      }
+                      title={t(
+                        mode === 'live'
+                          ? module === 'pathology'
+                            ? 'pathology.liveMissingTitle'
+                            : 'workspace.liveNotReadyTitle'
+                          : 'workspace.demoUnreadableTitle',
+                      )}
                       action={
                         <button
                           className="button"
@@ -350,27 +421,48 @@ export default function App() {
                         </button>
                       }
                     >
-                      {t(mode === 'live' ? 'workspace.liveNeedsServices' : 'workspace.demoMissing')}
+                      {t(
+                        mode === 'live'
+                          ? module === 'pathology'
+                            ? 'pathology.liveMissingBody'
+                            : 'workspace.liveNeedsServices'
+                          : 'workspace.demoMissing',
+                      )}
                     </EmptyState>
                   </div>
-                ) : !record ? (
+                ) : module === 'pathology' ? (
+                  slide && manifest ? (
+                    <PathologyWorkspace
+                      key={`${mode}:${slide.id}`}
+                      slide={slide}
+                      model={manifest.model}
+                      reviewMargin={manifest.reviewMargin}
+                    />
+                  ) : (
+                    <div className="panel">
+                      <EmptyState icon={<FolderOpen />} title={t('pathology.noSlideTitle')}>
+                        {t('pathology.noSlideBody')}
+                      </EmptyState>
+                    </div>
+                  )
+                ) : record ? (
+                  <ImagingWorkspace
+                    key={`${mode}:${record.id}`}
+                    record={record}
+                    nextMeshUrl={nextMeshUrl}
+                  />
+                ) : (
                   <div className="panel">
                     <EmptyState icon={<FolderOpen />} title={t('workspace.noCaseTitle')}>
                       {t('workspace.noCaseBody')}
                     </EmptyState>
                   </div>
-                ) : (
-                  <ImagingWorkspace
-                    key={`${mode}:${record.id}`}
-                    record={record as CaseRecord}
-                    nextMeshUrl={nextMeshUrl}
-                  />
                 )}
               </div>
               {assistantEnabled && assistantOpen && (
                 <AssistantPanel
-                  key={record?.id ?? mode}
-                  caseId={record?.id ?? null}
+                  key={selected?.id ?? mode}
+                  caseId={selected?.id ?? null}
                   close={closeAssistant}
                 />
               )}
@@ -381,6 +473,9 @@ export default function App() {
               </span>
               <span>{t('footer.purpose')}</span>
               <span className="footer-links">
+                <button className="link-button" onClick={() => setValidationOpen(true)}>
+                  {t('validation.open')}
+                </button>
                 <button className="link-button" onClick={() => setAboutOpen(true)}>
                   {t('about.open')}
                 </button>
@@ -393,6 +488,7 @@ export default function App() {
         </div>
       </div>
       {aboutOpen && <AboutDialog onClose={() => setAboutOpen(false)} />}
+      {validationOpen && <ValidationDialog onClose={() => setValidationOpen(false)} />}
       {tourOpen && <GuidedTour actions={tourActions} onClose={() => setTourOpen(false)} />}
     </div>
   );
