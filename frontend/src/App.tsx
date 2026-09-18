@@ -18,7 +18,7 @@ import {
   X,
 } from 'lucide-react';
 import { demoSource, liveSource } from './data/source';
-import { statusKeys, type SourceMode, type CaseRecord } from './data/contracts';
+import { statusKeys, type SourceMode, type DemoCase } from './data/contracts';
 import { useLanguage } from './i18n';
 import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
@@ -362,7 +362,7 @@ export default function App() {
                 ) : (
                   <ImagingWorkspace
                     key={`${mode}:${record.id}`}
-                    record={record as CaseRecord}
+                    record={record as DemoCase}
                     nextMeshUrl={nextMeshUrl}
                   />
                 )}

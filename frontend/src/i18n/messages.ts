@@ -39,8 +39,11 @@ export const tr = {
   'status.draft': 'Girdi bekliyor',
   'status.queued': 'Kuyrukta',
   'status.processing': 'İşleniyor',
+  'status.claimed': 'GPU sunucusuna verildi',
+  'status.running': 'Model çalışıyor',
   'status.completed': 'Tamamlandı',
   'status.failed': 'Başarısız',
+  'status.cancelled': 'İptal edildi',
 
   'axis.axial': 'Aksiyel',
   'axis.coronal': 'Koronal',
@@ -253,8 +256,11 @@ export const en: Record<MessageKey, string> = {
   'status.draft': 'Awaiting input',
   'status.queued': 'Queued',
   'status.processing': 'Processing',
+  'status.claimed': 'Handed to the GPU server',
+  'status.running': 'Model is running',
   'status.completed': 'Completed',
   'status.failed': 'Failed',
+  'status.cancelled': 'Cancelled',
 
   'axis.axial': 'Axial',
   'axis.coronal': 'Coronal',
