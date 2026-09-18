@@ -29,6 +29,8 @@ Bu aşama model eğitimi, klinik füzyon doğrulaması veya hastane/PACS entegra
 değildir. Arayüz, salt okunur demo API'si, MCP ve canlı oturum/kuyruk temeli
 çalışır; izole Swin UNETR runner'ı sentetik fixture ile gerçek GPU'da uçtan uca
 çalıştı (41 s, tepe 5794 MiB), VPS kuyruğuyla uçtan uca kabul yapılmamıştır.
+Canlı yolun arayüzü de yazıldı (oturum, yükleme, iş takibi, sonuç, indirme);
+sözleşme ve arayüz testleriyle kapalı, gerçek bir GPU işiyle denenmedi.
 Runner M5'te ürün yapılandırmasını (`mergen-uwcse` / `v3`: beş nnU-Net foldu +
 Swin, UWCSE v3 kuralı) tarif eder; sözleşme, orkestrasyon ve kural eşitliği
 testlerle kapalıdır ama **nnU-Net üyesi gerçek ağırlıklarla hiç çalıştırılmadı**,

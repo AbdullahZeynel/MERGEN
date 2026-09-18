@@ -286,6 +286,27 @@ fixture `input-invalid` ile reddedildi. Checkpoint'in 159 anahtarı strict
 yüklendi. Kalan iş dispatcher/VPS kuyruğuyla uçtan uca kabuldür; o tamamlanmadan
 G4 bitmiş sayılmaz.
 
+### G5 arayüz durumu
+
+Canlı yolun tarayıcı tarafı `main` üzerindedir: erişim kodlu oturum, 30 saniyelik
+heartbeat, dört modalitelik NIfTI seçimi, paketin tarayıcıda kurulması, işin
+`queued → claimed → running → completed/failed/cancelled` boyunca izlenmesi,
+sonucun ekranda gösterilmesi (3D yüzeyler, bölge hacimleri, `review_flags`) ve
+ZIP indirme.
+
+Sınırlar sözleşmeyle kapalıdır: canlı iş şeması `hasGroundTruth`'u yalnız `false`
+kabul eder ve her varlık bağlantısını işin kanonik yoluna bağlar, yani ekrana ne
+Dice çıkabilir ne de başka bir işin dosyası. Canlı istek başarısız olduğunda demo
+verisi gösterilmez; hata tipli olarak kullanıcıya söylenir. Tarayıcıda kurulan
+paket gerçek `backend.archive_io.validate_input_archive` ile doğrulandı.
+
+Heartbeat sekme açık olduğu sürece boşta kalma sayacını sıfırladığı için
+kullanıcının karşılaştığı sınır mutlak oturum süresidir (varsayılan 30 dk);
+arayüz onu geri sayar ve son beş dakikada uyarır.
+
+Kalan iş ölçümdür, kod değil: **bu akış gerçek bir GPU işiyle hiç çalıştırılmadı.**
+G5 dispatcher/executor uçtan uca kabulü yapılmadan tamamlanmış sayılmaz (#23, #14).
+
 ### M1 güncel durum
 
 Arşivin metin ve JSON'ları (131 dosya, 1,4 MB) `models/registry/` altında; figürler,
