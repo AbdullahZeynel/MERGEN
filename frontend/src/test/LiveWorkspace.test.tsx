@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LiveWorkspace } from '../components/LiveWorkspace';
 import { withLanguage } from './render';
-import { makeLiveJob } from './fixtures';
+import { makeLiveJob, makeLiveReport, makeReviewFlag } from './fixtures';
 
 type Call = { url: string; init: RequestInit };
 let calls: Call[] = [];
@@ -255,6 +255,154 @@ describe('live workspace', () => {
     await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
     await screen.findByText('Model çalışıyor');
     expect(screen.queryByRole('button', { name: /Yeni analiz/ })).not.toBeInTheDocument();
+  });
+
+  it('shows the measured region volumes from the job\'s own report', async () => {
+    document.cookie = 'mergen_csrf=token';
+    const finished = makeLiveJob();
+    const report = makeLiveReport();
+    serve(({ url, init }) => {
+      if (url.endsWith('/session') && init.method === 'POST') return json(session);
+      if (url.endsWith('/jobs'))
+        return json(
+          { jobId: finished.jobId, status: 'queued', module: 'imaging', disease: 'glioma' },
+          202,
+        );
+      if (url.endsWith('/assets/report.json')) return json(report);
+      return json(finished);
+    });
+    const user = mount();
+    await connect(user);
+    await chooseAll(user);
+    await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
+    expect(await screen.findByText('12.400')).toBeInTheDocument();
+    expect(screen.getByText('48.900')).toBeInTheDocument();
+    expect(screen.getByText('5.100')).toBeInTheDocument();
+    // Rapor isin kendi varlik baglantisindan okunur, baska bir adresten degil.
+    expect(
+      calls.some((call) => call.url === `/api/live/jobs/${finished.jobId}/assets/report.json`),
+    ).toBe(true);
+  });
+
+  it('never offers a reference-dependent measure on a live case', async () => {
+    document.cookie = 'mergen_csrf=token';
+    const finished = makeLiveJob();
+    serve(({ url, init }) => {
+      if (url.endsWith('/session') && init.method === 'POST') return json(session);
+      if (url.endsWith('/jobs'))
+        return json(
+          { jobId: finished.jobId, status: 'queued', module: 'imaging', disease: 'glioma' },
+          202,
+        );
+      if (url.endsWith('/assets/report.json')) return json(makeLiveReport());
+      return json(finished);
+    });
+    const user = mount();
+    await connect(user);
+    await chooseAll(user);
+    await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
+    await screen.findByText('12.400');
+    // Tabloda yalniz uc bolge hacmi var: referansa bagli bir satir (Dice, HD95)
+    // eklenemez, cunku canli vakada karsilastirilacak etiket yok.
+    const rows = screen.getAllByRole('row');
+    expect(rows.map((row) => row.textContent)).toEqual([
+      'Tümör çekirdeği12.400',
+      'Bütün tümör48.900',
+      'Kontrast tutan tümör5.100',
+    ]);
+    expect(screen.queryByText(/Dice\s*[:=]?\s*\d/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/referans etiketi yoktur/)).toBeVisible();
+  });
+
+  it('states a review flag in the interface language, with its numbers', async () => {
+    // Bayragin metni sunucuda tek dilde uretiliyor; ekranda gerekce kodundan
+    // cevrilmis cumle ve kanit sayilari durmali.
+    document.cookie = 'mergen_csrf=token';
+    const finished = makeLiveJob();
+    const report = makeLiveReport();
+    report.reviewFlags = [makeReviewFlag()];
+    serve(({ url, init }) => {
+      if (url.endsWith('/session') && init.method === 'POST') return json(session);
+      if (url.endsWith('/jobs'))
+        return json(
+          { jobId: finished.jobId, status: 'queued', module: 'imaging', disease: 'glioma' },
+          202,
+        );
+      if (url.endsWith('/assets/report.json')) return json(report);
+      return json(finished);
+    });
+    const user = mount();
+    await connect(user);
+    await chooseAll(user);
+    await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
+    expect(await screen.findByText(/model bir tümör çekirdeği işaretledi/)).toBeInTheDocument();
+    expect(screen.getByText(/Çekirdek 900 voksel/)).toBeInTheDocument();
+    expect(screen.queryByText('Sunucudan gelen tek dilli metin.')).not.toBeInTheDocument();
+  });
+
+  it('keeps the result usable when the report cannot be read', async () => {
+    document.cookie = 'mergen_csrf=token';
+    const finished = makeLiveJob();
+    serve(({ url, init }) => {
+      if (url.endsWith('/session') && init.method === 'POST') return json(session);
+      if (url.endsWith('/jobs'))
+        return json(
+          { jobId: finished.jobId, status: 'queued', module: 'imaging', disease: 'glioma' },
+          202,
+        );
+      if (url.endsWith('/assets/report.json')) return json({ detail: 'gone' }, 503);
+      return json(finished);
+    });
+    const user = mount();
+    await connect(user);
+    await chooseAll(user);
+    await user.click(screen.getByRole('button', { name: /Analizi başlat/ }));
+    // Sayilar gosterilmez ama ZIP hala inebilir; uydurma sayi cikmaz.
+    expect(await screen.findByText(/Rapor okunamadı/)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Sonucu indir/ })).toBeInTheDocument();
+    expect(screen.queryByText('12.400')).not.toBeInTheDocument();
+  });
+
+  it('says how long the session has left, and warns near the end', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    serve(({ url }) =>
+      url.endsWith('/session')
+        ? json({ ...session, absoluteExpiresAt: now + 21 * 60 })
+        : json(session),
+    );
+    const user = mount();
+    await connect(user);
+    // Bosta kalma sayaci degil: heartbeat sekme acikken onu sifirliyor, gorunen
+    // sinir mutlak sure.
+    expect(screen.getByText(/21 dakika sonra kendiliğinden kapanır/)).toBeVisible();
+    expect(screen.queryByText(/indirin/)).not.toBeInTheDocument();
+  });
+
+  it('turns the remaining time into a warning in the last five minutes', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    serve(({ url }) =>
+      url.endsWith('/session')
+        ? json({ ...session, absoluteExpiresAt: now + 4 * 60 })
+        : json(session),
+    );
+    const user = mount();
+    await connect(user);
+    const notice = screen.getByText(/4 dakikadan az sürede kapanacak/);
+    expect(notice).toBeVisible();
+    expect(notice.closest('[role="alert"]')).not.toBeNull();
+  });
+
+  it('ends the session itself when its absolute lifetime runs out', async () => {
+    const now = Math.floor(Date.now() / 1000);
+    serve(({ url }) =>
+      url.endsWith('/session') ? json({ ...session, absoluteExpiresAt: now }) : json(session),
+    );
+    const user = mount();
+    await user.type(screen.getByLabelText('Erişim kodu'), 'kod');
+    await user.click(screen.getByRole('button', { name: /Oturum aç/ }));
+    // Suresi dolmus bir oturumda yukleme formu hic acilmaz.
+    expect(await screen.findByRole('alert')).toHaveTextContent('Oturum sona erdi');
+    expect(screen.getByLabelText('Erişim kodu')).toBeInTheDocument();
   });
 
   it('returns to the access gate when the session is closed', async () => {

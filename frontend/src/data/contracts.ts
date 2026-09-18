@@ -183,3 +183,48 @@ export const liveJobSchema = z
         ctx.addIssue({ code: 'custom', message: 'Varlık bağlantısı işe ait değil.' });
   });
 export type LiveJob = z.infer<typeof liveJobSchema>;
+
+// Runner'in `report.json`'u (sema 2, mergen_imaging/runner.py). Sonuc ZIP'inin
+// icindeki bu dosya arayuze bolge hacimlerini ve inceleme bayraklarini verir.
+// Bayragin metni degil, *gerekcesi ve sayilari* okunur: metin sunucuda tek
+// dilde uretiliyor, arayuz iki dilli.
+export const reviewFlagSchema = z.object({
+  finding: z.string(),
+  severity: z.string(),
+  reason: z.string(),
+  message: z.string(),
+  evidence: z.object({
+    tumor_core_voxels: z.number().int().nonnegative(),
+    enhancing_voxels: z.number().int().nonnegative(),
+    enhancing_threshold: z.number().int().nonnegative(),
+  }),
+});
+export type ReviewFlag = z.infer<typeof reviewFlagSchema>;
+
+export const liveReportSchema = z.object({
+  schemaVersion: z.literal(2),
+  status: z.literal('research-output'),
+  modelId: slug,
+  modelVersion: z.string().min(1),
+  rule: z.object({
+    id: z.string(),
+    version: z.string(),
+    tcMin: z.number().int().nonnegative(),
+    etMin: z.number().int().nonnegative(),
+    minComponentVoxels: z.number().int().nonnegative(),
+  }),
+  regionVolumes: z.object({
+    TC: z.number().int().nonnegative(),
+    WT: z.number().int().nonnegative(),
+    ET: z.number().int().nonnegative(),
+  }),
+  reviewFlags: z.array(reviewFlagSchema),
+  notice: z.string().min(1),
+}).superRefine((report, ctx) => {
+  // Cekirdek ve kontrast tutan bolge butun tumorun icindedir; disari tasan bir
+  // sayi ekranda sessizce yanlis bir hacim gosterirdi.
+  const { TC, WT, ET } = report.regionVolumes;
+  if (TC > WT || ET > WT)
+    ctx.addIssue({ code: 'custom', message: 'Bölge hacimleri bütün tümörü aşıyor.' });
+});
+export type LiveReport = z.infer<typeof liveReportSchema>;

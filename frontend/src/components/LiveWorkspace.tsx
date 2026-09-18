@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
+import { AlertTriangle, Box, Clock, Download, LogOut, RotateCcw, ShieldCheck, Upload } from 'lucide-react';
 import {
   closeSession,
+  fetchReport,
   jobStatus,
   LiveError,
   openSession,
@@ -12,7 +13,9 @@ import {
   type LiveSession,
 } from '../data/liveClient';
 import { buildBundle, BundleRejected, MODALITIES, type Modality, type VolumeSelection } from '../data/liveBundle';
-import { liveStatusKeys, type LiveJob } from '../data/contracts';
+import { liveStatusKeys, type LiveJob, type ReviewFlag } from '../data/contracts';
+import { LazyVolumeViewer } from './LazyVolumeViewer';
+import { ViewerFrame } from './ViewerFrame';
 import { useLanguage } from '../i18n';
 import type { MessageKey } from '../i18n/messages';
 
@@ -23,6 +26,60 @@ const TERMINAL = new Set(['completed', 'failed', 'cancelled']);
 
 type Failure = { key: MessageKey; values?: Record<string, string | number> };
 
+/**
+ * Oturumun kalan omru. Bosta kalma sayaci degil: heartbeat sekme acik oldugu
+ * surece onu surekli sifirliyor, yani kullanicinin carptigi sinir mutlak sure
+ * (`MERGEN_SESSION_MAX_SECONDS`, varsayilan 30 dk). Geri sayim tarayicinin
+ * saatiyle hesaplanir, o yuzden bilgi amaclidir: oturumun gercekten bitip
+ * bitmedigine sunucu karar verir ve dusmus oturum zaten `session-expired`
+ * olarak geri gelir.
+ */
+function useRemainingSeconds(expiresAt: number | undefined): number | null {
+  const [now, setNow] = useState(() => Date.now() / 1000);
+  useEffect(() => {
+    if (expiresAt === undefined) return;
+    const timer = setInterval(() => setNow(Date.now() / 1000), 15_000);
+    return () => clearInterval(timer);
+  }, [expiresAt]);
+  if (expiresAt === undefined) return null;
+  return Math.max(0, Math.round(expiresAt - now));
+}
+
+const SOON_SECONDS = 5 * 60;
+
+const REVIEW_REASON_KEYS: Record<string, MessageKey> = {
+  non_enhancing_tumor: 'live.flag.nonEnhancingTumor',
+};
+
+function ReviewFlags({ flags }: { flags: ReviewFlag[] }) {
+  const { language, t } = useLanguage();
+  const number = (value: number) => value.toLocaleString(language);
+  if (flags.length === 0) return null;
+  return (
+    <ul className="live-flags">
+      {flags.map((flag, index) => {
+        const known = REVIEW_REASON_KEYS[flag.reason];
+        return (
+          <li key={`${flag.reason}-${index}`}>
+            <AlertTriangle size={17} aria-hidden />
+            <div>
+              <p>{known ? t(known) : t('live.flag.unknown')}</p>
+              <p className="live-note">
+                {t('live.flag.evidence', {
+                  core: number(flag.evidence.tumor_core_voxels),
+                  enhancing: number(flag.evidence.enhancing_voxels),
+                  threshold: number(flag.evidence.enhancing_threshold),
+                })}
+              </p>
+              {!known && <p className="live-note">{flag.message}</p>}
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 function failureOf(error: unknown): Failure {
   if (error instanceof BundleRejected)
     return { key: error.messageKey, values: error.modality ? { modality: error.modality } : undefined };
@@ -31,7 +88,7 @@ function failureOf(error: unknown): Failure {
 }
 
 export function LiveWorkspace() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [session, setSession] = useState<LiveSession | null>(null);
   const [accessCode, setAccessCode] = useState('');
   const [selection, setSelection] = useState<VolumeSelection>({});
@@ -39,6 +96,7 @@ export function LiveWorkspace() {
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState<Failure | null>(null);
   const stopHeartbeat = useRef<(() => void) | null>(null);
+  const remaining = useRemainingSeconds(session?.absoluteExpiresAt);
 
   const endSession = useCallback(() => {
     stopHeartbeat.current?.();
@@ -67,6 +125,13 @@ export function LiveWorkspace() {
       if (job.error instanceof LiveError && job.error.code === 'session-expired') endSession();
     }
   }, [job.error, endSession]);
+
+  useEffect(() => {
+    if (session && remaining === 0) {
+      setFailure({ key: 'live.error.sessionExpired' });
+      endSession();
+    }
+  }, [session, remaining, endSession]);
 
   const connect = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -126,6 +191,14 @@ export function LiveWorkspace() {
     setSelection((current) => ({ ...current, [modality]: file }));
 
   const result = job.data?.status === 'completed' ? job.data : null;
+  const reportUrl = result?.assetUrls?.['report.json'];
+  const meshUrl = result?.assetUrls?.['prediction.glb'];
+  const report = useQuery({
+    queryKey: ['live-report', reportUrl],
+    enabled: reportUrl !== undefined,
+    queryFn: ({ signal }) => fetchReport(reportUrl!, signal),
+    retry: false,
+  });
   // Is bittiginde (basarili ya da degil) oturum acik kalir; ayni oturumda
   // yeni bir vaka calistirilabilir.
   const finished = job.data !== undefined && TERMINAL.has(job.data.status);
@@ -141,6 +214,20 @@ export function LiveWorkspace() {
       {failure && (
         <p className="live-failure" role="alert">
           {t(failure.key, failure.values)}
+        </p>
+      )}
+
+      {session && remaining !== null && remaining > 0 && (
+        <p
+          className={`live-clock ${remaining <= SOON_SECONDS ? 'soon' : ''}`}
+          role={remaining <= SOON_SECONDS ? 'alert' : 'status'}
+        >
+          <Clock size={15} aria-hidden />{' '}
+          {remaining < 60
+            ? t('live.endsUnderMinute')
+            : t(remaining <= SOON_SECONDS ? 'live.endsSoon' : 'live.endsIn', {
+                minutes: Math.ceil(remaining / 60),
+              })}
         </p>
       )}
 
@@ -204,6 +291,30 @@ export function LiveWorkspace() {
                   modelVersion: result.result!.modelVersion,
                 })}
               </p>
+              <ViewerFrame title={t('viewer.mesh')} icon={<Box size={18} />}>
+                <LazyVolumeViewer url={meshUrl} fallbackHint="mesh.liveFallbackHint" />
+              </ViewerFrame>
+              {report.isError ? (
+                <p className="live-note" role="status">
+                  {t('live.reportUnreadable')}
+                </p>
+              ) : report.data ? (
+                <>
+                  <table className="live-volumes">
+                    <caption>{t('live.volumesCaption')}</caption>
+                    <tbody>
+                      {(['TC', 'WT', 'ET'] as const).map((region) => (
+                        <tr key={region}>
+                          <th scope="row">{t(`live.region.${region}` as MessageKey)}</th>
+                          <td>{report.data.regionVolumes[region].toLocaleString(language)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  <ReviewFlags flags={report.data.reviewFlags} />
+                  <p className="live-note">{t('live.noReference')}</p>
+                </>
+              ) : null}
               <a className="live-download" href={result.downloadUrl} download>
                 <Download size={17} /> {t('live.download')}
               </a>

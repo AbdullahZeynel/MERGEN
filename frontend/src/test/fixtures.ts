@@ -1,4 +1,10 @@
-import type { DemoCase, LiveJob, LiveResult } from '../data/contracts';
+import type {
+  DemoCase,
+  LiveJob,
+  LiveReport,
+  LiveResult,
+  ReviewFlag,
+} from '../data/contracts';
 
 // Contract-only fixtures; no patient results or fabricated medical scores.
 export const makeCase = (id: string): DemoCase => ({
@@ -52,3 +58,22 @@ export const makeLiveJob = (jobId: string = LIVE_JOB_ID): LiveJob => {
     ),
   };
 };
+
+export const makeLiveReport = (): LiveReport => ({
+  schemaVersion: 2,
+  status: 'research-output',
+  modelId: 'mergen-uwcse',
+  modelVersion: 'v3',
+  rule: { id: 'uwcse', version: 'v3', tcMin: 250, etMin: 100, minComponentVoxels: 50 },
+  regionVolumes: { TC: 12_400, WT: 48_900, ET: 5_100 },
+  reviewFlags: [],
+  notice: 'Research prototype; not for clinical use.',
+});
+
+export const makeReviewFlag = (): ReviewFlag => ({
+  finding: 'tumor_core',
+  severity: 'low_confidence',
+  reason: 'non_enhancing_tumor',
+  message: 'Sunucudan gelen tek dilli metin.',
+  evidence: { tumor_core_voxels: 900, enhancing_voxels: 120, enhancing_threshold: 500 },
+});
