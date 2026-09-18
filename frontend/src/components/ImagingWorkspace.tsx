@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Box, ImageOff, ScanLine, Info } from 'lucide-react';
-import { axes, axisKeys, type Axis, type CaseRecord } from '../data/contracts';
+import { axes, axisKeys, type Axis, type DemoCase } from '../data/contracts';
 import { useT } from '../i18n';
 import { EmptyState } from './EmptyState';
 import { LazyVolumeViewer } from './LazyVolumeViewer';
@@ -10,7 +10,7 @@ export function ImagingWorkspace({
   record,
   nextMeshUrl,
 }: {
-  record: CaseRecord;
+  record: DemoCase;
   nextMeshUrl?: string;
 }) {
   const t = useT();
