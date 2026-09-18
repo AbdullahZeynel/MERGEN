@@ -97,8 +97,10 @@ flowchart LR
 Kesikli çizgiler henüz canlı açılmamış yolu gösterir: servisler GPU hostunda
 staged durumdadır ve enable edilmemiştir. Model runner'ı sentetik bir fixture
 ile gerçek GPU üzerinde uçtan uca çalıştı; kalan iş VPS kuyruğuyla uçtan uca
-kabul. Geçici oturum dosyalarını bir systemd zamanlayıcısı süresi dolunca
-siler.
+kabul. Arayüz tarafı tamamlandı — erişim kodu, dört modalitelik yükleme, işin
+kuyrukta izlenmesi, sonucun ekranda gösterilmesi ve ZIP indirme — ancak gerçek
+bir GPU işiyle hiç denenmedi. Geçici oturum dosyalarını bir systemd
+zamanlayıcısı süresi dolunca siler.
 
 | Bileşen | Durum |
 |---|---|
@@ -106,6 +108,7 @@ siler.
 | Genel API — hazır demo uçları | Çalışıyor |
 | Demo MCP (salt okunur, loopback) | Çalışıyor |
 | Oturum, iş kuyruğu, worker kontrol API'si, temizlik | Yazıldı, worker'sız |
+| Canlı arayüz — erişim kapısı, yükleme, iş takibi, sonuç ve ZIP indirme | Yazıldı; gerçek GPU işiyle denenmedi |
 | GPU dispatcher, executor ve yerel spool sözleşmesi | Yazıldı ve hostta staged; servisler henüz açılmadı |
 | Canlı Swin UNETR model runner | Gerçek GPU'da sentetik fixture ile uçtan uca çalıştı; VPS kuyruğuyla kabul bekliyor |
 | Sohbet asistanı | Ertelendi |
