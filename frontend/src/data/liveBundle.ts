@@ -45,8 +45,15 @@ export class BundleRejected extends Error {
 
 export type VolumeSelection = Partial<Record<Modality, File>>;
 
-/** Sunucunun `MERGEN_MAX_UPLOAD_BYTES` varsayilaniyla ayni buyukluk sinifi. */
-export const MAX_BUNDLE_BYTES = 512 * 1024 * 1024;
+/**
+ * `MERGEN_MAX_UPLOAD_BYTES` varsayilani (backend/live_store.py). Sunucu bu
+ * degeri ortamdan alabildigi icin buradaki sayi bir kopyadir, sinir degil:
+ * kararı sunucu verir ve 413 zaten `bundle-too-large` olarak gosteriliyor.
+ * Buradaki kontrol yalnizca dakikalarca suren bos bir yuklemeyi onluyor, o
+ * yuzden varsayilandan dusuk tutulmaz — dusuk tutulursa sunucunun kabul
+ * edecegi gecerli bir yukleme tarayicida bosuna reddedilir.
+ */
+export const MAX_BUNDLE_BYTES = 2 * 1024 ** 3;
 
 const NIFTI = /\.nii(\.gz)?$/i;
 

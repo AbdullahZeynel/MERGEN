@@ -93,6 +93,14 @@ describe('live input bundle', () => {
     expect(inspect(selection)).toMatchObject({ problem: 'empty-file', modality: 'T1CE' });
   });
 
+  it('accepts a selection the server would accept', async () => {
+    // Sunucu varsayilani 2 GiB (backend/live_store.py). Istemci esigi bunun
+    // altina cekilirse gecerli bir yukleme tarayicida bosuna reddedilir.
+    const selection = complete();
+    selection.T1 = { name: 'big.nii.gz', size: 1024 ** 3 } as File;
+    expect(inspect(selection)).toBeNull();
+  });
+
   it('refuses a selection over the upload limit before it is sent', async () => {
     const selection = complete();
     const huge = { name: 'big.nii.gz', size: MAX_BUNDLE_BYTES + 1 } as File;
