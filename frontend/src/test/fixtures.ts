@@ -1,10 +1,5 @@
-import type {
-  DemoCase,
-  LiveJob,
-  LiveReport,
-  LiveResult,
-  ReviewFlag,
-} from '../data/contracts';
+import type { DemoCase } from '../data/contracts';
+import type { LiveJob, LiveReport, LiveResult, ReviewFlag } from '../data/contracts.live';
 
 // Contract-only fixtures; no patient results or fabricated medical scores.
 export const makeCase = (id: string): DemoCase => ({

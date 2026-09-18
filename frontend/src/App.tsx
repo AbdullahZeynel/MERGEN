@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
@@ -22,12 +22,15 @@ import { statusKeys, type SourceMode, type DemoCase } from './data/contracts';
 import { useLanguage } from './i18n';
 import { EmptyState } from './components/EmptyState';
 import { ImagingWorkspace } from './components/ImagingWorkspace';
-import { LiveWorkspace } from './components/LiveWorkspace';
 import { AssistantPanel } from './components/AssistantPanel';
 import { AboutDialog } from './components/AboutDialog';
 import { GuidedTour } from './tour/GuidedTour';
 import { GuideLauncher, rememberAnswered, shouldNudge } from './tour/GuideLauncher';
 import { TOUR_SPIN_EVENT } from './tour/steps';
+
+const LiveWorkspace = lazy(() =>
+  import('./components/LiveWorkspace').then((module) => ({ default: module.LiveWorkspace })),
+);
 
 // Deferred until chatbot integration; keep the component for the next sprint.
 const assistantEnabled = false;
@@ -336,7 +339,15 @@ export default function App() {
             <div className="content-with-assistant">
               <div className="analysis-content">
                 {mode === 'live' ? (
-                  <LiveWorkspace />
+                  <Suspense
+                    fallback={
+                      <div className="panel loading-panel" role="status">
+                        <RefreshCw className="spin" /> {t('workspace.loadingCase')}
+                      </div>
+                    }
+                  >
+                    <LiveWorkspace />
+                  </Suspense>
                 ) : query.isPending ? (
                   <div className="panel loading-panel" role="status">
                     <RefreshCw className="spin" /> {t('workspace.loadingCase')}

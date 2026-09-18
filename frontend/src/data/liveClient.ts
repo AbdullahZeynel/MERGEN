@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { liveJobSchema, liveReportSchema, type LiveJob, type LiveReport } from './contracts';
+import { liveJobSchema, liveReportSchema, type LiveJob, type LiveReport } from './contracts.live';
 import type { MessageKey } from '../i18n/messages';
 
 // Canli oturum istemcisi. Tek kural: bu dosya hicbir kosulda demo verisine
