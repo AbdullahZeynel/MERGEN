@@ -312,6 +312,26 @@ Kural testleri (`test_uwcse_rules.py`, 12 test) CI'da torch'suz koşar. Bugünk�
 demo vakası eski kuralla üretilmiştir; yeniden üretim olasılık önbelleğini ister
 ve M5'te hostta yapılır.
 
+### M3 güncel durum
+
+`frontend/scripts/prepare_demo_v4.py` paket v4'ü üretir: kök katalog şeması 3'te
+kalır, `pathology/glioma` koleksiyonu eklenir ve görüntü manifesti 4'e yükselip
+`examples` dizisini taşır. 17 Eylül arşiviyle ölçülen çıktı 246 MB: 12 slayt
+vakası (7 doğru, 5 yanlış — hepsi etiketli; 2'si top-2 farkı 0,45'in altında
+olduğu için uzman incelemesi bayrağıyla; 8 merkez), 5 MRI figürü ve 22
+kopyalanmış görüntü vakası. Kaynak paketteki `genomics` koleksiyonu kopyalanmaz.
+
+Store her manifesti yüklerken iddiaları yeniden türetir: `needsExpertReview`
+bildirilen `reviewMargin` ile, `agreesWithReference` referansla, her varlık yolu
+vakanın kendi kanonik yoluyla doğrulanır; referans hacmi olmadan `dice`/`hd95Mm`
+yazılamaz ve hiçbir vaka başka bir vakanın varlığına işaret edemez. Üretici de
+arşivin sınıf/doğruluk iddialarını ve klasör-hasta eşleşmesini yeniden hesaplar.
+MRI figürleri gezilebilir vaka listesine girmez; kendi `ruleVersion`'ıyla ayrı
+uçtan okunur, çünkü bugünkü 22 demo vakası eski kuralla, figürler UWCSE v3 ile
+üretilmiştir. Arayüz tarafı (modül seçici, patoloji ekranı, `review_flags`
+bandı) M4'tedir; `review_flags` arşivdeki beş figürde de boş geldiği için bant
+bugün pozitif örneksizdir.
+
 ## Git ve ekip çalışma düzeni
 
 - Bir sprint dalı bir sorumluluk alanını değiştirir. Aynı dosyaları değiştirecek iki

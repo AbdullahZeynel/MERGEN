@@ -5,6 +5,11 @@
       "module": "imaging",
       "disease": "glioma",
       "manifest": "imaging/glioma/manifest.json"
+    },
+    {
+      "module": "pathology",
+      "disease": "glioma",
+      "manifest": "pathology/glioma/manifest.json"
     }
   ]
 }
