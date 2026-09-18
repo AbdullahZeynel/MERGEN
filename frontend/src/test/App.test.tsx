@@ -230,6 +230,18 @@ describe('case workspace', () => {
     expect(dialog).toHaveTextContent('silinir');
   });
 
+  it('links the full attribution list instead of only naming the file', async () => {
+    const user = mount();
+    await screen.findByRole('heading', { name: 'TEST-0001' });
+    await user.click(screen.getAllByRole('button', { name: 'Veri kaynakları ve gizlilik' })[0]);
+    await screen.findByRole('dialog');
+    // Dosya adini yazmak atif listesini ulasilabilir yapmiyor; baglanti olmali.
+    expect(screen.getByRole('link', { name: /ATTRIBUTIONS\.md/ })).toHaveAttribute(
+      'href',
+      'https://github.com/AbdullahZeynel/MERGEN/blob/main/docs/ATTRIBUTIONS.md',
+    );
+  });
+
   it('switches the interface language and remembers it', async () => {
     const user = mount();
     await screen.findByRole('heading', { name: 'TEST-0001' });

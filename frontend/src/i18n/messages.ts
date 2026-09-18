@@ -261,7 +261,7 @@ export const tr = {
   'credits.licenceTitle': 'Bu yazılım',
   'credits.licenceBody':
     'MERGEN kaynak kodu Apache-2.0 ile yayımlanır. Depoya alınmış üçüncü taraf kaynak kodu kendi lisans bildirimleriyle dağıtılır.',
-  'credits.full': 'Tam atıf listesi depodaki ATTRIBUTIONS.md dosyasındadır.',
+  'credits.full': 'Tam atıf listesi depodadır:',
 
   'footer.purpose': 'Onkolojide 3T · Araştırma amaçlıdır, klinik kararda kullanılamaz',
 } as const;
@@ -531,7 +531,7 @@ export const en: Record<MessageKey, string> = {
   'credits.licenceTitle': 'This software',
   'credits.licenceBody':
     'The MERGEN source code is released under Apache-2.0. Third-party source code vendored into the repository is distributed with its own licence notices.',
-  'credits.full': 'The full attribution list is in ATTRIBUTIONS.md in the repository.',
+  'credits.full': 'The full attribution list is in the repository:',
 
   'footer.purpose': 'Onkolojide 3T · Research use only, not for clinical decisions',
 };

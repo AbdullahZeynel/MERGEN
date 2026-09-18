@@ -5,6 +5,8 @@ import { useT } from '../i18n';
 const DATASET_DOI = 'https://doi.org/10.7937/tcia.bdgf-8v37';
 const PAPER_DOI = 'https://doi.org/10.1148/ryai.220058';
 const COLLECTION = 'https://www.cancerimagingarchive.net/collection/ucsf-pdgm/';
+const ATTRIBUTIONS =
+  'https://github.com/AbdullahZeynel/MERGEN/blob/main/docs/ATTRIBUTIONS.md';
 
 /** Veri kaynagi, kimliksizlestirme ve atiflar. Icerik ATTRIBUTIONS.md'yi yansitir. */
 export function AboutDialog({ onClose }: { onClose: () => void }) {
@@ -85,7 +87,12 @@ export function AboutDialog({ onClose }: { onClose: () => void }) {
 
           <h4>{t('credits.licenceTitle')}</h4>
           <p>{t('credits.licenceBody')}</p>
-          <p className="about-note">{t('credits.full')}</p>
+          <p className="about-note">
+            {t('credits.full')}{' '}
+            <a href={ATTRIBUTIONS} target="_blank" rel="noreferrer noopener">
+              ATTRIBUTIONS.md <ExternalLink size={13} />
+            </a>
+          </p>
         </section>
       </div>
     </dialog>
